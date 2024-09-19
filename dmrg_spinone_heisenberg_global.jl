@@ -21,8 +21,8 @@ eps = 1e-4
 # Extract command line arguments
 function parse_args()
     args = ARGS
-    α = 0
-    L = 0
+    #α = 0
+    #L = 0
 
     # Loop through the arguments and extract values
     for (i, arg) in enumerate(args)
@@ -211,16 +211,16 @@ let
     mag_list = Float64[]
 
     header = ["D" "fidelity"]
-    CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_sigma$(α)_L$(L).csv",  Tables.table(header), header=false)
+    CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
     
     header = ["D" "SvN"]
-    CSV.write("$(base_output_path)/spinone_heisenberg_svn_sigma$(α)_L$(L).csv",  Tables.table(header), header=false)
+    CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
 
     header = ["D" "str_order"]
-    CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_sigma$(α)_L$(L).csv",  Tables.table(header), header=false)
+    CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
     
     header = ["D" "mag"]
-    CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_sigma$(α)_L$(L).csv",  Tables.table(header), header=false)
+    CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
 
     # iterate over all
     Ds = d_min:step_size:d_max
@@ -284,20 +284,20 @@ let
         # calc fidelity susceptibility
         fidelity = calc_fidelity(psi, psi_eps, eps)
         push!(fidelity_list,fidelity)
-        CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_sigma$(α)_L$(L).csv",  Tables.table([D fidelity]), append=true)
+        CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table([D fidelity]), append=true)
 
 
         # calc von Neumann entropy
         SvN = calc_entropy(psi, L÷2)
         push!(entropy_list, SvN)
-        CSV.write("$(base_output_path)/spinone_heisenberg_svn_sigma$(α)_L$(L).csv",  Tables.table([D SvN]), append=true)
+        CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table([D SvN]), append=true)
 
         i = L÷4
         j = i + L÷2
         string_order = calc_string_order(psi, sites, i, j)
         @show string_order
         push!(strorder_list, string_order)
-        CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_sigma$(α)_L$(L).csv",  Tables.table([D string_order]), append=true)
+        CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table([D string_order]), append=true)
 
         # append to csvs
         zzcorr = correlation_matrix(psi,"Sz","Sz")
@@ -306,7 +306,7 @@ let
         #mag = 3*abs.(expect(psi,"Sz"))[L÷2]
         @show mag
         push!(mag_list, mag)
-        CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_sigma$(α)_L$(L).csv",  Tables.table([D mag]), append=true)
+        CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table([D mag]), append=true)
         #println("mx = $(mag)")
         
         #push!(fid_sus_lists, fid_sus_L)
