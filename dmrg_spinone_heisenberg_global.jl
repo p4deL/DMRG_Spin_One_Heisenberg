@@ -9,7 +9,7 @@ using CSV, DataFrames, Tables
 #==================#
 # Input parameters #
 #==================#
-base_output_path = "output"
+base_output_path = "spinone_heisenberg/output"
 L = 128
 α = 2.0
 d_min = 0.0
@@ -21,8 +21,8 @@ eps = 1e-4
 # Extract command line arguments
 function parse_args()
     args = ARGS
-    α = 0
-    L = 0
+    #α = 0
+    #L = 0
 
     # Loop through the arguments and extract values
     for (i, arg) in enumerate(args)
@@ -207,6 +207,7 @@ let
 
     fidelity_list = Float64[]
     entropy_list = Float64[]
+    strorder_list = Float64[]
     mag_list = Float64[]
 
     header = ["D" "fidelity"]
@@ -215,6 +216,9 @@ let
     header = ["D" "SvN"]
     CSV.write("$(base_output_path)/spinone_heisenberg_svn_sigma$(α)_L$(L).csv",  Tables.table(header), header=false)
 
+    header = ["D" "str_order"]
+    CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_sigma$(α)_L$(L).csv",  Tables.table(header), header=false)
+    
     header = ["D" "mag"]
     CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_sigma$(α)_L$(L).csv",  Tables.table(header), header=false)
 
@@ -290,19 +294,16 @@ let
 
         i = L÷4
         j = i + L÷2
-        #zzcorr = correlation_matrix(psi, "Sz", "Sz")
-        #@show zzcorr[i,j]
-
-        #zzcorr_test = two_op_correlator(psi, sites, i, j)
-        #@show zzcorr_test
-
         string_order = calc_string_order(psi, sites, i, j)
         @show string_order
+        push!(strorder_list, string_order)
+        CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_sigma$(α)_L$(L).csv",  Tables.table([D string_order]), append=true)
 
         # append to csvs
-        zzcorr = correlation_matrix(psi,"Sz","Sz")
-        stag_zzcorr = [(-1)^(i + j) * 3 * zzcorr[i, j] for i in axes(zzcorr, 1), j in axes(zzcorr, 2)]
-        mag = sum(stag_zzcorr)/L^2
+        #zzcorr = correlation_matrix(psi,"Sz","Sz")
+        #stag_zzcorr = [(-1)^(i + j) * 3 * zzcorr[i, j] for i in axes(zzcorr, 1), j in axes(zzcorr, 2)]
+        #mag = sum(stag_zzcorr)/L^2
+        mag = 3*abs.(expect(psi,"Sz"))[L÷2]
         @show mag
         push!(mag_list, mag)
         CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_sigma$(α)_L$(L).csv",  Tables.table([D mag]), append=true)
