@@ -9,12 +9,12 @@ using CSV, DataFrames, Tables
 #==================#
 # Input parameters #
 #==================#
-base_output_path = "output"
+base_output_path = "spinone_heisenberg/output"
 L = 128
 α = 2.0
 d_min = 0.0
 d_max = 2.0
-step_size = 0.25
+step_size = 0.2
 #n_steps = 30
 eps = 1e-4
 
