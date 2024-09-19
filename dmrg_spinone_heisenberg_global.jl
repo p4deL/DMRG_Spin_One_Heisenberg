@@ -3,15 +3,15 @@
 #include("fidelity_susceptibility.jl")
 using ITensors
 using CSV, DataFrames, Tables
-using Plots
-gr()
+#using Plots
+#gr()
 
 #==================#
 # Input parameters #
 #==================#
-base_output_path = "spinone_heisenberg/output"
+base_output_path = "output"
 L = 128
-α = 2
+α = 2.0
 d_min = 0.0
 d_max = 2.0
 step_size = 0.25
@@ -27,12 +27,12 @@ function parse_args()
     # Loop through the arguments and extract values
     for (i, arg) in enumerate(args)
         if arg == "--alpha"
-            α = parse(Int, args[i + 1])
+            α = parse(Float64, args[i + 1])
         elseif arg == "--size"
             L = parse(Int, args[i + 1])
         end
     end
-    return alpha, size
+    return α, L
 end
 
 
@@ -70,7 +70,7 @@ function create_op_sum(sites, D, α)
     # staggered long-range AF Heisenberg interactions 
     for i=1:N-1
         for δ=1:N-i
-			coupling = (-1.0)^(δ+1)*δ^(-float(α))
+			coupling = (-1.0)^(δ+1)*δ^(-α)
 			os += 0.5*coupling,"S+",i,"S-",i+δ
 			os += 0.5*coupling,"S-",i,"S+",i+δ
 			os += 1.0*coupling,"Sz",i,"Sz",i+δ
@@ -225,6 +225,7 @@ let
         println("D=$(D)")
 
         # create OpSum
+		@show α
         os1 = create_op_sum(sites, D, α)
         os2 = create_op_sum(sites, D+eps, α)
 
