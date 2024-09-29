@@ -3,26 +3,30 @@
 #include("fidelity_susceptibility.jl")
 using ITensors
 using CSV, DataFrames, Tables
+using LinearAlgebra
 #using Plots
 #gr()
+
+
+BLAS.set_num_threads(1)
 
 #==================#
 # Input parameters #
 #==================#
-base_output_path = "spinone_heisenberg/output"
+base_output_path = "output"
 L = 128
 α = 2.0
 d_min = 0.0
-d_max = 2.0
-step_size = 0.2
+d_max = 1.5
+step_size = 0.1
 #n_steps = 30
 eps = 1e-4
 
 # Extract command line arguments
 function parse_args()
     args = ARGS
-    #α = 0
-    #L = 0
+    α = 0
+    L = 0
 
     # Loop through the arguments and extract values
     for (i, arg) in enumerate(args)
@@ -233,12 +237,16 @@ let
         os1 = create_op_sum(sites, D, α)
         os2 = create_op_sum(sites, D+eps, α)
 
-        # constructing the Hamiltonian parts
-        H1 = MPO(os1, sites)
+
+	# constructing the Hamiltonian parts
+	t2 = time()
+	H1 = MPO(os1, sites)
         H2 = MPO(os2, sites)
+    	construction_time = time() - t2
+    	println("construction time: $(construction_time) seconds")
 
         # dmrg parameters
-        nsweeps = 30
+        nsweeps = 50
 
         # maxdim dominated schedule
         #maxdim = [10 20 80 200 300 400 800]
@@ -256,7 +264,7 @@ let
         #noise = [1E-5 1E-5 1E-8 1E-9 1E-10 1E-10 1E-10]
 
         # individual
-        maxdim = [10 20 80 200 300 400 500]
+        maxdim = [10 20 80 200 300 400 500 600]
         cutoff = [1E-5 1E-5 1E-6 1E-7 1E-7 1E-8]        
         noise = [0 0 0 0 0 0 0 0]
         #noise = [1E-5 1E-5 1E-8 1E-9 1E-10 1E-10 1E-10]
