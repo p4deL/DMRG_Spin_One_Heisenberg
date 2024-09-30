@@ -229,7 +229,9 @@ let
     # iterate over all
     Ds = d_min:step_size:d_max
 
-    for D in Ds
+    file_lock = ReentrantLock()
+    
+    Threads.@threads for D in Ds
         println("D=$(D)")
 
         # create OpSum
@@ -292,20 +294,17 @@ let
         # calc fidelity susceptibility
         fidelity = calc_fidelity(psi, psi_eps, eps)
         push!(fidelity_list,fidelity)
-        CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table([D fidelity]), append=true)
-
+        
 
         # calc von Neumann entropy
         SvN = calc_entropy(psi, L÷2)
         push!(entropy_list, SvN)
-        CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table([D SvN]), append=true)
 
         i = L÷4
         j = i + L÷2
         string_order = calc_string_order(psi, sites, i, j)
         @show string_order
         push!(strorder_list, string_order)
-        CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table([D string_order]), append=true)
 
         # append to csvs
         zzcorr = correlation_matrix(psi,"Sz","Sz")
@@ -314,7 +313,6 @@ let
         #mag = 3*abs.(expect(psi,"Sz"))[L÷2]
         @show mag
         push!(mag_list, mag)
-        CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table([D mag]), append=true)
         #println("mx = $(mag)")
         
         #push!(fid_sus_lists, fid_sus_L)
@@ -323,6 +321,13 @@ let
         #header_fid = ["h", "fid_suscept"]
         #CSV.write("$(base_output_path)/spinone_heisenberg_mag_sigma$(σ)_L$(L).csv", Tables.table(cat(hzs_L,mag_L,dims=2)), header = header_mag)
         #CSV.write("$(base_output_path)/spinone_heisenberg_fid_suscept_sigma$(σ)_L$(L).csv", Tables.table(cat(hzs_L,fid_sus_L,dims=2)), header = header_fid)
+
+	lock(file_lock)
+	CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table([D fidelity]), append=true)
+        CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table([D SvN]), append=true)
+        CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table([D string_order]), append=true)
+        CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table([D mag]), append=true)
+	unlock(file_lock)
 
     end
 
