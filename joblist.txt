@@ -1,0 +1,10 @@
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha inf
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha 10.0
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha 5.0
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha 3.33333
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha 2.5
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha 2.0
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha 1.66667
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha 1.42857143
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha 1.25
+julia -t 15 dmrg_spinone_heisengerg_global.jl --size 400 --alpha 1.11111
