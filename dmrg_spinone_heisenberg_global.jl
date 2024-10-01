@@ -1,12 +1,6 @@
-#include("init_dmrg.jl")
-#include("fidelity_susceptibility.jl")
-#include("fidelity_susceptibility.jl")
 using ITensors
 using CSV, DataFrames, Tables
 using LinearAlgebra
-#using Plots
-#gr()
-
 
 BLAS.set_num_threads(1)
 
@@ -14,43 +8,41 @@ BLAS.set_num_threads(1)
 # Input parameters #
 #==================#
 base_output_path = "output"
-L = 128
-α = 2.0
+infflag = true
 d_min = 0.0
 d_max = 1.5
 step_size = 0.1
-#n_steps = 30
 eps = 1e-4
+
+
+#======================#
+# function definitions #
+#======================#
 
 # Extract command line arguments
 function parse_args()
     args = ARGS
+    
     α = 0
     L = 0
 
     # Loop through the arguments and extract values
     for (i, arg) in enumerate(args)
         if arg == "--alpha"
-            α = parse(Float64, args[i + 1])
+            αstring = args[i + 1]
+            if αstring == "inf" || αstring == "Inf"
+                global infflag = true
+            else
+                global infflag = false
+            end
+            α = parse(Float64, αstring)
+        
         elseif arg == "--size"
             L = parse(Int, args[i + 1])
         end
     end
     return α, L
 end
-
-
-# TODO
-# input parameters: sigma, hc_guess, L, n_steps, scaling range on and off
-# save to file after every h, so that nothing lost!
-# write script creates joblist -> probably bash script that can be made into a slurm_script
-
-#======================#
-# function definitions #
-#======================#
-
-
-
 
 # creates operator string needed to init mpo
 function create_op_sum(sites, D, α)
@@ -63,21 +55,23 @@ function create_op_sum(sites, D, α)
         #print(i, ' ')
     end
 
-	# AF Heisenberg interactions
-    #=for i in 1:N-1
-		os += 0.5,"S+",i,"S-",i+1
-		os += 0.5,"S-",i,"S+",i+1
-		os += 1.0,"Sz",i,"Sz",i+1
-    end=#
+    if infflag
+	    # AF Heisenberg NN interactions
+        for i in 1:N-1
+		    os += 0.5,"S+",i,"S-",i+1
+		    os += 0.5,"S-",i,"S+",i+1
+		    os += 1.0,"Sz",i,"Sz",i+1
+        end
 
-	
-    # staggered long-range AF Heisenberg interactions 
-    for i=1:N-1
-        for δ=1:N-i
-			coupling = (-1.0)^(δ+1)*δ^(-α)
-			os += 0.5*coupling,"S+",i,"S-",i+δ
-			os += 0.5*coupling,"S-",i,"S+",i+δ
-			os += 1.0*coupling,"Sz",i,"Sz",i+δ
+    else
+        # staggered long-range AF Heisenberg interactions 
+        for i=1:N-1
+            for δ=1:N-i
+                coupling = (-1.0)^(δ+1)*δ^(-α)
+                os += 0.5*coupling,"S+",i,"S-",i+δ
+                os += 0.5*coupling,"S-",i,"S+",i+δ
+                os += 1.0*coupling,"Sz",i,"Sz",i+δ
+            end
         end
     end
     
@@ -214,23 +208,23 @@ let
     strorder_list = Float64[]
     mag_list = Float64[]
 
+    # write headers of csv files
     header = ["D" "fidelity"]
     CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
-    
     header = ["D" "SvN"]
     CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
-
     header = ["D" "str_order"]
     CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
-    
     header = ["D" "mag"]
     CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
 
     # iterate over all
     Ds = d_min:step_size:d_max
 
+    # file lock for multithreating
     file_lock = ReentrantLock()
     
+    # iterate over Ds in multiple threads
     Threads.@threads for D in Ds
         println("D=$(D)")
 
@@ -295,11 +289,11 @@ let
         fidelity = calc_fidelity(psi, psi_eps, eps)
         push!(fidelity_list,fidelity)
         
-
         # calc von Neumann entropy
         SvN = calc_entropy(psi, L÷2)
         push!(entropy_list, SvN)
 
+        # calc non-local string order parameter
         i = L÷4
         j = i + L÷2
         string_order = calc_string_order(psi, sites, i, j)
@@ -313,14 +307,7 @@ let
         #mag = 3*abs.(expect(psi,"Sz"))[L÷2]
         @show mag
         push!(mag_list, mag)
-        #println("mx = $(mag)")
         
-        #push!(fid_sus_lists, fid_sus_L)
-        #push!(mag_lists, mag_L)
-        #header_mag = ["h", "m_squared"]
-        #header_fid = ["h", "fid_suscept"]
-        #CSV.write("$(base_output_path)/spinone_heisenberg_mag_sigma$(σ)_L$(L).csv", Tables.table(cat(hzs_L,mag_L,dims=2)), header = header_mag)
-        #CSV.write("$(base_output_path)/spinone_heisenberg_fid_suscept_sigma$(σ)_L$(L).csv", Tables.table(cat(hzs_L,fid_sus_L,dims=2)), header = header_fid)
 
 	lock(file_lock)
 	CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table([D fidelity]), append=true)
@@ -333,9 +320,5 @@ let
 
     elapsed_time = time() - t1
     println("Elapsed time: $(elapsed_time) seconds")
-
-    #labels = ["L=$(L)" for L in Ls]
-    #plot(hzs_list, fid_sus_lists, label=labels, yaxis=("fidelity suscept."), xaxis=("h"))
-    #plot(hzs_list, mag_lists, label=labels, yaxis=("m^2"), xaxis=("h"))
 
 end
