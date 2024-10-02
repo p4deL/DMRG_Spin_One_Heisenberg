@@ -234,9 +234,9 @@ let
         os2 = create_op_sum(sites, D+eps, α)
 
 
-	# constructing the Hamiltonian parts
-	t2 = time()
-	H1 = MPO(os1, sites)
+	    # constructing the Hamiltonian parts
+	    t2 = time()
+	    H1 = MPO(os1, sites)
         H2 = MPO(os2, sites)
     	construction_time = time() - t2
     	println("construction time: $(construction_time) seconds")
@@ -309,12 +309,12 @@ let
         push!(mag_list, mag)
         
 
-	lock(file_lock)
-	CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table([D fidelity]), append=true)
+	    lock(file_lock)
+	    CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table([D fidelity]), append=true)
         CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table([D SvN]), append=true)
         CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table([D string_order]), append=true)
         CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table([D mag]), append=true)
-	unlock(file_lock)
+	    unlock(file_lock)
 
     end
 

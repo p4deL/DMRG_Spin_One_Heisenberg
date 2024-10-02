@@ -1,0 +1,10 @@
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha inf
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha 10.0
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha 5.0
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha 3.33333
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha 2.5
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha 2.0
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha 1.66667
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha 1.42857143
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha 1.25
+/scratch/pi77josu/julia-1.10.5/bin/julia -t 16 dmrg_spinone_heisenberg_central_charge.jl --size1 200 --size2 220 --alpha 1.11111
