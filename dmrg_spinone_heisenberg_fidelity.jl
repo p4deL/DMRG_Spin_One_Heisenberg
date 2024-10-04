@@ -9,8 +9,8 @@ BLAS.set_num_threads(1)
 #==================#
 base_output_path = "output"
 infflag = true
-d_min = -1.0
-d_max = 0.0
+d_min = 0.0
+d_max = 1.0
 step_size = 0.025
 eps = 1e-4
 
@@ -115,6 +115,7 @@ let
     # file lock for multithreating
     file_lock = ReentrantLock()
     
+    # TODO: Implement dynamic scheduling
     # iterate over Ds in multiple threads
     Threads.@threads for D in Ds
         println("D=$(D)")
@@ -164,17 +165,17 @@ let
         # init wavefunction
 
         # Haldane like init states
-        remainder = L%3
-        Leff = L - remainder
-        pattern = ["Up", "Dn", "Z0"]
-        states = [pattern[(i)%3+1] for i in 0:Leff-1]
-        append!(states, fill("Z0",remainder)) 
+        #remainder = L%3
+        #Leff = L - remainder
+        #pattern = ["Up", "Dn", "Z0"]
+        #states = [pattern[(i)%3+1] for i in 0:Leff-1]
+        #append!(states, fill("Z0",remainder)) 
         
         # AF init state
-        #states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
+        states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
 
         # large D like GS
-        states = ["Z0" for n in 1:L]
+        #states = ["Z0" for n in 1:L]
         
         
         psi0 = MPS(sites, states)
