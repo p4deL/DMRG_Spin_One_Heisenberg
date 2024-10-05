@@ -203,11 +203,6 @@ let
     sites = siteinds("S=1", L; conserve_sz=true)
     #sites = siteinds("S=1", L)
 
-    fidelity_list = Float64[]
-    entropy_list = Float64[]
-    strorder_list = Float64[]
-    mag_list = Float64[]
-
     # write headers of csv files
     header = ["D" "fidelity"]
     CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
@@ -215,7 +210,7 @@ let
     CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
     header = ["D" "str_order"]
     CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
-    header = ["D" "mag"]
+    header = ["D" "mx" "my" "mz" "m_tot"]
     CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
 
     # iterate over all
@@ -271,8 +266,19 @@ let
         #noise = [0 0 0 0 0 0 0 0]
 
         # init wavefunction
-        states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
-        psi0 = MPS(sites, states)
+        
+        # Haldane like init states
+        #remainder = L%3
+        #Leff = L - remainder
+        #pattern = ["Up", "Dn", "Z0"]
+        #states = [pattern[(i)%3+1] for i in 0:Leff-1]
+        #append!(states, fill("Z0",remainder)) 
+        
+        # AF init state
+        #states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
+
+        # large D like GS
+        states = ["Z0" for n in 1:L]
 
         # observer to 
         observer = DMRGObserver(;energy_tol=1E-8,minsweeps=5)
@@ -281,40 +287,34 @@ let
         # TODO: For long-range sytems it might be sensible to increase niter! Not available anymore?
         # Noise can help convegence, introduces peturbation at each step 1E-5->1E-12
         energy,psi = dmrg(H1,psi0; nsweeps,maxdim,cutoff,observer=observer,outputlevel=1)
-        energy_eps,psi_eps = dmrg(H2,psi0; nsweeps,maxdim,cutoff,observer=observer,outputlevel=1)
-
-        #energy,psi = dmrg(H1,psi0; nsweeps,maxdim,cutoff,noise,outputlevel=1)
-        #energy_eps,psi_eps = dmrg(H2,psi0; nsweeps,maxdim,cutoff,noise,outputlevel=1)
-
-        # calc fidelity susceptibility
-        fidelity = calc_fidelity(psi, psi_eps, eps)
-        push!(fidelity_list,fidelity)
         
         # calc von Neumann entropy
         SvN = calc_entropy(psi, L÷2)
-        push!(entropy_list, SvN)
 
         # calc non-local string order parameter
         i = L÷4
         j = i + L÷2
         string_order = calc_string_order(psi, sites, i, j)
-        @show string_order
-        push!(strorder_list, string_order)
 
-        # append to csvs
+        # calc magnetizaiton
+        xxcorr = correlation_matrix(psi,"Sx","Sx")
+        stag_xxcorr = [(-1)^(i + j) * 3 * xxcorr[i, j] for i in axes(xxcorr, 1), j in axes(xxcorr, 2)]
+        magx_sq = sum(stag_xxcorr)/L^2
+        yycorr = correlation_matrix(psi,"Sy","Sy")
+        stag_yycorr = [(-1)^(i + j) * 3 * yycorr[i, j] for i in axes(yycorr, 1), j in axes(yycorr, 2)]
+        magy_sq = sum(stag_yycorr)/L^2
         zzcorr = correlation_matrix(psi,"Sz","Sz")
         stag_zzcorr = [(-1)^(i + j) * 3 * zzcorr[i, j] for i in axes(zzcorr, 1), j in axes(zzcorr, 2)]
-        mag = sum(stag_zzcorr)/L^2
+        magz_sq = sum(stag_zzcorr)/L^2
+
         #mag = 3*abs.(expect(psi,"Sz"))[L÷2]
-        @show mag
-        push!(mag_list, mag)
         
 
 	    lock(file_lock)
 	    CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table([D fidelity]), append=true)
         CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table([D SvN]), append=true)
         CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table([D string_order]), append=true)
-        CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table([D mag]), append=true)
+        CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table([D np.sqrt(magx_sq) np.sqrt(magy_sq) np.sqrt(magz_sq) np.sqrt(magx_sq + magy_sq + magz_sq)]), append=true)
 	    unlock(file_lock)
 
     end

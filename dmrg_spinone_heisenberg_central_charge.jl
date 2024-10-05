@@ -173,11 +173,35 @@ let
         #noise = [0 0 0 0 0 0 0 0]
 
         # init wavefunction
-        states = [isodd(n) ? "Up" : "Dn" for n in 1:L1]
-        psi01 = MPS(sites1, states)
         
-        states = [isodd(n) ? "Up" : "Dn" for n in 1:L2]
+        # Haldane like init states
+        pattern = ["Up", "Dn", "Z0"]
+        #remainder = L1%3
+        #Leff = L1 - remainder
+        #states = [pattern[(i)%3+1] for i in 0:Leff-1]
+        #append!(states1, fill("Z0",remainder))
+        #psi01 = MPS(sites1, states)
+
+        #remainder = L2%3
+        #Leff = L2 - remainder
+        #states = [pattern[(i)%3+1] for i in 0:Leff-1]
+        #append!(states1, fill("Z0",remainder))
+        #psi02 = MPS(sites2, states)
+        
+        # AF init state
+        #states = [isodd(n) ? "Up" : "Dn" for n in 1:L1]
+        #psi01 = MPS(sites1, states)
+
+        #states = [isodd(n) ? "Up" : "Dn" for n in 1:L2]
+        #psi02 = MPS(sites2, states)
+
+        # large D like GS
+        states = ["Z0" for n in 1:L1]
+        psi01 = MPS(sites1, states)
+
+        states = ["Z0" for n in 1:L2]
         psi02 = MPS(sites2, states)
+
 
         # observer to 
         observer = DMRGObserver(;energy_tol=1E-8,minsweeps=5)

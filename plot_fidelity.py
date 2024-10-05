@@ -17,33 +17,25 @@ L = 100  # system size
 alpha = "Inf"
 
 # output filename
-output_file = "initstate_convergence_negativeD.pdf"
+output_file = f"fidelity_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
-data_dir = 'output/fidelity_convergence/negativeD/'
-filename_largeD = f'fidelity_largeDinit_alpha{alpha}_L{L}.csv'
-filename_af = f'fidelity_afinit_alpha{alpha}_L{L}.csv'
+data_dir = 'output/fidelity/'
+filename = f'spinone_heisenberg_fidelity_alpha{alpha}_L{L}.csv'
 
 fs1 = 18
 fs2 = 16
 
 
-file_largeD = os.path.join(data_dir, filename_largeD)
-file_af = os.path.join(data_dir, filename_af)
-
-data_largeD = pd.read_csv(file_largeD)
-data_af = pd.read_csv(file_af)
+file = os.path.join(data_dir, filename)
+data = pd.read_csv(file)
 
 # Create the contour plot
 plt.figure(figsize=(8, 6))
 
-Ds = data_largeD['D'].values
-fidelity = data_largeD['fidelity'].values
-plt.plot(Ds, fidelity, label="large D init state")
-
-Ds = data_af['D'].values
-fidelity = data_af['fidelity'].values
-plt.plot(Ds, fidelity, label="AF init state")
+Ds = data['D'].values
+fidelity = data['fidelity'].values
+plt.plot(Ds, fidelity)
 
 
 # Label axes
@@ -51,7 +43,7 @@ plt.xlabel(r'$D$', fontsize=fs2)
 plt.ylabel(r'$\chi_{\rm fidelity}$', fontsize=fs2)
 
 plt.ylim(0,100)
-plt.legend(fontsize=fs2)
+#plt.legend(fontsize=fs2)
 
 # title
 plt.title(f"$L={L}$", fontsize=fs1)

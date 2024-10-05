@@ -17,13 +17,13 @@ L = 100  # system size
 alpha = "Inf"
 
 # output filename
-output_file = "initstate_gse_convergence.pdf"
+output_file = "initstate_convergence_positiveD.pdf"
 
 # directory and filename
-data_dir = 'output/gse_convergence/'
-filename_largeD = f'gsenergy_largeDinit_alpha{alpha}_L{L}_D0.45.csv'
-filename_af = f'gsenergy_afinit_alpha{alpha}_L{L}_D0.45.csv'
-filename_haldane = f'gsenergy_haldaneinit_alpha{alpha}_L{L}_D0.45.csv'
+data_dir = 'output/fidelity_convergence/positiveD/'
+filename_largeD = f'fidelity_largeDinit_alpha{alpha}_L{L}.csv'
+filename_af = f'fidelity_afinit_alpha{alpha}_L{L}.csv'
+filename_haldane = f'fidelity_haldaneinit_alpha{alpha}_L{L}.csv'
 
 fs1 = 18
 fs2 = 16
@@ -40,26 +40,27 @@ data_haldane = pd.read_csv(file_haldane)
 # Create the contour plot
 plt.figure(figsize=(8, 6))
 
-steps = data_largeD['step'].values
-energy = data_largeD['energy'].values
-plt.plot(steps, energy, label="large D init state")
+Ds = data_largeD['D'].values
+fidelity = data_largeD['fidelity'].values
+plt.plot(Ds, fidelity, label="large D init state")
 
-steps = data_af['step'].values
-energy = data_af['energy'].values
-plt.plot(steps, energy, label="AF init state")
+Ds = data_af['D'].values
+fidelity = data_af['fidelity'].values
+plt.plot(Ds, fidelity, label="AF init state")
 
-steps = data_haldane['step'].values
-energy = data_haldane['energy'].values
-plt.plot(steps, energy, label="Haldane init state")
+Ds = data_haldane['D'].values
+fidelity = data_haldane['fidelity'].values
+plt.plot(Ds, fidelity, label="Haldane init state")
 
 # Label axes
-plt.xlabel(r'step', fontsize=fs2)
-plt.ylabel(r'$\varepsilon_{\rm GS}$', fontsize=fs2)
+plt.xlabel(r'$D$', fontsize=fs2)
+plt.ylabel(r'$\chi_{\rm fidelity}$', fontsize=fs2)
 
+plt.ylim(0,20)
+plt.legend(fontsize=fs2)
 
 # title
 plt.title(f"$L={L}$", fontsize=fs1)
-plt.legend(fontsize=fs2)
 
 # save figure
 plt.savefig(output_file)

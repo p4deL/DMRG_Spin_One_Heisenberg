@@ -9,9 +9,9 @@ BLAS.set_num_threads(1)
 #==================#
 base_output_path = "output"
 infflag = true
-d_min = 0.0
+d_min = -1.0
 d_max = 1.0
-step_size = 0.025
+step_size = 0.01
 eps = 1e-4
 
 #======================#
@@ -21,7 +21,7 @@ eps = 1e-4
 # Extract command line arguments
 function parse_args()
     args = ARGS
-    
+     
     α = 0
     L = 0
 
@@ -134,7 +134,7 @@ let
     	println("construction time: $(construction_time) seconds")
 
         # dmrg parameters
-        nsweeps = 200
+        nsweeps = 100
 
         # maxdim dominated schedule
         #maxdim = [10 20 80 200 300 400 800]
@@ -163,7 +163,7 @@ let
         #noise = [0 0 0 0 0 0 0 0]
 
         # init wavefunction
-
+        if D<0.3
         # Haldane like init states
         #remainder = L%3
         #Leff = L - remainder
@@ -171,17 +171,19 @@ let
         #states = [pattern[(i)%3+1] for i in 0:Leff-1]
         #append!(states, fill("Z0",remainder)) 
         
-        # AF init state
-        states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
+            # AF init state
+            states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
 
-        # large D like GS
-        #states = ["Z0" for n in 1:L]
+        else
+            # large D like GS
+            states = ["Z0" for n in 1:L]
+        end
         
         
         psi0 = MPS(sites, states)
 
         # observer to 
-        observer = DMRGObserver(;energy_tol=1E-12,minsweeps=5)
+        observer = DMRGObserver(;energy_tol=1E-10,minsweeps=5)
 
         # calc ground-state wave functions
         # TODO: For long-range sytems it might be sensible to increase niter! Not available anymore?
