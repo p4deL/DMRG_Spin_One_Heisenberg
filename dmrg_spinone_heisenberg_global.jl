@@ -9,10 +9,9 @@ BLAS.set_num_threads(1)
 #==================#
 base_output_path = "output"
 infflag = true
-d_min = 0.0
-d_max = 1.5
-step_size = 0.1
-eps = 1e-4
+d_min = -1.0
+d_max = 1.0
+step_size = 0.02
 
 
 #======================#
@@ -226,14 +225,11 @@ let
 
         # create OpSum
 		@show α
-        os1 = create_op_sum(sites, D, α)
-        os2 = create_op_sum(sites, D+eps, α)
-
+        os = create_op_sum(sites, D, α)
 
 	    # constructing the Hamiltonian parts
 	    t2 = time()
-	    H1 = MPO(os1, sites)
-        H2 = MPO(os2, sites)
+	    H = MPO(os, sites)
     	construction_time = time() - t2
     	println("construction time: $(construction_time) seconds")
 
@@ -281,13 +277,15 @@ let
             states = ["Z0" for n in 1:L]
         end
 
+        psi0 = MPS(sites, states)
+
         # observer to 
         observer = DMRGObserver(;energy_tol=1E-10,minsweeps=5)
 
         # calc ground-state wave functions
         # TODO: For long-range sytems it might be sensible to increase niter! Not available anymore?
         # Noise can help convegence, introduces peturbation at each step 1E-5->1E-12
-        energy,psi = dmrg(H1,psi0; nsweeps,maxdim,cutoff,observer=observer,outputlevel=1)
+        energy,psi = dmrg(H,psi0; nsweeps,maxdim,cutoff,observer=observer,outputlevel=1)
         
         # calc von Neumann entropy
         SvN = calc_entropy(psi, L÷2)
