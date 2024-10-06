@@ -266,7 +266,7 @@ let
         #noise = [0 0 0 0 0 0 0 0]
 
         # init wavefunction
-        
+        if D<=0.0 
         # Haldane like init states
         #remainder = L%3
         #Leff = L - remainder
@@ -274,14 +274,15 @@ let
         #states = [pattern[(i)%3+1] for i in 0:Leff-1]
         #append!(states, fill("Z0",remainder)) 
         
-        # AF init state
-        #states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
-
-        # large D like GS
-        states = ["Z0" for n in 1:L]
+            # AF init state
+            states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
+        else
+            # large D like GS
+            states = ["Z0" for n in 1:L]
+        end
 
         # observer to 
-        observer = DMRGObserver(;energy_tol=1E-8,minsweeps=5)
+        observer = DMRGObserver(;energy_tol=1E-10,minsweeps=5)
 
         # calc ground-state wave functions
         # TODO: For long-range sytems it might be sensible to increase niter! Not available anymore?

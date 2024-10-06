@@ -175,36 +175,39 @@ let
         # init wavefunction
         
         # Haldane like init states
-        pattern = ["Up", "Dn", "Z0"]
-        #remainder = L1%3
-        #Leff = L1 - remainder
-        #states = [pattern[(i)%3+1] for i in 0:Leff-1]
-        #append!(states1, fill("Z0",remainder))
-        #psi01 = MPS(sites1, states)
+        if D<=0.0
 
-        #remainder = L2%3
-        #Leff = L2 - remainder
-        #states = [pattern[(i)%3+1] for i in 0:Leff-1]
-        #append!(states1, fill("Z0",remainder))
-        #psi02 = MPS(sites2, states)
+            #pattern = ["Up", "Dn", "Z0"]
+            #remainder = L1%3
+            #Leff = L1 - remainder
+            #states = [pattern[(i)%3+1] for i in 0:Leff-1]
+            #append!(states1, fill("Z0",remainder))
+            #psi01 = MPS(sites1, states)
+
+            #remainder = L2%3
+            #Leff = L2 - remainder
+            #states = [pattern[(i)%3+1] for i in 0:Leff-1]
+            #append!(states1, fill("Z0",remainder))
+            #psi02 = MPS(sites2, states)
         
-        # AF init state
-        #states = [isodd(n) ? "Up" : "Dn" for n in 1:L1]
-        #psi01 = MPS(sites1, states)
+            # AF init state
+            states = [isodd(n) ? "Up" : "Dn" for n in 1:L1]
+            psi01 = MPS(sites1, states)
 
-        #states = [isodd(n) ? "Up" : "Dn" for n in 1:L2]
-        #psi02 = MPS(sites2, states)
+            states = [isodd(n) ? "Up" : "Dn" for n in 1:L2]
+            psi02 = MPS(sites2, states)
+        
+        else
+            # large D like GS
+            states = ["Z0" for n in 1:L1]
+            psi01 = MPS(sites1, states)
 
-        # large D like GS
-        states = ["Z0" for n in 1:L1]
-        psi01 = MPS(sites1, states)
-
-        states = ["Z0" for n in 1:L2]
-        psi02 = MPS(sites2, states)
-
+            states = ["Z0" for n in 1:L2]
+            psi02 = MPS(sites2, states)
+        end
 
         # observer to 
-        observer = DMRGObserver(;energy_tol=1E-8,minsweeps=5)
+        observer = DMRGObserver(;energy_tol=1E-10,minsweeps=5)
 
         # calc ground-state wave functions
         # TODO: For long-range sytems it might be sensible to increase niter! Not available anymore?
