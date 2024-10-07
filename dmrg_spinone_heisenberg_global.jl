@@ -10,8 +10,8 @@ BLAS.set_num_threads(1)
 #==================#
 base_output_path = "output"
 infflag = true
-d_min = 2.0
-d_max = -2.0
+d_min = -1.5
+d_max = 1.5
 step_size = 0.02
 
 
@@ -204,8 +204,6 @@ let
     #sites = siteinds("S=1", L)
 
     # write headers of csv files
-    header = ["D" "fidelity"]
-    CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
     header = ["D" "SvN"]
     CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
     header = ["D" "str_order"]
@@ -313,8 +311,8 @@ let
 
             # calc magnetizaiton
             pmcorr = correlation_matrix(psi,"S+","S-")
-            println("pmcorr = $(0.5*pmcorr[1,:])")
-            #stag_pmcorr = [(-1)^(i + j) * pmcorr[i, j] for i in axes(pmcorr, 1), j in axes(pmcorr, 2)]
+            #println("pmcorr = $(0.5*pmcorr[1,:])")
+            stag_pmcorr = [(-1)^(i + j) * pmcorr[i, j] for i in axes(pmcorr, 1), j in axes(pmcorr, 2)]
             magpm = sqrt(sum(stag_pmcorr)/L^2)
             mpcorr = correlation_matrix(psi,"S-","S+")
             #println("mpcorr = $(0.5*mpcorr[1,:])")
