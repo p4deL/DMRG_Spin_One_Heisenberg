@@ -1,6 +1,7 @@
 using ITensors
 using CSV, DataFrames, Tables
 using LinearAlgebra
+using Base.Threads
 
 BLAS.set_num_threads(1)
 
@@ -9,8 +10,8 @@ BLAS.set_num_threads(1)
 #==================#
 base_output_path = "output"
 infflag = true
-d_min = -1.0
-d_max = 1.0
+d_min = 2.0
+d_max = -2.0
 step_size = 0.02
 
 
@@ -179,11 +180,11 @@ function calc_string_order(psi, sites, i, j)
     return -1*real(scalar(C)) 
 end
 
+# actual work done in trhead
+function process_in_thread(D)
 
-# calculate magnetization
-#function calc_magnetization(psi)
-#
-#end
+
+end
 
 #==============#
 # main routine #
@@ -209,112 +210,130 @@ let
     CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
     header = ["D" "str_order"]
     CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
-    header = ["D" "mx" "my" "mz" "m_tot"]
+    header = ["D" "mag_pm" "mag_mp" "mag_z" "mag_tot"]
     CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table(header), header=false)
 
-    # iterate over all
-    Ds = d_min:step_size:d_max
+    # range
+    D_range = d_min:step_size:d_max
+
+    # Atomic index for dynamic scheduling
+    idx_global = Atomic{Int}(1)
+    n = length(D_range)
 
     # file lock for multithreating
     file_lock = ReentrantLock()
     
-        # TODO: Implement dynamic scheduling
-    # iterate over Ds in multiple threads
-    Threads.@threads for D in Ds
-        println("D=$(D)")
+     # TODO: Implement dynamic scheduling
+    # loop over all threads
+    @threads for _ in 1:nthreads()
 
-        # create OpSum
-		@show α
-        os = create_op_sum(sites, D, α)
+        while true
+            # get the next index atomically
+            idx = atomic_add!(idx_global,1)
+            
+            if idx > n
+                break
+            end
+            
+            # get D value
+            D = D_range[idx]
+            println("D=$(D)")
 
-	    # constructing the Hamiltonian parts
-	    t2 = time()
-	    H = MPO(os, sites)
-    	construction_time = time() - t2
-    	println("construction time: $(construction_time) seconds")
+            # create OpSum
+            @show α
+            os = create_op_sum(sites, D, α)
 
-        # dmrg parameters
-        nsweeps = 50
+            # constructing the Hamiltonian parts
+            t2 = time()
+            H = MPO(os, sites)
+            construction_time = time() - t2
+            println("construction time: $(construction_time) seconds")
 
-        # maxdim dominated schedule
-        #maxdim = [10 20 80 200 300 400 800]
-        #cutoff = [1E-5 1E-8 1E-12 1E-12 1E-12]
-        #noise = [0 0 0 0 0 0 0]
+            # dmrg parameters
+            nsweeps = 25
 
-        # cutoff domintaed schedule
-        #maxdim = [20 80 200 400 800 800]
-        #cutoff = [1E-5 1E-6 1E-8 1E-9 1E-10 1E-12]
-        #noise = [0 0 0 0 0 0]
+            # maxdim dominated schedule
+            #maxdim = [10 20 80 200 300 400 800]
+            #cutoff = [1E-5 1E-8 1E-12 1E-12 1E-12]
+            #noise = [0 0 0 0 0 0 0]
 
-        # noise schedule
-        #maxdim = [10 20 80 200 300 400 400]
-        #cutoff = [1E-5 1E-6 1E-7 1E-8 1E-8 1E-8 1E-8]
-        #noise = [1E-5 1E-5 1E-8 1E-9 1E-10 1E-10 1E-10]
+            # cutoff domintaed schedule
+            #maxdim = [20 80 200 400 800 800]
+            #cutoff = [1E-5 1E-6 1E-8 1E-9 1E-10 1E-12]
+            #noise = [0 0 0 0 0 0]
 
-        # individual
-        maxdim = [10 20 80 200 300 400 500 600]
-        cutoff = [1E-5 1E-5 1E-6 1E-7 1E-7 1E-8]        
-        noise = [0 0 0 0 0 0 0 0]
-        #noise = [1E-5 1E-5 1E-8 1E-9 1E-10 1E-10 1E-10]
-        
-        #maxdim = [10 10 20 50 50 200 200 300 300]
-        #cutoff = [1E-5 1E-6 1E-6 1E-7 1E-7 6E-8]        
-        #noise = [0 0 0 0 0 0 0 0]
+            # noise schedule
+            #maxdim = [10 20 80 200 300 400 400]
+            #cutoff = [1E-5 1E-6 1E-7 1E-8 1E-8 1E-8 1E-8]
+            #noise = [1E-5 1E-5 1E-8 1E-9 1E-10 1E-10 1E-10]
 
-        # init wavefunction
-        if D<=0.0 
-        # Haldane like init states
-        #remainder = L%3
-        #Leff = L - remainder
-        #pattern = ["Up", "Dn", "Z0"]
-        #states = [pattern[(i)%3+1] for i in 0:Leff-1]
-        #append!(states, fill("Z0",remainder)) 
-        
-            # AF init state
-            states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
-        else
-            # large D like GS
-            states = ["Z0" for n in 1:L]
+            # individual
+            maxdim = [10 20 80 200 300 400 500 600]
+            cutoff = [1E-5 1E-5 1E-6 1E-7 1E-7 1E-8]        
+            noise = [0 0 0 0 0 0 0 0]
+            #noise = [1E-5 1E-5 1E-8 1E-9 1E-10 1E-10 1E-10]
+            
+            #maxdim = [10 10 20 50 50 200 200 300 300]
+            #cutoff = [1E-5 1E-6 1E-6 1E-7 1E-7 6E-8]        
+            #noise = [0 0 0 0 0 0 0 0]
+
+            # init wavefunction
+            if D<=0.0 
+            # Haldane like init states
+            #remainder = L%3
+            #Leff = L - remainder
+            #pattern = ["Up", "Dn", "Z0"]
+            #states = [pattern[(i)%3+1] for i in 0:Leff-1]
+            #append!(states, fill("Z0",remainder)) 
+            
+                # AF init state
+                states = [isodd(n) ? "Up" : "Dn" for n in 1:L]
+            else
+                # large D like GS
+                states = ["Z0" for n in 1:L]
+            end
+
+            psi0 = MPS(sites, states)
+
+            # observer to 
+            observer = DMRGObserver(;energy_tol=1E-10,minsweeps=5)
+
+            # calc ground-state wave functions
+            # TODO: For long-range sytems it might be sensible to increase niter! Not available anymore?
+            # Noise can help convegence, introduces peturbation at each step 1E-5->1E-12
+            energy,psi = dmrg(H,psi0; nsweeps,maxdim,cutoff,observer=observer,outputlevel=1)
+            
+            # calc von Neumann entropy
+            SvN = calc_entropy(psi, L÷2)
+
+            # calc non-local string order parameter
+            i = L÷4
+            j = i + L÷2
+            string_order = calc_string_order(psi, sites, i, j)
+
+            # calc magnetizaiton
+            pmcorr = correlation_matrix(psi,"S+","S-")
+            println("pmcorr = $(0.5*pmcorr[1,:])")
+            #stag_pmcorr = [(-1)^(i + j) * pmcorr[i, j] for i in axes(pmcorr, 1), j in axes(pmcorr, 2)]
+            magpm = sqrt(sum(stag_pmcorr)/L^2)
+            mpcorr = correlation_matrix(psi,"S-","S+")
+            #println("mpcorr = $(0.5*mpcorr[1,:])")
+            stag_mpcorr = [(-1)^(i + j) * mpcorr[i, j] for i in axes(mpcorr, 1), j in axes(mpcorr, 2)]
+            magmp = sqrt(sum(stag_mpcorr)/L^2)
+            zzcorr = correlation_matrix(psi,"Sz","Sz")
+            #println("zzcorr = $(zzcorr[1,:])")
+            stag_zzcorr = [(-1)^(i + j) * zzcorr[i, j] for i in axes(zzcorr, 1), j in axes(zzcorr, 2)]
+            magz = sqrt(sum(stag_zzcorr)/L^2)
+
+
+            lock(file_lock)
+            CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table([D SvN]), append=true)
+            CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table([D string_order]), append=true)
+            CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table([D magpm magmp magz sqrt(0.125*(magpm + magmp)^2 + magz^2)]), append=true)
+            unlock(file_lock)
+
+
         end
-
-        psi0 = MPS(sites, states)
-
-        # observer to 
-        observer = DMRGObserver(;energy_tol=1E-10,minsweeps=5)
-
-        # calc ground-state wave functions
-        # TODO: For long-range sytems it might be sensible to increase niter! Not available anymore?
-        # Noise can help convegence, introduces peturbation at each step 1E-5->1E-12
-        energy,psi = dmrg(H,psi0; nsweeps,maxdim,cutoff,observer=observer,outputlevel=1)
-        
-        # calc von Neumann entropy
-        SvN = calc_entropy(psi, L÷2)
-
-        # calc non-local string order parameter
-        i = L÷4
-        j = i + L÷2
-        string_order = calc_string_order(psi, sites, i, j)
-
-        # calc magnetizaiton
-        xxcorr = correlation_matrix(psi,"Sx","Sx")
-        stag_xxcorr = [(-1)^(i + j) * 3 * xxcorr[i, j] for i in axes(xxcorr, 1), j in axes(xxcorr, 2)]
-        magx_sq = sum(stag_xxcorr)/L^2
-        yycorr = correlation_matrix(psi,"Sy","Sy")
-        stag_yycorr = [(-1)^(i + j) * 3 * yycorr[i, j] for i in axes(yycorr, 1), j in axes(yycorr, 2)]
-        magy_sq = sum(stag_yycorr)/L^2
-        zzcorr = correlation_matrix(psi,"Sz","Sz")
-        stag_zzcorr = [(-1)^(i + j) * 3 * zzcorr[i, j] for i in axes(zzcorr, 1), j in axes(zzcorr, 2)]
-        magz_sq = sum(stag_zzcorr)/L^2
-
-        #mag = 3*abs.(expect(psi,"Sz"))[L÷2]
-        
-
-	    lock(file_lock)
-	    CSV.write("$(base_output_path)/spinone_heisenberg_fidelity_alpha$(α)_L$(L).csv",  Tables.table([D fidelity]), append=true)
-        CSV.write("$(base_output_path)/spinone_heisenberg_svn_alpha$(α)_L$(L).csv",  Tables.table([D SvN]), append=true)
-        CSV.write("$(base_output_path)/spinone_heisenberg_stringorder_alpha$(α)_L$(L).csv",  Tables.table([D string_order]), append=true)
-        CSV.write("$(base_output_path)/spinone_heisenberg_magnetization_alpha$(α)_L$(L).csv",  Tables.table([D np.sqrt(magx_sq) np.sqrt(magy_sq) np.sqrt(magz_sq) np.sqrt(magx_sq + magy_sq + magz_sq)]), append=true)
-	    unlock(file_lock)
 
     end
 
