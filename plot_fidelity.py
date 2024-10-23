@@ -13,14 +13,14 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 
-L = 100  # system size
-alpha = "Inf"
+L = 32  # system size
+alpha = 2.0
 
 # output filename
 output_file = f"fidelity_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
-data_dir = 'output/fidelity_tenpy/'
+data_dir = 'output/'
 filename = f'spinone_heisenberg_fidelity_alpha{alpha}_L{L}.csv'
 
 fs1 = 18

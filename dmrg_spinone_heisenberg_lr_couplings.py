@@ -9,12 +9,70 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from tenpy.networks.mps import MPS
 from tenpy.models.spins import SpinModel
-from tenpy.models.spins import SpinChain
+#from tenpy.models.spins import SpinChain
 from tenpy.linalg import np_conserved as npc
 from tenpy.algorithms import dmrg
+from tenpy.networks.mps import InitialStateBuilder
 
 
-def dmrg_lr_spinone_heisenberg_finite(L=100, D=0.0, alpha=10.0, conserve='Sz'):
+def log_sweep_statistics(L, alpha, D, sweep_info):
+    # global log number of sweeps
+    # TODO: I could also print other info here like max bond dimension
+    with open(f"logs/0_spinone_heisenberg_L{L}_alpha{alpha}_nsweeps.log", 'a') as file:
+        # If the file is empty, write the header first
+        if file.tell() == 0:
+            file.write("D,nsweeps\n")
+
+
+        nsweeps = len(sweep_info['sweep'])
+        # Write the two values in CSV format
+        file.write(f"{D},{nsweeps}\n")
+
+    # TODO: Whould be nice to also depict convergence criteria values in plots. Where and how to include?
+    # write detailed info in seperate file
+    with open(f"logs/1_spinone_heisenberg_L{L}_alpha{alpha}_D{D}_info.log", 'w', newline='') as file:
+        writer = csv.writer(file)
+
+        # Write the header
+        header = [ key for key in sweep_info ]
+        info_lists = [ list for list in sweep_info.values()]
+
+        writer.writerow(header)
+
+        # Write the data row by row
+        for row in zip(*info_lists):
+            writer.writerow(row)
+
+
+def calc_correlations(psi):
+    length = psi.L
+    corr_long = psi.correlation_function("Sz", "Sz", site1=range(length))
+    corr_trans = psi.correlation_function("S+", "S-", site1=range(length))
+    Sz = psi.sites[0].Sz
+    print(Sz)
+    Bk = npc.expm(1.j * np.pi * Sz)
+    str_order = psi.correlation_function("Sz", "Sz", opstr=Bk, str_on_first=False)
+
+    return corr_long, corr_trans, str_order
+
+
+def calc_order_parameters(psi):
+
+    Sz = psi.expectation_value("Sz")
+    Spm = psi.expectation_value(["S+", "S-"])
+
+    mag_z = np.mean(Sz)
+    print("<S_z> = [{Sz0:.5f}, {Sz1:.5f}]; mean ={mag_z:.5f}".format(Sz0=Sz[0],Sz1=Sz[1],mag_z=mag_z))
+    mag_pm = np.mean(Spm)
+    print("<S_+S_-> = [{Spm0:.5f}, {Spm1:.5f}]; mean ={mag_pm:.5f}".format(Spm0=Spm[0],Spm1=Spm[1],mag_pm=mag_pm))
+
+
+def calc_fidelity(psi, psi_eps, eps):
+    overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
+    return -2 * np.log(overlap) / (eps ** 2)  # fidelity susceptiblity
+
+
+def dmrg_lr_spinone_heisenberg_finite_fidelity(L=100, alpha=10.0, D=0.0, eps=1e-4, conserve='Sz'):
     #print("finite DMRG, S=1 Anisotorpic Heisenberg chain")
     #print("Jz={Jz:.2f}, conserve={conserve!r}".format(Jz=Jz, conserve=conserve))
     model_params = dict(
@@ -31,12 +89,26 @@ def dmrg_lr_spinone_heisenberg_finite(L=100, D=0.0, alpha=10.0, conserve='Sz'):
 
     M.init_H_from_terms()
 
-    if D <= 0.56:
+    if D <= 0.0:
         product_state = [0, 2] * (M.lat.N_sites//2)  # initial state down = 0, 0 = 1, up = 2
     else:
         product_state = [1] * M.lat.N_sites
 
-    psi = MPS.from_product_state(M.lat.mps_sites(), product_state, bc=M.lat.bc_MPS)
+    #options = {'method': 'lat_product_state',
+    #...            'product_state' : [[['up'], ['down']],
+    #...                               [['down'], ['up']]],
+    #                'chi' : 50
+    #...            }
+    #options = {
+    #    'method': 'lat_product_state',
+    #    'product_state': ['|+x>' if i % 2 == 0 else '|-x>' for i in range(M.lat.N_sites)],  # Alternating up and down in X direction
+    #}
+    #psi = InitialStateBuilder(M.lat, nit_state_params).run()
+
+
+
+
+    psi0 = MPS.from_product_state(M.lat.mps_sites(), product_state, bc=M.lat.bc_MPS)
     dmrg_params = {
         'mixer': True,  # setting this to True helps to escape local minima
         'trunc_params': {
@@ -55,17 +127,35 @@ def dmrg_lr_spinone_heisenberg_finite(L=100, D=0.0, alpha=10.0, conserve='Sz'):
         #'norm_tol': 1.e-6,
         'max_sweeps': 30,
     }
+
+
+    # TODO: Calculate everything here
+
     #eng = dmrg.TwoSiteDMRGEngine(psi, M, dmrg_params)
     #eng.chi_list(600,50,2)
     ##E,psi = eng.run()
-    info = dmrg.run(psi, M, dmrg_params)
-    #print(info)
-    E = info['E']
-    #eng = dmrg.TwoSiteDMRGEngine(psi, M, dmrg_params)
-    #E, psi = eng.run()  # equivalent to dmrg.run() up to the return parameters.
-    #psi = info['psi']
-    print("E = {E:.13f}".format(E=E))
+    info = dmrg.run(psi0, M, dmrg_params)
+    psi = psi0.copy()
+    #print(f"should be 1: {psi.overlap(psi0)}")
+
+
+    log_sweep_statistics(L, alpha, D, info['sweep_statistics'])
     print("final bond dimensions: ", psi.chi)
+    #print("E = {E:.13f}".format(E=E))
+
+    dmrg_params['chi_list'] = {0: 200}
+    info = dmrg.run(psi0, M, dmrg_params)
+    log_sweep_statistics(L, alpha, D, info['sweep_statistics'])
+    print("final bond dimensions: ", psi.chi)
+    psi_eps = psi0
+    #print(f"could be different 1: {psi.overlap(psi0)}")
+
+
+    fidelity = calc_fidelity(psi, psi_eps, eps)
+
+    return fidelity
+
+
     #print(info)
     #print(f"Number of sweeps completed: {info['sweep_number']}")
     #Sz = psi.expectation_value("Sz")  # Sz instead of Sigma z: spin-1/2 operators!
@@ -75,47 +165,33 @@ def dmrg_lr_spinone_heisenberg_finite(L=100, D=0.0, alpha=10.0, conserve='Sz'):
     #corrs = psi.correlation_function("Sz", "Sz", sites1=range(10))
     #print("correlations <Sz_i Sz_j> =")
     #print(corrs)
-    return E, psi
 
 
-def correlations(psi):
-    length = psi.L
-    corr_long = psi.correlation_function("Sz", "Sz", site1=range(length))
-    corr_trans = psi.correlation_function("S+", "S-", site1=range(length))
-    Sz = psi.sites[0].Sz
-    print(Sz)
-    Bk = npc.expm(1.j * np.pi * Sz)
-    str_order = psi.correlation_function("Sz", "Sz", opstr=Bk, str_on_first=False)
 
-def calc_fidelity(psi, psi_eps, eps):
-    overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
-    return -2 * np.log(overlap) / (eps ** 2)  # fidelity susceptiblity
-
-
-def process_task(D, eps, lock):
+def process_task(L, alpha, D, eps, lock):
     print(f"Thread processing task with parameter D={D}")
     print("-" * 100)
 
-    E, psi = dmrg_lr_spinone_heisenberg_finite(L=100, D=D, alpha=10.0)
-    E_eps, psi_eps = dmrg_lr_spinone_heisenberg_finite(L=100, D=D + eps, alpha=10.0)
-    # print("-" * 100)
-    # print("-" * 100)
-    fidelity = calc_fidelity(psi, psi_eps, eps)
+    fidelity = dmrg_lr_spinone_heisenberg_finite_fidelity(L=L, D=D, alpha=alpha, eps=eps)
     with lock:
         with open(filename, mode='a', newline='') as file:
             writer = csv.writer(file)
             writer.writerow([D, fidelity])  # Append D and fidelity
-        # print("E = {E:.13f}".format(E=E))
         print("-" * 100)
-        #return f"Result of task {task_id} with param {additional_param}"
 
 
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
 
+    L = 32
+    alpha = 2.0
+    Ds = np.arange(-0.5,0.5,0.02)
+    eps = 1e-4
+    n_threads = 6
+
     # Open a file in write mode
-    filename = 'spinone_heisenberg_fidelity_alphaInf_L100.csv'
+    filename = f'output/spinone_heisenberg_fidelity_alpha{alpha}_L{L}.csv'
     with open(filename, mode='w', newline='') as file:
         writer = csv.writer(file)
         # Write the header
@@ -124,12 +200,9 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    # Number of threads
-    n_threads = 4
-    eps = 1e-4
+
 
     # List of tasks to be processed
-    Ds = np.arange(0.3,0.56,0.02)
     tasks = [f"task_{i}" for i in range(len(Ds))]  # Example task list
 
     # create lock object
@@ -138,7 +211,7 @@ if __name__ == "__main__":
     # Create a ThreadPoolExecutor with n threads
     with ThreadPoolExecutor(max_workers=n_threads) as executor:
         # Submit tasks dynamically to the executor with the additional parameter
-        future_to_task = {executor.submit(process_task,D,eps, lock): D for D in Ds}
+        future_to_task = {executor.submit(process_task, L, alpha, D, eps, lock): D for D in Ds}
 
         # Collect results as they are completed
         for future in as_completed(future_to_task):
