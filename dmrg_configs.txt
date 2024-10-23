@@ -1,0 +1,28 @@
+    dmrg_params = {
+        'mixer': True,  # setting this to True helps to escape local minima
+        'mixer_params': {
+            'amplitude': 1.e-5,
+            'decay': 1.2,
+            'disable_after': 4
+        },
+        'trunc_params': {
+            'svd_min': 1.e-10
+            #'chi_max': 7000
+        },
+        'chi_list': {
+            0: 80,
+            4: 100,
+            8: 200,
+            12: 400,
+            16: 800,
+            20: 1000,
+            24: 2000,
+        },
+        'max_E_err': 1.e-9,
+        'max_S_err': 1.e-6,
+        'norm_tol': 1.e-6,
+        'max_sweeps': 80,
+        #'max_sweeps': 46,
+        'N_sweeps_check': 2,
+        'update_env':20,
+    }
