@@ -20,7 +20,7 @@ alpha = "Inf"
 output_file = f"fidelity_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
-data_dir = 'output/fidelity/'
+data_dir = 'output/fidelity_tenpy/'
 filename = f'spinone_heisenberg_fidelity_alpha{alpha}_L{L}.csv'
 
 fs1 = 18
@@ -33,8 +33,10 @@ data = pd.read_csv(file)
 # Create the contour plot
 plt.figure(figsize=(8, 6))
 
-Ds = data['D'].values
-fidelity = data['fidelity'].values
+combined = list(zip(data["D"].values, data["fidelity"].values))
+sorted_combined = sorted(combined)
+Ds, fidelity = zip(*sorted_combined)
+
 plt.plot(Ds, fidelity)
 
 
@@ -42,7 +44,7 @@ plt.plot(Ds, fidelity)
 plt.xlabel(r'$D$', fontsize=fs2)
 plt.ylabel(r'$\chi_{\rm fidelity}$', fontsize=fs2)
 
-plt.ylim(0,100)
+#plt.ylim(0,2500)
 #plt.legend(fontsize=fs2)
 
 # title

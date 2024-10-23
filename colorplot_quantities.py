@@ -13,14 +13,15 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 # system size 
-L = 200
+L = 100
 
 # Directory where your CSV files are stored
 data_dir = f'output/L{L}/'
 
-quantity = ['svn', 'SvN', r'$S_{\rm VN}$']
+#quantity = ['svn', 'SvN', r'$S_{\rm VN}$']
 #quantity = ['stringorder', 'str_order', r'$O_{\rm string}$']
-#quantity = ['magnetization', 'mag', r'$M_z^2$']  # TODO. different mag directions
+#quantity = ['magnetization', 'mag_z', r'$M_z$']  # TODO. different mag directions
+quantity = ['magnetization', 'mag_pm', r'$M_{\perp}$']  # TODO. different mag directions
 #quantity = ['fidelity', 'fidelity', r'$\chi_{\rm fidelity}$']
 
 # output filename
@@ -57,6 +58,7 @@ for file in csv_files:
     sorted_combined = sorted(combined)
     d, z = zip(*sorted_combined)
 
+    print(len(z))
     D_values.append(d)
     z_values.append(z)
     alpha_values.append(np.full_like(data["D"].values, 1./alpha))  # Create an array of alphaval for each D
@@ -67,7 +69,6 @@ combined = zip(alpha_values, D_values, z_values)
 sorted_combined = sorted(combined, key=lambda x: x[0][0])
 alpha_values, D_values, z_values = zip(*sorted_combined)
 
-
 # Convert lists to arrays for plotting
 D_values = np.concatenate(D_values)
 z_values = np.concatenate(z_values)
@@ -75,8 +76,8 @@ alpha_values = np.concatenate(alpha_values)
 
 
 #print(D_values)
-print(alpha_values)
-print(z_values)
+#print(alpha_values)
+#print(z_values)
 
 # Now create a grid of D and alphaval values for contouring
 D_grid, alpha_grid = np.meshgrid(np.unique(D_values), np.unique(alpha_values))
@@ -92,7 +93,7 @@ D_grid, alpha_grid = np.meshgrid(np.unique(D_values), np.unique(alpha_values))
 plt.figure(figsize=(8, 6))
 
 colorplot = plt.pcolor(D_grid, alpha_grid, z_values.reshape(D_grid.shape), cmap='viridis')
-
+plt.scatter([-1.5, 0, 0, 0.5, 1.5], [0, 0, 0.5, 0.5, 0.], color='red', marker='o', s=100)
 
 # Add colorbar
 cbar = plt.colorbar(colorplot)

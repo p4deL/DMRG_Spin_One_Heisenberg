@@ -266,7 +266,7 @@ let
             #noise = [1E-5 1E-5 1E-8 1E-9 1E-10 1E-10 1E-10]
 
             # individual
-            maxdim = [10 20 80 200 300 400 500 600]
+            maxdim = [10 20 80 200 300]
             cutoff = [1E-5 1E-5 1E-6 1E-7 1E-7 1E-8]        
             noise = [0 0 0 0 0 0 0 0]
             #noise = [1E-5 1E-5 1E-8 1E-9 1E-10 1E-10 1E-10]
@@ -278,6 +278,7 @@ let
             # init wavefunction
             if D<=0.0 
             # Haldane like init states
+            # FIXME I could try a Haldane state that does not break symmetry -> superposition
             #remainder = L%3
             #Leff = L - remainder
             #pattern = ["Up", "Dn", "Z0"]
