@@ -104,11 +104,11 @@ if __name__ == "__main__":
     start_time = time.time()
 
     # Number of threads
-    n_threads = 1
+    n_threads = 4
     eps = 1e-4
 
     # List of tasks to be processed
-    Ds = np.arange(0.34,0.36,0.02)
+    Ds = np.arange(-1.0,-0.7,0.02)
     tasks = [f"task_{i}" for i in range(len(Ds))]  # Example task list
 
     # create lock object

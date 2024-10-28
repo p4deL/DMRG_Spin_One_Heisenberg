@@ -4,18 +4,63 @@ import sys
 import time
 import csv
 import numpy as np
-import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
+import getopt
+import os
+from filelock import FileLock
+from scipy.optimize import curve_fit
+from tenpy.tools.fit import sum_of_exp #, fit_with_sum_of_exp
 
-from tenpy.networks.mps import MPS
-from tenpy.models.spins import SpinModel
-#from tenpy.models.spins import SpinChain
-from tenpy.linalg import np_conserved as npc
-from tenpy.algorithms import dmrg
-from tenpy.networks.mps import InitialStateBuilder
 from tenpy.networks.site import SpinSite
-from tenpy.models.model import CouplingMPOModel, NearestNeighborModel
-from tenpy.models.lattice import Chain
+from tenpy.models.model import CouplingModel, MPOModel, CouplingMPOModel
+from tenpy.models.lattice import Lattice, Chain, Ladder
+import tenpy.linalg.np_conserved as npc
+from tenpy.networks.mps import MPS
+from tenpy.algorithms import dmrg
+
+
+def usage():
+    print("Usage: dmrg_spinone_heisenberg_lr_coupling.py -L <length of chain> -D <single ion anisotropy strength> -a <decay exponent alpha>")
+
+
+def param_use(argv):
+    L = 0
+    D = 1.
+    alpha = 10.
+    found_l = found_D = found_a = False
+
+    try:
+        opts, args = getopt.getopt(argv, "L:D:a:h", ["Length=", "D=", "alpha=", "help"])
+    except getopt.GetoptError:
+      usage()
+      sys.exit(2)
+    for opt, arg in opts:
+      if opt in ("-h", "--help"):
+         usage()
+      elif opt in ("-L", "--Length"):
+        L = int(arg)
+        found_l = True
+      elif opt in ("-D", "--D"):
+        D = float(arg)
+        found_D = True
+      elif opt in ("-a", "--alpha"):
+        alpha = float(arg)
+        found_a = True
+
+    if not found_l:
+     print("Length of ladder (system size) not given.")
+     usage()
+     sys.exit(2)
+    if not found_D:
+      print("single-ion anisotropy strength not given.")
+      usage()
+      sys.exit(2)
+    if not found_a:
+      print("decay exponent not given.")
+      usage()
+      sys.exit(2)
+
+    return L, D, alpha
+
 
 def log_sweep_statistics(L, alpha, D, sweep_info):
     # global log number of sweeps
@@ -45,169 +90,258 @@ def log_sweep_statistics(L, alpha, D, sweep_info):
         for row in zip(*info_lists):
             writer.writerow(row)
 
-def decay(x):
-    #return np.exp(-0.1*x) / x**2
-    return (-1)**(x+1) / (x ** alpha)
+
+def write_quantity_to_file(quantity_string, quantity, alpha, D, L):
+
+    # Open a file in write mode
+    filename = f'output/spinone_heisenberg_{quantity_string}_alpha{alpha}_L{L}.csv'
+
+    # lock files when writing (necessary when using a joblist)
+    with FileLock(filename + ".lock"):
+        if os.path.isfile(filename):
+            with open(filename, 'a') as file:
+                writer = csv.writer(file)
+                writer.writerow([D, quantity])  # Append D and fidelity
+        else:
+            with open(filename, 'w') as file:
+                writer = csv.writer(file)
+                writer.writerow(["D", "fidelity"])
+                writer.writerow([D, quantity])  # Append D and fidelity
 
 
-# TODO: I need to add one term between even sites and one term between odd sites
-#from tenpy.tools.fit import fit_with_sum_of_exp, sum_of_exp
-#n_exp = 5
-#fit_range = 50
-#lam, pref = fit_with_sum_of_exp(decay, n_exp, fit_range)
-#x = np.arange(1, fit_range + 1)
-#print('error in fit: {0:.3e}'.format(np.sum(np.abs(decay(x) - sum_of_exp(lam, pref, x)))))
+def alternating_power_law_decay(dist, alpha):
+    return (-1) ** (dist + 1) / dist ** alpha
 
-#for pr, la in zip(pref, lam):
-#   self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'N')
+def power_law_decay(dist, alpha):
+    return 1. / dist ** alpha
 
+def fit_with_sum_of_exp(f, alpha, n, N=50):
+    r"""Approximate a decaying function `f` with a sum of exponentials.
 
-def calc_correlations(psi):
-    length = psi.L
-    corr_long = psi.correlation_function("Sz", "Sz", site1=range(length))
-    corr_trans = psi.correlation_function("S+", "S-", site1=range(length))
+    MPOs can naturally represent long-range interactions with an exponential decay.
+    A common technique for other (e.g. powerlaw) long-range interactions is to approximate them
+    by sums of exponentials and to include them into the MPOs.
+    This function allows to do that.
 
-    return corr_long, corr_trans
+    The algorithm/implementation follows the appendix of :cite:`murg2010`.
 
+    Parameters
+    ----------
+    f : function
+        Decaying function to be approximated. Needs to accept a 1D numpy array `x`
+    n : int
+        Number of exponentials to be used.
+    N : int
+        Number of points at which to evaluate/fit `f`;
+        we evaluate and fit `f` at the points ``x = np.arange(1, N+1)``.
 
-def calc_order_parameters(psi):
+    Returns
+    -------
+    lambdas, prefactors: 1D arrays
+        Such that :math:`f(k) \approx \sum_i x_i \lambda_i^k` for (integer) 1 <= `k` <= `N`.
+        The function :func:`sum_of_exp` evaluates this for given `x`.
+    """
+    assert n < N
+    x = np.arange(1, N + 1)
+    f_x = f(x, alpha)
+    F = np.zeros([N - n + 1, n])
+    for i in range(n):
+        F[:, i] = f_x[i:i + N - n + 1]
 
-    Sz = psi.expectation_value("Sz")
-    Spm = psi.expectation_value(["S+", "S-"])
-
-    mag_z = np.mean(Sz)
-    print("<S_z> = [{Sz0:.5f}, {Sz1:.5f}]; mean ={mag_z:.5f}".format(Sz0=Sz[0],Sz1=Sz[1],mag_z=mag_z))
-    mag_pm = np.mean(Spm)
-    print("<S_+S_-> = [{Spm0:.5f}, {Spm1:.5f}]; mean ={mag_pm:.5f}".format(Spm0=Spm[0],Spm1=Spm[1],mag_pm=mag_pm))
-    Sz = psi.sites[0].Sz
-    print(Sz)
-    Bk = npc.expm(1.j * np.pi * Sz)
-    str_order = psi.correlation_function("Sz", "Sz", opstr=Bk, str_on_first=False)
-    print(f"<O_string>=${str_order}")
-    #print("<O_string> = [{Spm0:.5f}, {Spm1:.5f}]; mean ={mag_pm:.5f}".format(Spm0=Spm[0],Spm1=Spm[1],mag_pm=mag_pm))
-
-
-def calc_fidelity(psi, psi_eps, eps):
-    overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
-    return -2 * np.log(overlap) / (eps ** 2)  # fidelity susceptiblity
-
-
-def dmrg_lr_spinone_heisenberg_finite_fidelity(L=100, alpha=10.0, D=0.0, eps=1e-4, conserve='Sz'):
-    #print("finite DMRG, S=1 Anisotorpic Heisenberg chain")
-    #print("Jz={Jz:.2f}, conserve={conserve!r}".format(Jz=Jz, conserve=conserve))
-    model_params = dict(
-        L=L,
-        S=1.,  # spin 1
-        D=D,  # anisotropy coupling
-        bc_MPS='finite',
-        conserve=conserve
-    )
-    print("="*100)
-    #model_params2 = dict(
-    #    L=L,
-    #    D=D,  # anisotropy coupling
-    #    bc_MPS='finite',
-    #    conserve=conserve
-    #)
-    #model_test = LongRangeSpin1Chain(model_params2)
-    #print("="*100)
-    #sys.exit()
-    M = SpinModel(model_params)
-
-    for dist in range(2, L):  # Only add for j > i to avoid double counting
-        #print(dist)
-        strength = (-1)**(dist+1) / (dist ** alpha)  # Long-range decay
-        M.add_coupling(strength, 0, "Sz", 0, "Sz", dx=dist)
-        M.add_coupling(0.5*strength, 0, "Sp", 0, "Sm", dx=dist, plus_hc=True)
-        #M.add_coupling(strength, 0, "Sx", 0, "Sx", dx=dist)
-        #M.add_coupling(strength, 0, "Sy", 0, "Sy", dx=dist)
-
-    # Assuming 'model' is your defined SpinModel
-    #print("Coupling terms in the model:")
-    #for term in M.coupling_terms:
-    #    print(term)
-    #    J, op1, i1, op2, i2, u1, u2 = term
-    #    print(f"Interaction: {op1} at site {i1} (unit cell {u1}) with {op2} at site {i2} (unit cell {u2}), coupling strength: {J}")
-
-    M.init_H_from_terms()
-
-    if D <= 0.0:
-        product_state = [0, 2] * (M.lat.N_sites//2)  # initial state down = 0, 0 = 1, up = 2
-    else:
-        product_state = [1] * M.lat.N_sites
-
-    #options = {'method': 'lat_product_state',
-    #...            'product_state' : [[['up'], ['down']],
-    #...                               [['down'], ['up']]],
-    #                'chi' : 50
-    #...            }
-    #options = {
-    #    'method': 'lat_product_state',
-    #    'product_state': ['|+x>' if i % 2 == 0 else '|-x>' for i in range(M.lat.N_sites)],  # Alternating up and down in X direction
-    #}
-    #psi = InitialStateBuilder(M.lat, nit_state_params).run()
+    U, V = np.linalg.qr(F)
+    U1 = U[:-1, :]
+    U2 = U[1:, :]
+    M = np.dot(np.linalg.pinv(U1), U2)
+    lam = np.linalg.eigvals(M)
+    lam = np.sort(lam)[::-1]
+    # least-square fit
+    W = np.power.outer(lam, x).T
+    pref, res, rank, s = np.linalg.lstsq(W, f_x, None)
+    return lam, pref
 
 
-    psi0 = MPS.from_product_state(M.lat.mps_sites(), product_state, bc=M.lat.bc_MPS)
-    dmrg_params = {
-        'mixer': True,  # setting this to True helps to escape local minima
-        'trunc_params': {
-            'chi_max': 50,
-            'svd_min': 1.e-8,
-        },
-        'chi_list': {
-            0: 20,
-            4: 50,
-        #    8: 200,
-        #    12: 400,
-        #    16: 600,
-        },
-        'max_E_err': 1.e-8,  # TODO go back to 1.e-8
-        #'max_S_err': 1.e-6,
-        #'norm_tol': 1.e-6,
-        'max_sweeps': 30,
-    }
+#def sum_of_exp(x, *params):
+#    """
+#    Sum of exponentials of the form: sum_i pref_i * lam_i^x
+#    """
+#    n_exp = len(params) // 2
+#    pref = params[:n_exp]
+#    lam = params[n_exp:]
+#    result = np.zeros_like(x, dtype=float)
+#    for i in range(n_exp):
+#        result += pref[i] * np.power(lam[i], x)
+#
+#    return result
 
 
-    # TODO: Calculate everything here
+#def fit_with_sum_of_exp(power_law_func, n_exp, fit_range, alpha):
+    """
+    Fits a power law function 1 / abs(x) ** alpha using a sum of exponentials.
 
-    #eng = dmrg.TwoSiteDMRGEngine(psi, M, dmrg_params)
-    #eng.chi_list(600,50,2)
-    ##E,psi = eng.run()
-    info = dmrg.run(psi0, M, dmrg_params)
-    psi = psi0.copy()
-    #print(f"should be 1: {psi.overlap(psi0)}")
+    Parameters:
+    - power_law_func: function, the target power-law decay function to fit
+    - n_exp: int, number of exponentials to use in the sum
+    - fit_range: int, range of x values to fit
+    - alpha: float, exponent of the power law (decay rate)
 
+    Returns:
+    - pref: list of prefactors for each exponential term
+    - lam: list of bases for each exponential term
+    """
+#    x_data = np.arange(1, fit_range + 1)
+#    y_data = power_law_func(x_data, alpha)
 
-    log_sweep_statistics(L, alpha, D, info['sweep_statistics'])
-    print("final bond dimensions: ", psi.chi)
-    #print("E = {E:.13f}".format(E=E))
+    # Initial guesses: prefactors close to 1/n_exp and lambda values between 0 and 1
+#    initial_pref = [1.0 / n_exp] * n_exp
+#    initial_lam = [0.9 - 0.05 * i for i in range(n_exp)]  # FIXME: 0.05 prefactor should depend on n_exp
+#    initial_guess = initial_pref + initial_lam
 
-    dmrg_params['chi_list'] = {0: 50}
-    info = dmrg.run(psi0, M, dmrg_params)
-    log_sweep_statistics(L, alpha, D, info['sweep_statistics'])
-    print("final bond dimensions: ", psi.chi)
-    psi_eps = psi0
-    #print(f"could be different 1: {psi.overlap(psi0)}")
+    # Fit the power law with sum of exponentials
+#    params, _ = curve_fit(sum_of_exp, x_data, y_data, p0=initial_guess)
 
+    # Separate prefactors and lambda values from params
+#    pref = params[:n_exp]
+#    lam = params[n_exp:]
 
-    fidelity = calc_fidelity(psi, psi_eps, eps)
-
-    return fidelity
-
-
-    #print(info)
-    #print(f"Number of sweeps completed: {info['sweep_number']}")
-    #Sz = psi.expectation_value("Sz")  # Sz instead of Sigma z: spin-1/2 operators!
-    #mag_z = np.mean(Sz)
-    #print("<S_z> = [{Sz0:.5f}, {Sz1:.5f}]; mean ={mag_z:.5f}".format(Sz0=Sz[0],Sz1=Sz[1],mag_z=mag_z))
-    # note: it's clear that mean(<Sz>) is 0: the model has Sz conservation!
-    #corrs = psi.correlation_function("Sz", "Sz", sites1=range(10))
-    #print("correlations <Sz_i Sz_j> =")
-    #print(corrs)
+#    return pref, lam
 
 
-class LongRangeSpin1Chain(CouplingMPOModel):
+#class TwoSiteChain(Chain):
+#    """Custom lattice with a two-site unit cell for an arbitrary length chain."""
+#    def __init__(self, L, **kwargs):
+#        super().__init__(L=L, **kwargs)
+#        self.unit_cell = [0, 1]  # Define the two-site unit cell
+#        self.N_sites = L * 2  # Total number of sites
+
+    def __init__(self, model_params):
+        # define some default parameters
+        L = model_params.get('L', 2)
+        J = model_params.get('J', 1.)
+        K = model_params.get('K', 0.01)
+
+        hy = model_params.get('hy', 0.)
+
+        # initialize a ladder lattice with two spin-1/2 sites on it
+        site1 = SpinHalfSite(conserve=None)
+        site2 = SpinHalfSite(conserve=None)
+        bc = 'periodic' if model_params['bc_MPS'] == 'infinite' else 'open'
+        lat = Ladder(L, [site1, site2], bc=bc, bc_MPS=model_params['bc_MPS'])
+
+        # initialize a coupling model
+        CouplingModel.__init__(self, lat)
+
+        # add terms of the Hamiltonian
+        # intracell Heisenberg coupling (along the rungs of the ladder)
+        self.add_coupling(J, 0, 'Sp', 1, 'Sm', 0, plus_hc=True)
+        self.add_coupling(J, 0, 'Sz', 1, 'Sz', 0, plus_hc=True)
+        # intercell Heisenberg coupling (along the length of the ladder)
+        self.add_coupling(K, 0, 'Sp', 0, 'Sm', 1, plus_hc=True)
+        self.add_coupling(K, 0, 'Sz', 0, 'Sz', 1, plus_hc=True)
+        self.add_coupling(K, 1, 'Sp', 1, 'Sm', 1, plus_hc=True)
+        self.add_coupling(K, 1, 'Sz', 1, 'Sz', 1, plus_hc=True)
+        # odd-parity DM interactions # NOTE: check whether plus_hc=True is correct
+        self.add_coupling(D, 0, 'Sz', 0, 'Sx', 1, plus_hc=True)
+        self.add_coupling(-D, 0, 'Sx', 0, 'Sz', 1, plus_hc=True)
+        self.add_coupling(D, 1, 'Sz', 1, 'Sx', 1, plus_hc=True)
+        self.add_coupling(-D, 1, 'Sx', 1, 'Sz', 1, plus_hc=True)
+        # even parity anisotropic interdimer coupling # NOTE: also chck with hc
+        self.add_coupling(Gamma, 0, 'Sz', 0, 'Sx', 1, plus_hc=True)
+        self.add_coupling(Gamma, 0, 'Sx', 0, 'Sz', 1, plus_hc=True)
+        self.add_coupling(Gamma, 1, 'Sz', 1, 'Sx', 1, plus_hc=True)
+        self.add_coupling(Gamma, 1, 'Sx', 1, 'Sz', 1, plus_hc=True)
+        # add a magnetic field pointing in y direction
+        self.add_onsite(hy, 0, 'Sy')
+        self.add_onsite(hy, 1, 'Sy')
+
+        # construct the Hamiltonian in the Matrix-Product-Operator (MPO) picture
+        MPOModel.__init__(self, lat, self.calc_H_MPO())
+
+
+class LongRangeSpin1ChainTest2(CouplingModel, MPOModel):
+    r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
+
+       .. math ::
+           H = J \sum_i \vec{S}_i \cdot \vec{S}_{i+1} + B \sum_i S^x_i + D \sum_i (S^z_i)^2
+       """
+
+    def __init__(self, model_params):
+        # get model parameters
+        L = model_params.get('L', 2)
+        Nuc = L//2
+        print(L, Nuc)
+        J = model_params.get('J', 1.)
+        D = model_params.get('D', 0.)
+        alpha = model_params.get('alpha', 100.)  # FIXME no need for alpha anymore
+        n_exp = model_params.get('n_exp', 10)  # Number of exponentials in fit
+        fit_range = model_params.get('fit_range', 1000)  # Range of fit for decay
+
+        site1 = SpinSite(S=1., conserve='Sz')
+        site2 = SpinSite(S=1., conserve='Sz')
+
+        # initialize spin chain with tow site spin-one unit cell
+        bc = 'periodic' if model_params['bc_MPS'] == 'infinite' else 'open'
+        #lat = Ladder(L,[site1, site2], bc=bc, bc_MPS=model_params['bc_MPS'])
+        lat = Lattice([Nuc],[site1, site2], bc=bc, bc_MPS=model_params['bc_MPS'])
+
+        # initialize a coupling model
+        CouplingModel.__init__(self, lat)
+
+        # add on site terms
+        self.add_onsite(D, 0, 'Sz Sz')
+        self.add_onsite(D, 1, 'Sz Sz')
+
+        # add nearest-neighbor coupling
+        # intra-cell coupling
+        #self.add_coupling(J/2., 0, 'Sp', 1, 'Sm', 0, plus_hc=True)
+        #self.add_coupling(J, 0, 'Sz', 1, 'Sz', 0)
+        # inter-cell coupling
+        #self.add_coupling(J/2., 1, 'Sp', 0, 'Sm', 1, plus_hc=True)
+        #self.add_coupling(J, 1, 'Sz', 0, 'Sz', 1)
+
+        # add long-range interactions
+        #for shift in range(1, Nuc):
+        #    # ferro couplings (even)
+        #    dist = 2*shift
+        #    strength = alternating_power_law_decay(dist, alpha)
+        #    self.add_coupling(0.5 * J * strength, 0, "Sp", 0, "Sm", dx=shift, plus_hc=True)
+        #    self.add_coupling(strength, 0, "Sz", 0, "Sz", dx=shift)
+        #    self.add_coupling(0.5 * J * strength, 1, "Sp", 1, "Sm", dx=shift, plus_hc=True)
+        #    self.add_coupling(strength, 1, "Sz", 1, "Sz", dx=shift)
+
+        #    # af couplings (odd)
+        #    dist = 2*shift-1
+        #    strength = alternating_power_law_decay(dist, alpha)
+        #    self.add_coupling(0.5 * J * strength, 1, "Sp", 0, "Sm", dx=shift, plus_hc=True)
+        #    self.add_coupling(strength, 1, "Sz", 0, "Sz", dx=shift)
+        #    dist = 2*shift+1
+        #    strength = alternating_power_law_decay(dist, alpha)
+        #    self.add_coupling(0.5 * J * strength, 0, "Sp", 1, "Sm", dx=shift, plus_hc=True)
+        #    self.add_coupling(strength, 0, "Sz", 1, "Sz", dx=shift)
+
+        # fit power-law decay with sum of exponentials
+        lam, pref = fit_with_sum_of_exp(power_law_decay, alpha, n_exp, fit_range)
+        x = np.arange(1, fit_range + 1)
+        print("*" * 100)
+        #print(lam, pref)
+        print('error in fit: {0:.3e}'.format(np.sum(np.abs(power_law_decay(x, alpha) - sum_of_exp(lam, pref, x)))))
+        print("*" * 100)
+
+
+        # add expontially_decaying terms
+        for dist in range(1, L):  # Only add for j > i to avoid double counting
+            # ferro couplings
+            for pr, la in zip(pref, lam):
+                #self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz', subsites=[0,0])
+                self.add_exponentially_decaying_coupling(0.5*pr, la, 'Sp', 'Sm', subsites=[0,1], plus_hc=True)
+                self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz', subsites=[0,1])
+                #self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz', subsites=[0,0])
+
+
+        # construct the Hamiltonian in the Matrix-Product-Operator (MPO) picture
+        MPOModel.__init__(self, lat, self.calc_H_MPO())
+
+
+class LongRangeSpin1ChainTest(CouplingMPOModel):
     r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
 
        .. math ::
@@ -217,18 +351,34 @@ class LongRangeSpin1Chain(CouplingMPOModel):
     force_default_lattice = True
 
     def init_sites(self, model_params):
-        B = model_params.get('B', 0.)
         conserve = model_params.get('conserve', 'best')
-        if conserve == 'best':
-            conserve = 'Sz' if not model_params.any_nonzero(['B']) else None
-            self.logger.info("%s: set conserve to %s", self.name, conserve)
         sort_charge = model_params.get('sort_charge', True)
-        return SpinSite(S=1., conserve=None, sort_charge=sort_charge)
+        if conserve == 'best' or conserve == 'Sz':
+            spin_site = SpinSite(S=1., conserve='Sz', sort_charge=sort_charge)
+        else:
+            spin_site = SpinSite(S=1., conserve=None, sort_charge=sort_charge)
+
+        return [spin_site, spin_site]
+
+    #def init_lattice(self, model_params):
+    #    L = model_params['L']  # Total number of sites
+    #    sites = self.init_sites(model_params)
+    #    print("="*100)
+    #    print(sites)
+    #    self.lat = Chain(L, [sites, sites], bc='open')  # Two sites per unit cell
+    #    print(f"L={L}, N_sites={self.lat.N_sites}")
+    #    # TODO: Print terms
+        #CouplingMPOModel.__init__(self, lat)
+        #print(c.all_coupling_terms().to_TermList())
 
     def init_terms(self, model_params):
         J = model_params.get('J', 1.)
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
+        alpha = model_params.get('alpha', 100.)
+        n_exp = model_params.get('n_exp', 5)  # Number of exponentials in fit
+        fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
+
 
         for u in range(len(self.lat.unit_cell)):
             self.add_onsite(B, u, 'Sx')
@@ -240,109 +390,170 @@ class LongRangeSpin1Chain(CouplingMPOModel):
             self.add_coupling(J / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
             self.add_coupling(J, u1, 'Sz', u2, 'Sz', dx)
 
-        for dist in range(2, L):  # Only add for j > i to avoid double counting
+
+        #lam, pref = fit_with_sum_of_exp(power_law_decay, n_exp, fit_range)
+        #x = np.arange(1, fit_range + 1)
+        #print('error in fit: {0:.3e}'.format(np.sum(np.abs(power_law_decay(x) - sum_of_exp(lam, pref, x)))))
+        # TODO: if error is too big
+
+
+        #for dist in range(2, self.lat.N_sites):  # Only add for j > i to avoid double counting
+         #   # print(dist)
+         #   strength = (-1) ** (dist + 1) / (dist ** alpha)  # Long-range decay
+         #   self.add_coupling(strength, 0, "Sz", 0, "Sz", dx=dist)
+         #   self.add_coupling(0.5 * strength, 0, "Sp", 0, "Sm", dx=dist, plus_hc=True)
+
+
+class LongRangeSpin1Chain(CouplingMPOModel):
+    r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
+
+       .. math ::
+           H = J \sum_i \vec{S}_i \cdot \vec{S}_{i+1} + B \sum_i S^x_i + D \sum_i (S^z_i)^2
+       """
+    default_lattice = Chain
+    force_default_lattice = True
+
+    #def init_sites(self, model_params):
+    #    B = model_params.get('B', 0.)
+    #    conserve = model_params.get('conserve', 'best')
+    #    if conserve == 'best':
+    #        conserve = 'Sz' if not model_params.any_nonzero(['B']) else None
+    #        self.logger.info("%s: set conserve to %s", self.name, conserve)
+    #    sort_charge = model_params.get('sort_charge', True)
+    #    return SpinSite(S=1., conserve=None, sort_charge=sort_charge)
+
+    def init_sites(self, model_params):
+        conserve = model_params.get('conserve', 'best')
+        sort_charge = model_params.get('sort_charge', True)
+        if conserve == 'best' or conserve == 'Sz':
+            return SpinSite(S=1., conserve='Sz', sort_charge=sort_charge)
+        else:
+            return SpinSite(S=1., conserve=None, sort_charge=sort_charge)
+
+    def init_terms(self, model_params):
+        J = model_params.get('J', 1.)
+        B = model_params.get('B', 0.)
+        D = model_params.get('D', 0.)
+        alpha = model_params.get('alpha', 100.)
+
+        for u in range(len(self.lat.unit_cell)):
+            self.add_onsite(B, u, 'Sx')
+            self.add_onsite(D, u, 'Sz Sz')
+
+        for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
+            print(f"dx={dx}")
+            print(f"u1={u1}, u2={u2}")
+            self.add_coupling(J / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
+            self.add_coupling(J, u1, 'Sz', u2, 'Sz', dx)
+
+        for dist in range(2, self.lat.N_sites):  # Only add for j > i to avoid double counting
             # print(dist)
             strength = (-1) ** (dist + 1) / (dist ** alpha)  # Long-range decay
             self.add_coupling(strength, 0, "Sz", 0, "Sz", dx=dist)
             self.add_coupling(0.5 * strength, 0, "Sp", 0, "Sm", dx=dist, plus_hc=True)
 
 
-def process_task(L, alpha, D, eps, lock):
-    print(f"Thread processing task with parameter D={D}")
-    print("-" * 100)
+def calc_fidelity(psi, psi_eps, eps):
+    overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
+    return -2 * np.log(overlap) / (eps ** 2)  # fidelity susceptiblity
 
+
+def calc_fidelity_ed(psi, psi_eps, eps):
+    overlap = npc.inner(psi, psi_eps, axes='range', do_conj=True)
+    print(f"ed_overlap: {overlap}")
+    return -2 * np.log(overlap) / (eps ** 2)  # fidelity susceptiblity
+
+
+def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4, conserve='Sz'):
+    model_params = dict(
+        L=L,
+        D=D,  # couplings
+        alpha=alpha,
+        bc_MPS='finite',
+        conserve=conserve)
+    dmrg_params = {
+        'mixer': True,  # setting this to True helps to escape local minima
+        'trunc_params': {
+            'chi_max': 100,
+            'svd_min': 1.e-8,
+        },
+        'chi_list': {
+            0: 50,
+            4: 100,
+            #8: 200,
+            #    12: 400,
+            #    16: 600,
+        },
+        'max_E_err': 1.e-8,
+        #'max_S_err': 1.e-6,
+        #'norm_tol': 1.e-6,
+        'max_sweeps': 30,
+    }
+
+
+    # create spine one model
+    M = LongRangeSpin1ChainTest2(model_params)
+    model_params['D'] = D+eps  # FIXME: Could something go wrong here?
+    M_eps = LongRangeSpin1ChainTest2(model_params)
+    print(M.all_coupling_terms().to_TermList())
+    print(alternating_power_law_decay(np.arange(1,7), alpha))
+
+    # create initial state
+    if D <= 0.0:
+        product_state = [0, 2] * (L//2)  # initial state down = 0, 0 = 1, up = 2
+    else:
+        product_state = [1] * L
+
+    # initial guess mps
+    psi = MPS.from_product_state(M.lat.mps_sites(), product_state, bc=M.lat.bc_MPS)
+    psi_eps = MPS.from_product_state(M_eps.lat.mps_sites(), product_state, bc=M.lat.bc_MPS)
+
+    ##options = {'method': 'lat_product_state',
+    #           'product_state': product_state
+    #        }
+    #psi = InitialStateBuilder(M.lat, options).run()
+    #psi_eps = InitialStateBuilder(M.lat, options).run()
+
+    # run dmrg
+    info = dmrg.run(psi, M, dmrg_params)
+    #psi_eps = psi.copy()
+    #dmrg_params['chi_list'] =  { 0: 100 }
+    info_eps = dmrg.run(psi_eps, M_eps, dmrg_params)  # TODO: Alternatively, I could feed the previous psi
+
+    # log data
+    log_sweep_statistics(L, alpha, D, info['sweep_statistics'])
+    log_sweep_statistics(L, alpha, D+eps, info_eps['sweep_statistics'])
+
+    # calculate fidelity
+    fidelity = calc_fidelity(psi, psi_eps, eps)
+
+    # output to check sanity
+    print("E = {E:.13f}".format(E=info['E']))
+    print("final bond dimensions psi: ", psi.chi)
+    print("E_eps = {E:.13f}".format(E=info_eps['E']))
+    print("final bond dimensions psi_eps: ", psi_eps.chi)
+
+    return fidelity
+
+
+def main(argv):
+
+    # read terminal inputs
+    L, D, alpha = param_use(argv)
+    eps = 1e-4
+
+    start_time = time.time()
     fidelity = dmrg_lr_spinone_heisenberg_finite_fidelity(L=L, D=D, alpha=alpha, eps=eps)
-    with lock:
-        with open(filename, mode='a', newline='') as file:
-            writer = csv.writer(file)
-            writer.writerow([D, fidelity])  # Append D and fidelity
-        print("-" * 100)
+    print("--- %s seconds ---" % (time.time() - start_time))
+
+    # print observables
+    print(f"fidelity susceptibility: {fidelity}")
+
+    # write results to files
+    write_quantity_to_file("fidelity", fidelity, alpha, D, L)
 
 
 if __name__ == "__main__":
     import logging
     logging.basicConfig(level=logging.INFO)
-
-    L = 20
-    alpha = 6.0
-    Ds = np.arange(-1.0,-0.2,0.02)
-    #Ds = np.arange(0.,0.02,0.02)
-    eps = 1e-4
-    n_threads = 6
-
-    # Open a file in write mode
-    filename = f'output/spinone_heisenberg_fidelity_alpha{alpha}_L{L}.csv'
-    with open(filename, mode='w', newline='') as file:
-        writer = csv.writer(file)
-        # Write the header
-        writer.writerow(["D", "fidelity"])
-
-
-    start_time = time.time()
-
-
-
-    # List of tasks to be processed
-    tasks = [f"task_{i}" for i in range(len(Ds))]  # Example task list
-
-    # create lock object
-    lock = threading.Lock()
-
-    # Create a ThreadPoolExecutor with n threads
-    with ThreadPoolExecutor(max_workers=n_threads) as executor:
-        # Submit tasks dynamically to the executor with the additional parameter
-        future_to_task = {executor.submit(process_task, L, alpha, D, eps, lock): D for D in Ds}
-
-        # Collect results as they are completed
-        for future in as_completed(future_to_task):
-            task = future_to_task[future]
-            try:
-                future.result()
-                print(f"Completed: {task}")
-            except Exception as exc:
-                print(f"Task {task} generated an exception: {exc}")
-
-
-    print("--- %s seconds ---" % (time.time() - start_time))
-
-
-    #eps = 1e-4
-    #for D in np.arange(0.1,1.52,0.02):  # np.arange(-1.5, 1.5, 0.02):
-    #for D in np.arange(1.5, 0.08, -0.02):  # np.arange(-1.5, 1.5, 0.02):
-    #    print("-" * 100)
-    #    print(D)
-
-    #    E, psi = dmrg_spinone_heisenberg_finite(D=D)
-    #    E_eps, psi_eps = dmrg_spinone_heisenberg_finite(D=D+eps)
-        #print("-" * 100)
-        #print("-" * 100)
-    #    fidelity = calc_fidelity(psi, psi_eps, eps)
-    #    with open(filename, mode='a', newline='') as file:
-    #        writer = csv.writer(file)
-    #        writer.writerow([D, fidelity])  # Append D and fidelity
-        #print("E = {E:.13f}".format(E=E))
-    #    print("-" * 100)
-
-
-# Number of threads
-#n_threads = 4
-
-# List of tasks to be processed
-#Ds = np.arange(-1.5,1.6,0.02)
-#tasks = [f"task_{i}" for i in range(len(Ds))]  # Example task list
-
-# Create a ThreadPoolExecutor with n threads
-#with ThreadPoolExecutor(max_workers=n_threads) as executor:
-    # Submit tasks dynamically to the executor with the additional parameter
-#    future_to_task = {executor.submit(process_task,D): D for D in Ds}
-
-    # Collect results as they are completed
- #   for future in as_completed(future_to_task):
-   #     task = future_to_task[future]
-  #      try:
-  #          future.result()
-  #          print(f"Completed: {task}")
-  #      except Exception as exc:
-  #          print(f"Task {task} generated an exception: {exc}")
-
-
+    main(sys.argv[1:])
