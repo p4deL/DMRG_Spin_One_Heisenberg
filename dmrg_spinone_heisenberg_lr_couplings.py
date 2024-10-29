@@ -8,7 +8,9 @@ import getopt
 import os
 from filelock import FileLock
 from scipy.optimize import curve_fit
-from tenpy.tools.fit import sum_of_exp #, fit_with_sum_of_exp
+from tenpy.tools.fit import sum_of_exp, plot_alg_decay_fit #, fit_with_sum_of_exp
+import matplotlib.pyplot as plt
+
 
 from tenpy.networks.site import SpinSite
 from tenpy.models.model import CouplingModel, MPOModel, CouplingMPOModel
@@ -159,6 +161,16 @@ def fit_with_sum_of_exp(f, alpha, n, N=50):
     pref, res, rank, s = np.linalg.lstsq(W, f_x, None)
     return lam, pref
 
+def plot_fit(x_vals, y_powerlaw, y_sumexp):
+    plt.figure(figsize=(8, 6))
+    plt.plot(x_vals, y_powerlaw, marker='o', label='Power law')
+    plt.plot(x_vals, y_sumexp, marker='x', label='sum exp')
+    plt.legend(loc='best')
+    plt.show()
+
+
+
+
 
 #def sum_of_exp(x, *params):
 #    """
@@ -206,58 +218,8 @@ def fit_with_sum_of_exp(f, alpha, n, N=50):
 #    return pref, lam
 
 
-#class TwoSiteChain(Chain):
-#    """Custom lattice with a two-site unit cell for an arbitrary length chain."""
-#    def __init__(self, L, **kwargs):
-#        super().__init__(L=L, **kwargs)
-#        self.unit_cell = [0, 1]  # Define the two-site unit cell
-#        self.N_sites = L * 2  # Total number of sites
 
-    def __init__(self, model_params):
-        # define some default parameters
-        L = model_params.get('L', 2)
-        J = model_params.get('J', 1.)
-        K = model_params.get('K', 0.01)
-
-        hy = model_params.get('hy', 0.)
-
-        # initialize a ladder lattice with two spin-1/2 sites on it
-        site1 = SpinHalfSite(conserve=None)
-        site2 = SpinHalfSite(conserve=None)
-        bc = 'periodic' if model_params['bc_MPS'] == 'infinite' else 'open'
-        lat = Ladder(L, [site1, site2], bc=bc, bc_MPS=model_params['bc_MPS'])
-
-        # initialize a coupling model
-        CouplingModel.__init__(self, lat)
-
-        # add terms of the Hamiltonian
-        # intracell Heisenberg coupling (along the rungs of the ladder)
-        self.add_coupling(J, 0, 'Sp', 1, 'Sm', 0, plus_hc=True)
-        self.add_coupling(J, 0, 'Sz', 1, 'Sz', 0, plus_hc=True)
-        # intercell Heisenberg coupling (along the length of the ladder)
-        self.add_coupling(K, 0, 'Sp', 0, 'Sm', 1, plus_hc=True)
-        self.add_coupling(K, 0, 'Sz', 0, 'Sz', 1, plus_hc=True)
-        self.add_coupling(K, 1, 'Sp', 1, 'Sm', 1, plus_hc=True)
-        self.add_coupling(K, 1, 'Sz', 1, 'Sz', 1, plus_hc=True)
-        # odd-parity DM interactions # NOTE: check whether plus_hc=True is correct
-        self.add_coupling(D, 0, 'Sz', 0, 'Sx', 1, plus_hc=True)
-        self.add_coupling(-D, 0, 'Sx', 0, 'Sz', 1, plus_hc=True)
-        self.add_coupling(D, 1, 'Sz', 1, 'Sx', 1, plus_hc=True)
-        self.add_coupling(-D, 1, 'Sx', 1, 'Sz', 1, plus_hc=True)
-        # even parity anisotropic interdimer coupling # NOTE: also chck with hc
-        self.add_coupling(Gamma, 0, 'Sz', 0, 'Sx', 1, plus_hc=True)
-        self.add_coupling(Gamma, 0, 'Sx', 0, 'Sz', 1, plus_hc=True)
-        self.add_coupling(Gamma, 1, 'Sz', 1, 'Sx', 1, plus_hc=True)
-        self.add_coupling(Gamma, 1, 'Sx', 1, 'Sz', 1, plus_hc=True)
-        # add a magnetic field pointing in y direction
-        self.add_onsite(hy, 0, 'Sy')
-        self.add_onsite(hy, 1, 'Sy')
-
-        # construct the Hamiltonian in the Matrix-Product-Operator (MPO) picture
-        MPOModel.__init__(self, lat, self.calc_H_MPO())
-
-
-class LongRangeSpin1ChainTest2(CouplingModel, MPOModel):
+class LongRangeSpin1ChainTest(CouplingModel, MPOModel):
     r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
 
        .. math ::
@@ -272,8 +234,8 @@ class LongRangeSpin1ChainTest2(CouplingModel, MPOModel):
         J = model_params.get('J', 1.)
         D = model_params.get('D', 0.)
         alpha = model_params.get('alpha', 100.)  # FIXME no need for alpha anymore
-        n_exp = model_params.get('n_exp', 10)  # Number of exponentials in fit
-        fit_range = model_params.get('fit_range', 1000)  # Range of fit for decay
+        n_exp = model_params.get('n_exp', 1)  # Number of exponentials in fit
+        fit_range = model_params.get('fit_range', 6)  # Range of fit for decay
 
         site1 = SpinSite(S=1., conserve='Sz')
         site2 = SpinSite(S=1., conserve='Sz')
@@ -328,20 +290,20 @@ class LongRangeSpin1ChainTest2(CouplingModel, MPOModel):
 
 
         # add expontially_decaying terms
-        for dist in range(1, L):  # Only add for j > i to avoid double counting
-            # ferro couplings
-            for pr, la in zip(pref, lam):
-                #self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz', subsites=[0,0])
-                self.add_exponentially_decaying_coupling(0.5*pr, la, 'Sp', 'Sm', subsites=[0,1], plus_hc=True)
-                self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz', subsites=[0,1])
-                #self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz', subsites=[0,0])
+        for pr, la in zip(pref, lam):
+            #self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz', subsites=[0,0])
+            #self.add_exponentially_decaying_coupling(0.5*pr, la, 'Sp', 'Sm', subsites=[0,1], plus_hc=True)
+            self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz', subsites=[0,2,4])
+            self.add_exponentially_decaying_coupling(-2*pr, la, 'Sz', 'Sz', subsites=[0,2,4])
+            #self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz', subsites=[0,0])
 
 
         # construct the Hamiltonian in the Matrix-Product-Operator (MPO) picture
         MPOModel.__init__(self, lat, self.calc_H_MPO())
 
 
-class LongRangeSpin1ChainTest(CouplingMPOModel):
+
+class LongRangeSpin1ChainFrustExp(CouplingMPOModel):
     r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
 
        .. math ::
@@ -358,27 +320,75 @@ class LongRangeSpin1ChainTest(CouplingMPOModel):
         else:
             spin_site = SpinSite(S=1., conserve=None, sort_charge=sort_charge)
 
-        return [spin_site, spin_site]
+        return spin_site
 
-    #def init_lattice(self, model_params):
-    #    L = model_params['L']  # Total number of sites
-    #    sites = self.init_sites(model_params)
-    #    print("="*100)
-    #    print(sites)
-    #    self.lat = Chain(L, [sites, sites], bc='open')  # Two sites per unit cell
-    #    print(f"L={L}, N_sites={self.lat.N_sites}")
-    #    # TODO: Print terms
-        #CouplingMPOModel.__init__(self, lat)
-        #print(c.all_coupling_terms().to_TermList())
+    def init_terms(self, model_params):
+        J = model_params.get('J', 1.)
+        B = model_params.get('B', 0.)
+        D = model_params.get('D', 0.)
+        alpha = model_params.get('alpha', 100.)  # FIXME no need for alpha anymore
+        n_exp = model_params.get('n_exp', 1)  # Number of exponentials in fit
+        fit_range = model_params.get('fit_range', 2*self.lat.N_sites)  # Range of fit for decay
+
+
+        for u in range(len(self.lat.unit_cell)):
+            self.add_onsite(B, u, 'Sx')
+            self.add_onsite(D, u, 'Sz Sz')
+
+        #for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
+        #    print(f"dx={dx}")
+        #    print(f"u1={u1}, u2={u2}")
+        #    self.add_coupling(J / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
+        #    self.add_coupling(J, u1, 'Sz', u2, 'Sz', dx)
+
+
+        # fit power-law decay with sum of exponentials
+        lam, pref = fit_with_sum_of_exp(power_law_decay, alpha, n_exp, fit_range)
+        x = np.arange(1, fit_range + 1)
+        print("*" * 100)
+        #print(lam, pref)
+        print('error in fit: {0:.3e}'.format(np.sum(np.abs(power_law_decay(x, alpha) - sum_of_exp(lam, pref, x)))))
+        #x_vals = np.arange(1, 0.02, fit_range+0.02)
+        #plot_fit(x, power_law_decay(x, alpha), sum_of_exp(lam, pref, x) )
+        print("*" * 100)
+
+        # add expontially_decaying terms
+        for pr, la in zip(pref, lam):
+            self.add_exponentially_decaying_coupling(0.5*pr, la, 'Sp', 'Sm', plus_hc=True)
+            self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz')
+
+
+class LongRangeSpin1ChainFrust(CouplingMPOModel):
+    r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
+
+       .. math ::
+           H = J \sum_i \vec{S}_i \cdot \vec{S}_{i+1} + B \sum_i S^x_i + D \sum_i (S^z_i)^2
+       """
+    default_lattice = Chain
+    force_default_lattice = True
+
+    #def init_sites(self, model_params):
+    #    B = model_params.get('B', 0.)
+    #    conserve = model_params.get('conserve', 'best')
+    #    if conserve == 'best':
+    #        conserve = 'Sz' if not model_params.any_nonzero(['B']) else None
+    #        self.logger.info("%s: set conserve to %s", self.name, conserve)
+    #    sort_charge = model_params.get('sort_charge', True)
+    #    return SpinSite(S=1., conserve=None, sort_charge=sort_charge)
+
+    def init_sites(self, model_params):
+        conserve = model_params.get('conserve', 'best')
+        sort_charge = model_params.get('sort_charge', True)
+        if conserve == 'best' or conserve == 'Sz':
+            return SpinSite(S=1., conserve='Sz', sort_charge=sort_charge)
+        else:
+            return SpinSite(S=1., conserve=None, sort_charge=sort_charge)
 
     def init_terms(self, model_params):
         J = model_params.get('J', 1.)
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
         alpha = model_params.get('alpha', 100.)
-        n_exp = model_params.get('n_exp', 5)  # Number of exponentials in fit
-        fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
-
 
         for u in range(len(self.lat.unit_cell)):
             self.add_onsite(B, u, 'Sx')
@@ -390,18 +400,11 @@ class LongRangeSpin1ChainTest(CouplingMPOModel):
             self.add_coupling(J / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
             self.add_coupling(J, u1, 'Sz', u2, 'Sz', dx)
 
-
-        #lam, pref = fit_with_sum_of_exp(power_law_decay, n_exp, fit_range)
-        #x = np.arange(1, fit_range + 1)
-        #print('error in fit: {0:.3e}'.format(np.sum(np.abs(power_law_decay(x) - sum_of_exp(lam, pref, x)))))
-        # TODO: if error is too big
-
-
-        #for dist in range(2, self.lat.N_sites):  # Only add for j > i to avoid double counting
-         #   # print(dist)
-         #   strength = (-1) ** (dist + 1) / (dist ** alpha)  # Long-range decay
-         #   self.add_coupling(strength, 0, "Sz", 0, "Sz", dx=dist)
-         #   self.add_coupling(0.5 * strength, 0, "Sp", 0, "Sm", dx=dist, plus_hc=True)
+        for dist in range(2, self.lat.N_sites):  # Only add for j > i to avoid double counting
+            # print(dist)
+            strength = 1. / (dist ** alpha)  # Long-range decay
+            self.add_coupling(strength, 0, "Sz", 0, "Sz", dx=dist)
+            self.add_coupling(0.5 * strength, 0, "Sp", 0, "Sm", dx=dist, plus_hc=True)
 
 
 class LongRangeSpin1Chain(CouplingMPOModel):
@@ -484,7 +487,7 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
             #    12: 400,
             #    16: 600,
         },
-        'max_E_err': 1.e-8,
+        'max_E_err': 1.e-9,
         #'max_S_err': 1.e-6,
         #'norm_tol': 1.e-6,
         'max_sweeps': 30,
@@ -492,11 +495,17 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
 
 
     # create spine one model
-    M = LongRangeSpin1ChainTest2(model_params)
+    M = LongRangeSpin1ChainFrustExp(model_params)
     model_params['D'] = D+eps  # FIXME: Could something go wrong here?
-    M_eps = LongRangeSpin1ChainTest2(model_params)
-    print(M.all_coupling_terms().to_TermList())
+    M_eps = LongRangeSpin1ChainFrustExp(model_params)
+
+    # TODO: Do not delete me
+    print("."*100)
+    print(M.all_onsite_terms().to_TermList())
+    #print(M.all_coupling_terms().to_TermList())
+    print(M.exp_decaying_terms.to_TermList())
     print(alternating_power_law_decay(np.arange(1,7), alpha))
+    print("."*100)
 
     # create initial state
     if D <= 0.0:
