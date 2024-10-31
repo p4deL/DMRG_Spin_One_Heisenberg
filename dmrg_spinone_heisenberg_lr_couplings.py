@@ -96,7 +96,7 @@ def log_sweep_statistics(L, alpha, D, sweep_info):
 def write_quantity_to_file(quantity_string, quantity, alpha, D, L):
 
     # Open a file in write mode
-    filename = f'output/spinone_heisenberg_{quantity_string}_alpha{alpha}_L{L}.csv'
+    filename = f'output/spinone_heisenberg_{quantity_string}_alpha{alpha}_L{L}.csv'  # FIXME
 
     # lock files when writing (necessary when using a joblist)
     with FileLock(filename + ".lock"):
@@ -192,7 +192,7 @@ class LongRangeSpin1ChainExp(CouplingMPOModel):
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
         alpha = model_params.get('alpha', 100.)  # FIXME no need for alpha anymore
-        n_exp = model_params.get('n_exp', 6)  # Number of exponentials in fit
+        n_exp = model_params.get('n_exp', 17)  # Number of exponentials in fit
         fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
 
 
@@ -258,7 +258,7 @@ class LongRangeSpin1ChainFrustExp(CouplingMPOModel):
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
         alpha = model_params.get('alpha', 100.)  # FIXME no need for alpha anymore
-        n_exp = model_params.get('n_exp', 1)  # Number of exponentials in fit
+        n_exp = model_params.get('n_exp', 10)  # Number of exponentials in fit
         fit_range = model_params.get('fit_range', 2*self.lat.N_sites)  # Range of fit for decay
 
 
@@ -375,8 +375,8 @@ class LongRangeSpin1Chain(CouplingMPOModel):
             self.add_onsite(D, u, 'Sz Sz')
 
         for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
-            print(f"dx={dx}")
-            print(f"u1={u1}, u2={u2}")
+            #print(f"dx={dx}")
+            #print(f"u1={u1}, u2={u2}")
             self.add_coupling(J / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
             self.add_coupling(J, u1, 'Sz', u2, 'Sz', dx)
 
@@ -406,28 +406,34 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
         bc_MPS='finite',
         conserve=conserve)
     dmrg_params = {
-        'mixer': True,  # setting this to True helps to escape local minima
+        'mixer': True,  # TODO: Turn off mixer for large alpha!? For small alpha it may be worth a try increasing
+        #'mixer_params': {
+        #    'amplitude': 1.e-4,
+        #    'decay': 2.0,
+        #    'disable_after': 12,
+        #},
         'trunc_params': {
+            'min_sweeps:': 10,
             'svd_min': 1.e-8,
         },
         'chi_list': {
             0: 50,
-            4: 100,
-            8: 200,
+            4: 150,
+            #8: 200,
             #    12: 400,
             #    16: 600,
         },
-        'max_E_err': 1.e-8,
-        #'max_S_err': 1.e-6,
-        #'norm_tol': 1.e-6,
+        'max_E_err': 1.e-9,
+        'max_S_err': 1.e-6,
+        'norm_tol': 1.e-6,
         'max_sweeps': 30,
     }
 
 
     # create spine one model
-    M = LongRangeSpin1ChainExp(model_params)
+    M = LongRangeSpin1Chain(model_params)
     model_params['D'] = D+eps  # FIXME: Could something go wrong here?
-    M_eps = LongRangeSpin1ChainExp(model_params)
+    M_eps = LongRangeSpin1Chain(model_params)
 
     # TODO: Do not delete me
     #print("."*100)
@@ -438,7 +444,7 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
     #print("."*100)
 
     # create initial state
-    if D <= 0.0 or alpha <= 3.0:
+    if D <= 0.0 or alpha <= 3.0:  # FIXME: Check if boundary should be changed
         product_state = [0, 2] * (L//2)  # initial state down = 0, 0 = 1, up = 2
     else:
         product_state = [1] * L
@@ -455,8 +461,8 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
 
     # run dmrg
     info = dmrg.run(psi, M, dmrg_params)
-    #psi_eps = psi.copy()
-    #dmrg_params['chi_list'] =  { 0: 100 }
+    #psi_eps = psi.copy()  # FIXME
+    #dmrg_params['chi_list'] =  { 0: 150 }  # FIXME
     info_eps = dmrg.run(psi_eps, M_eps, dmrg_params)  # TODO: Alternatively, I could feed the previous psi
 
     # log data
