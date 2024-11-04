@@ -80,7 +80,7 @@ def calc_order_parameters(psi):
     print(Sz)
     Bk = npc.expm(1.j * np.pi * Sz)
     str_order = psi.correlation_function("Sz", "Sz", opstr=Bk, str_on_first=False)
-    print(f"<O_string>=${str_order}")
+    print(f"<O_string>=${str_order}")  # should also be averaged?
     #print("<O_string> = [{Spm0:.5f}, {Spm1:.5f}]; mean ={mag_pm:.5f}".format(Spm0=Spm[0],Spm1=Spm[1],mag_pm=mag_pm))
 
 
