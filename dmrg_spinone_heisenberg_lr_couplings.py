@@ -21,6 +21,13 @@ from tenpy.networks.mps import MPS
 from tenpy.algorithms import dmrg
 from tenpy.linalg.np_conserved import Array, LegCharge
 
+# Set the number of BLAS threads
+#os.environ["OMP_NUM_THREADS"] = "1"    # For OpenMP (used by some BLAS implementations)
+#os.environ["OPENBLAS_NUM_THREADS"] = "1"  # For OpenBLAS
+#os.environ["MKL_NUM_THREADS"] = "1"       # For MKL
+#os.environ["VECLIB_MAXIMUM_THREADS"] = "1"  # For Accelerate (macOS)
+#os.environ["NUMEXPR_NUM_THREADS"] = "1"  # For NumExpr, if used
+
 def usage():
     print("Usage: dmrg_spinone_heisenberg_lr_coupling.py -L <length of chain> -D <single ion anisotropy strength> -a <decay exponent alpha>")
 
@@ -94,10 +101,10 @@ def log_sweep_statistics(L, alpha, D, sweep_info):
             writer.writerow(row)
 
 
-def write_quantity_to_file(quantity_string, quantity, alpha, D, L):
+def write_quantity_to_file(quantity_string, quantity, chi, alpha, D, L):
 
     # Open a file in write mode
-    filename = f'output/spinone_heisenberg_{quantity_string}_alpha{alpha}_L{L}.csv'  # FIXME
+    filename = f'output/spinone_heisenberg_{quantity_string}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
 
     # lock files when writing (necessary when using a joblist)
     with FileLock(filename + ".lock"):
@@ -215,7 +222,7 @@ class LongRangeSpin1ChainExp(CouplingMPOModel):
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
         alpha = model_params.get('alpha', 100.)  # FIXME no need for alpha anymore
-        n_exp = model_params.get('n_exp', 10)  # Number of exponentials in fit
+        n_exp = model_params.get('n_exp', 5)  # Number of exponentials in fit
         fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
 
 
@@ -429,19 +436,21 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
         bc_MPS='finite',
         conserve=conserve)
     dmrg_params = {
-        'mixer': True,  # TODO: Turn off mixer for large alpha!? For small alpha it may be worth a try increasing
+        'mixer': False,  # TODO: Turn off mixer for large alpha!? For small alpha it may be worth a try increasing
         #'mixer_params': {
         #    'amplitude': 1.e-4,
         #    'decay': 2.0
         #    'disable_after': 12,
         #},
         'trunc_params': {
-            'min_sweeps:': 10,
             'svd_min': 1.e-8,
         },
+        #'chi_max': 150,
         'chi_list': {
-            0: 50,
-            4: 150,
+            2: 10,
+            4: 50,
+            6: 100,
+            8: 150,
             #8: 200,
             #    12: 400,
             #    16: 600,
@@ -454,9 +463,9 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
 
 
     # create spine one model
-    M = LongRangeSpin1Chain(model_params)
+    M = LongRangeSpin1ChainExp(model_params)
     model_params['D'] = D+eps  # FIXME: Could something go wrong here?
-    M_eps = LongRangeSpin1Chain(model_params)
+    M_eps = LongRangeSpin1ChainExp(model_params)
 
     # TODO: Do not delete me
     #print("."*100)
@@ -527,6 +536,15 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
     # make plots as function of max bond dimension vs max cutoff
     # lastly try slower ramp up of bond dimension
 
+
+    print(f"chi={psi.chi}")
+    chi_max_psi = max(psi.chi)
+    chi_max_psi_eps = max(psi_eps.chi)
+    _ , chi_limit = list(dmrg_params['chi_list'].items())[-1]
+    chi = (chi_limit, chi_max_psi, chi_max_psi_eps)
+
+
+
     # calculate x- and z-parity
     id = psi.sites[0].Id
     Sz2 = psi.sites[0].multiply_operators(['Sz','Sz'])
@@ -557,9 +575,6 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
 
     Stot_sq = (Stot_sq_psi, Stot_sq_psi_eps)
 
-
-
-
     # calculate fidelity
     fidelity = calc_fidelity(psi, psi_eps, eps)
 
@@ -569,7 +584,7 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
     print("E_eps = {E:.13f}".format(E=info_eps['E']))
     print("final bond dimensions psi_eps: ", psi_eps.chi)
 
-    return fidelity, E, delta_E, Px, Stot_sq, sweeps
+    return chi, fidelity, E, delta_E, Px, Stot_sq, sweeps
 
 
 def main(argv):
@@ -579,24 +594,26 @@ def main(argv):
     eps = 1e-4
 
     start_time = time.time()
-    fidelity, E, delta_E, Px, Stot_sq, sweeps = dmrg_lr_spinone_heisenberg_finite_fidelity(L=L, D=D, alpha=alpha, eps=eps)
+    chi, fidelity, E, delta_E, Px, Stot_sq, sweeps = dmrg_lr_spinone_heisenberg_finite_fidelity(L=L, D=D, alpha=alpha, eps=eps)
+    chi_limit, chi_max, chi_max_eps = chi
     print("--- %s seconds ---" % (time.time() - start_time))
 
     # print observables
     print(f"fidelity susceptibility: {fidelity}")
 
     # write results to files
-    write_quantity_to_file("fidelity", fidelity, alpha, D, L)
-    write_quantity_to_file("gs_energy", E[0], alpha, D, L)
-    write_quantity_to_file("gs_energy_eps", E[1], alpha, D+eps, L)
-    write_quantity_to_file("gs_energy_diff", delta_E, alpha, D, L)
-    write_quantity_to_file("parity_x", Px[0], alpha, D, L)
-    write_quantity_to_file("parity_x_eps", Px[1], alpha, D, L)
-    write_quantity_to_file("s_total", Stot_sq[0], alpha, D, L)
-    write_quantity_to_file("s_total_eps", Stot_sq[1], alpha, D+eps, L)
-    write_quantity_to_file("nsweeps", sweeps[0], alpha, D, L)
-    write_quantity_to_file("nsweeps_eps", sweeps[1], alpha, D+eps, L)
-
+    write_quantity_to_file("fidelity", fidelity, chi_limit, alpha, D, L)
+    write_quantity_to_file("gs_energy", E[0], chi_limit, alpha, D, L)
+    write_quantity_to_file("gs_energy_eps", E[1], chi_limit, alpha, D+eps, L)
+    write_quantity_to_file("gs_energy_diff", delta_E, chi_limit, alpha, D, L)
+    write_quantity_to_file("parity_x", Px[0], chi_limit, alpha, D, L)
+    write_quantity_to_file("parity_x_eps", Px[1], chi_limit, alpha, D, L)
+    write_quantity_to_file("s_total", Stot_sq[0], chi_limit, alpha, D, L)
+    write_quantity_to_file("s_total_eps", Stot_sq[1], chi_limit, alpha, D+eps, L)
+    write_quantity_to_file("nsweeps", sweeps[0], chi_limit, alpha, D, L)
+    write_quantity_to_file("nsweeps_eps", sweeps[1], chi_limit, alpha, D+eps, L)
+    write_quantity_to_file("chi_max", chi_max, chi_limit, alpha, D, L)
+    write_quantity_to_file("chi_max_eps", chi_max_eps, chi_limit, alpha, D+eps, L)
 
 if __name__ == "__main__":
     import logging
