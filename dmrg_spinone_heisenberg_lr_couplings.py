@@ -222,7 +222,7 @@ class LongRangeSpin1ChainExp(CouplingMPOModel):
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
         alpha = model_params.get('alpha', 100.)  # FIXME no need for alpha anymore
-        n_exp = model_params.get('n_exp', 5)  # Number of exponentials in fit
+        n_exp = model_params.get('n_exp', 4)  # Number of exponentials in fit
         fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
 
 
@@ -443,23 +443,27 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
         #    'disable_after': 12,
         #},
         'trunc_params': {
-            'svd_min': 1.e-8,
+            'svd_min': 1.e-5,
         },
         #'chi_max': 150,
         'chi_list': {
-            2: 10,
-            4: 50,
-            6: 100,
-            8: 150,
+            1: 10,
+            2: 20,
+            3: 80,
+            4: 100,
+            8: 200,
+            10: 300,
             #8: 200,
             #    12: 400,
             #    16: 600,
         },
         'max_E_err': 1.e-9,
-        'max_S_err': 1.e-6,
-        'norm_tol': 1.e-6,
-        'max_sweeps': 30,
+        'max_S_err': 1.e-8,
+        'norm_tol': 1.e-8,
+        'max_sweeps': 100,
     }
+
+    # TODO: Save METADATA!!!!!!!
 
 
     # create spine one model
@@ -535,48 +539,41 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
     # choose smaller svd cutoff to control max bond dimension in practice
     # make plots as function of max bond dimension vs max cutoff
     # lastly try slower ramp up of bond dimension
+    # Should I plot bond dimension versus system size, Check area law for sufficiently short ranged interactions?
+    # TODO: first
+    # I should rather go back to TFIM -> Frust Spin-one chain and compare results again!
 
-
-    print(f"chi={psi.chi}")
+    # plot bond dimensions
     chi_max_psi = max(psi.chi)
     chi_max_psi_eps = max(psi_eps.chi)
     _ , chi_limit = list(dmrg_params['chi_list'].items())[-1]
     chi = (chi_limit, chi_max_psi, chi_max_psi_eps)
-
-
 
     # calculate x- and z-parity
     id = psi.sites[0].Id
     Sz2 = psi.sites[0].multiply_operators(['Sz','Sz'])
     rotz = id - 2*Sz2
     Px_psi = psi.expectation_value_multi_sites([rotz]*L, 0)
-    Px_psi_eps = psi.expectation_value_multi_sites([rotz]*L, 0)
+    Px_psi_eps = psi_eps.expectation_value_multi_sites([rotz]*L, 0)
     Px = (Px_psi, Px_psi_eps)
-
-    #Bk = npc.expm(1.j * np.pi * Sz)
-    #str_order = psi.correlation_function("Sz", "Sz", opstr=Bk, str_on_first=False)
-    #print(str_order)
-
-    #Px = psi.expectation_value_multi_sites(['Sz']*L, 0)
-    #print(f"parity={Px}")
-    #for i in range(L):
-    #Sx_value = psi.expectation_value("Sx")
-    #Pz *= Sx_value  # Product of sigma^z expectation values for x-flip
-    #print(Sx_value)
 
     # TODO: Calculate S_tot^2
     corrzz_psi = psi.correlation_function('Sz','Sz')
     corrpm_psi = psi.correlation_function('Sp','Sm')
-    Stot_sq_psi = 2*(np.sum(np.triu(corrpm_psi,k=1))+np.sum(np.triu(corrzz_psi,k=1))) + 2*L
+    corrmp_psi = psi.correlation_function('Sm','Sp')
+    Stot_sq_psi = (np.sum(np.triu(corrpm_psi,k=1))+np.sum(np.triu(corrmp_psi,k=1))+2*np.sum(np.triu(corrzz_psi,k=1))) + 2*L
 
-    corrzz_psi_eps = psi.correlation_function('Sz','Sz')
-    corrpm_psi_eps = psi.correlation_function('Sp','Sm')
-    Stot_sq_psi_eps = 2*(np.sum(np.triu(corrpm_psi_eps,k=1))+np.sum(np.triu(corrzz_psi_eps,k=1))) + 2*L
+    corrzz_psi_eps = psi_eps.correlation_function('Sz','Sz')
+    corrpm_psi_eps = psi_eps.correlation_function('Sp','Sm')
+    corrmp_psi_eps = psi_eps.correlation_function('Sm','Sp')
+    Stot_sq_psi_eps = (np.sum(np.triu(corrpm_psi_eps,k=1))+np.sum(np.triu(corrmp_psi_eps,k=1))+2*np.sum(np.triu(corrzz_psi_eps,k=1))) + 2*L
 
     Stot_sq = (Stot_sq_psi, Stot_sq_psi_eps)
 
     # calculate fidelity
     fidelity = calc_fidelity(psi, psi_eps, eps)
+
+    overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
 
     # output to check sanity
     print("E = {E:.13f}".format(E=info['E']))
@@ -584,7 +581,7 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
     print("E_eps = {E:.13f}".format(E=info_eps['E']))
     print("final bond dimensions psi_eps: ", psi_eps.chi)
 
-    return chi, fidelity, E, delta_E, Px, Stot_sq, sweeps
+    return chi, overlap, fidelity, E, delta_E, Px, Stot_sq, sweeps
 
 
 def main(argv):
@@ -594,7 +591,7 @@ def main(argv):
     eps = 1e-4
 
     start_time = time.time()
-    chi, fidelity, E, delta_E, Px, Stot_sq, sweeps = dmrg_lr_spinone_heisenberg_finite_fidelity(L=L, D=D, alpha=alpha, eps=eps)
+    chi, overlap, fidelity, E, delta_E, Px, Stot_sq, sweeps = dmrg_lr_spinone_heisenberg_finite_fidelity(L=L, D=D, alpha=alpha, eps=eps)
     chi_limit, chi_max, chi_max_eps = chi
     print("--- %s seconds ---" % (time.time() - start_time))
 
@@ -603,6 +600,7 @@ def main(argv):
 
     # write results to files
     write_quantity_to_file("fidelity", fidelity, chi_limit, alpha, D, L)
+    write_quantity_to_file("overlap", overlap, chi_limit, alpha, D, L)
     write_quantity_to_file("gs_energy", E[0], chi_limit, alpha, D, L)
     write_quantity_to_file("gs_energy_eps", E[1], chi_limit, alpha, D+eps, L)
     write_quantity_to_file("gs_energy_diff", delta_E, chi_limit, alpha, D, L)
