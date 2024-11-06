@@ -222,7 +222,7 @@ class LongRangeSpin1ChainExp(CouplingMPOModel):
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
         alpha = model_params.get('alpha', 100.)  # FIXME no need for alpha anymore
-        n_exp = model_params.get('n_exp', 4)  # Number of exponentials in fit
+        n_exp = model_params.get('n_exp', 8)  # Number of exponentials in fit
         fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
 
 
@@ -458,8 +458,8 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, eps=1e-4
             #    16: 600,
         },
         'max_E_err': 1.e-9,
-        'max_S_err': 1.e-8,
-        'norm_tol': 1.e-8,
+        'max_S_err': 1.e-7,
+        'norm_tol': 5.e-7,
         'max_sweeps': 100,
     }
 
@@ -588,7 +588,7 @@ def main(argv):
 
     # read terminal inputs
     L, D, alpha = param_use(argv)
-    eps = 1e-4
+    eps = 2e-3
 
     start_time = time.time()
     chi, overlap, fidelity, E, delta_E, Px, Stot_sq, sweeps = dmrg_lr_spinone_heisenberg_finite_fidelity(L=L, D=D, alpha=alpha, eps=eps)
