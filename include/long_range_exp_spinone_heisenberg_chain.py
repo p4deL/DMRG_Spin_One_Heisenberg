@@ -1,0 +1,74 @@
+from tenpy.networks.site import SpinSite
+from tenpy.models.model import CouplingMPOModel
+from tenpy.models.lattice import Chain
+from tenpy.tools.fit import sum_of_exp
+import numpy as np
+import math
+
+import include.utilities as utilities
+
+class LongRangeSpin1ChainExp(CouplingMPOModel):
+    r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
+
+       .. math ::
+           H = J \sum_i \vec{S}_i \cdot \vec{S}_{i+1} + B \sum_i S^x_i + D \sum_i (S^z_i)^2
+       """
+    default_lattice = Chain
+    force_default_lattice = True
+
+    def init_sites(self, model_params):
+        conserve = model_params.get('conserve', 'best')
+        sort_charge = model_params.get('sort_charge', True)
+        if conserve == 'best' or conserve == 'Sz':
+            spin_site = SpinSite(S=1., conserve='Sz', sort_charge=sort_charge)
+        elif conserve == 'parity':
+            spin_site = SpinSite(S=1., conserve='parity', sort_charge=sort_charge)
+        else:
+            spin_site = SpinSite(S=1., conserve=None, sort_charge=sort_charge)
+
+        return spin_site
+
+    def init_terms(self, model_params):
+        J = model_params.get('J', 1.)
+        B = model_params.get('B', 0.)
+        D = model_params.get('D', 0.)
+        alpha = model_params.get('alpha', float('inf'))
+        n_exp = model_params.get('n_exp', 2)  # Number of exponentials in fit
+        fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
+
+
+        for u in range(len(self.lat.unit_cell)):
+            self.add_onsite(B, u, 'Sx')
+            self.add_onsite(D, u, 'Sz Sz')
+
+        if math.isinf(alpha):
+            for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
+                self.add_coupling(J / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
+                self.add_coupling(J, u1, 'Sz', u2, 'Sz', dx)
+        else:
+            # fit power-law decay with sum of exponentials
+            lam, pref = utilities.fit_with_sum_of_exp(utilities.power_law_decay, alpha, n_exp, fit_range)
+            x = np.arange(1, fit_range + 1)
+            print("*" * 100)
+            print(f'n_exp = {n_exp}')
+            print('error in fit: {0:.3e}'.format(np.sum(np.abs(utilities.power_law_decay(x, alpha) - sum_of_exp(lam, pref, x)))))
+            #print(lam, pref)
+            #plot_fit(x, power_law_decay(x, alpha), sum_of_exp(lam, pref, x) )
+            print("*" * 100)
+
+            # add exponentially_decaying terms
+            for pr, la in zip(pref, lam):
+                self.add_exponentially_decaying_coupling(0.5*pr, la, 'Sp', 'Sm', plus_hc=True)
+                self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz')
+                # change sign of Ferro couplings
+                prprime = -2*pr
+                laprime = la**2
+                # couplings on even sites
+                even_sites = list(range(0,self.lat.N_sites,2))
+                self.add_exponentially_decaying_coupling(0.5*prprime, laprime, 'Sp', 'Sm', subsites=even_sites, plus_hc=True)
+                self.add_exponentially_decaying_coupling(prprime, laprime, 'Sz', 'Sz', subsites=even_sites)
+                # couplings on odd sites
+                odd_sites = list(range(1,self.lat.N_sites,2))
+                self.add_exponentially_decaying_coupling(0.5*prprime, laprime, 'Sp', 'Sm', subsites=odd_sites, plus_hc=True)
+                self.add_exponentially_decaying_coupling(prprime, laprime, 'Sz', 'Sz', subsites=odd_sites)
+
