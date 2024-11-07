@@ -1,13 +1,14 @@
-import getopt
 import numpy as np
 import sys
 import time
 
+from tenpy.algorithms import dmrg
 import tenpy.linalg.np_conserved as npc
 from tenpy.networks.mps import MPS
-from tenpy.algorithms import dmrg
 
 import include.data_io as data_io
+from include.long_range_exp_spinone_heisenberg_chain import LongRangeSpinOneChain
+
 
 # Set the number of BLAS threads
 #os.environ["OMP_NUM_THREADS"] = "1"    # For OpenMP (used by some BLAS implementations)
@@ -15,58 +16,6 @@ import include.data_io as data_io
 #os.environ["MKL_NUM_THREADS"] = "1"       # For MKL
 #os.environ["VECLIB_MAXIMUM_THREADS"] = "1"  # For Accelerate (macOS)
 #os.environ["NUMEXPR_NUM_THREADS"] = "1"  # For NumExpr, if used
-
-def usage():
-    print("Usage: dmrg_spinone_heisenberg_lr_coupling.py -L <length of chain> -D <single ion anisotropy strength> -a <decay exponent alpha> -e <number of exp terms to fit power law>")
-
-
-def param_use(argv):
-    L = 0
-    D = 1.
-    alpha = 10.
-    n_exp = 0
-    found_l = found_D = found_a = found_exp = False
-
-    try:
-        opts, args = getopt.getopt(argv, "L:D:a:e:h", ["Length=", "D=", "alpha=", "nexp=", "help"])
-    except getopt.GetoptError:
-      usage()
-      sys.exit(2)
-    for opt, arg in opts:
-      if opt in ("-h", "--help"):
-         usage()
-      elif opt in ("-L", "--Length"):
-        L = int(arg)
-        found_l = True
-      elif opt in ("-D", "--D"):
-        D = float(arg)
-        found_D = True
-      elif opt in ("-a", "--alpha"):
-        alpha = float(arg)
-        found_a = True
-      elif opt in ("-e", "--nexp"):
-          n_exp = int(arg)
-          found_exp = True
-
-    if not found_l:
-     print("Length of ladder (system size) not given.")
-     usage()
-     sys.exit(2)
-    if not found_D:
-      print("single-ion anisotropy strength not given.")
-      usage()
-      sys.exit(2)
-    if not found_a:
-      print("decay exponent not given.")
-      usage()
-      sys.exit(2)
-    if not found_exp:
-        print("number of exponential terms not given.")
-        usage()
-        sys.exit(2)
-
-    return L, D, alpha, n_exp
-
 
 
 def calc_tracking_quantities(psi, info, dmrg_params):
@@ -117,10 +66,12 @@ def calc_observables(psi):
 
     return SvN, mag_pm_stag, mag_zz_stag, str_order
 
+
 def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve='best'):
     model_params = dict(
         L=L,
         D=D,  # couplings
+        B=0.0, # FIXME use parameterlist
         alpha=alpha,
         n_exp=n_exp,
         bc_MPS='finite',
@@ -153,11 +104,9 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve
         'max_sweeps': 100,
     }
 
-    # TODO: Save METADATA!!!!!!!
-
 
     # create spine one model
-    M = LongRangeSpin1ChainExp(model_params)
+    M = LongRangeSpinOneChain(model_params)
 
     # create initial state
     if D <= 0.0 or alpha <= 3.0:  # FIXME: Check if boundary should be changed
@@ -170,24 +119,26 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve
 
     # run dmrg
     info = dmrg.run(psi, M, dmrg_params)
-    E = info['E']
-
-    # TODO: save ground_state and results
-    # TODO: save in subdirectory wavefunctions observables/ logs/ ~ think about good directory structure
-
-    # log data
     data_io.log_sweep_statistics(L, alpha, D, info['sweep_statistics'])
+    E = info['E']
 
     # calc observables for tracking convergence
     tracking_obs = calc_tracking_quantities(psi, info, dmrg_params)
 
-    # TODO: Calculate the following quantities
-    # - ground-state energy
-    # - Mag_|| mag_perp staggered!
-    # - string order parameter
-    # - entanglement entropy
+    # calculate observables
     obs = calc_observables(psi)
 
+    # save everything to a hdf5 file
+    filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
+    data_io.save_results_obs(filename,  model_params=model_params,
+                                    init_state=product_state,
+                                    dmrg_params=dmrg_params,
+                                    dmrg_info=info,
+                                    mpo=M,
+                                    mps=psi,
+                                    observables=obs,
+                                    tracking_observables=tracking_obs
+                         )
 
     # output to check sanity
     print("E = {E:.13f}".format(E=info['E']))
@@ -198,37 +149,32 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve
 
 def main(argv):
 
+    ######################
     # read terminal inputs
-    L, D, alpha, n_exp = param_use(argv)
+    L, D, alpha, n_exp = data_io.param_use(argv)
 
+    ##########
+    # run dmrg
     start_time = time.time()
     E, tracking_obs, obs = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, alpha=alpha, n_exp=n_exp)
-    sweeps, chi, Px, Stot_sq = tracking_obs
-    chi_limit, chi_max = chi
     print("--- %s seconds ---" % (time.time() - start_time))
 
-    # print observables
-    #print(f"fidelity susceptibility: {fidelity}")  # TODO
-
-    # write results to files
-    # TODO: Generalize function such that it takes multiple strings
-    #data_io.write_quantity_to_file("gs_energy", E, chi_limit, alpha, D, L)
-    #data_io.write_quantity_to_file("parity_x", Px, chi_limit, alpha, D, L)
-    #data_io.write_quantity_to_file("s_total", Stot_sq, chi_limit, alpha, D, L)
-    #data_io.write_quantity_to_file("nsweeps", sweeps, chi_limit, alpha, D, L)
-    #data_io.write_quantity_to_file("chi_max", chi_max, chi_limit, alpha, D, L)
-
+    ###########################
     # writing the data to files
+    # unpack
+    sweeps, chi, Px, Stot_sq = tracking_obs
+    chi_limit, chi_max = chi
+    # save tracking obs
     str_tracking_obs = ["gs_energy", "parity_x", "s_total", "nsweeps", "chi_max"]
     tracking_obs = [E, Px, Stot_sq, chi_max, chi_max]
     data_io.write_observables_to_file(str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
-
+    # save observables
     str_observables = ["SvN", "m_trans", "m_long", "str_order"]
     data_io.write_observables_to_file(str_observables, list(obs), L, alpha, D, chi_limit)
 
 
 
 if __name__ == "__main__":
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    main(sys.argv[1:])
+   import logging
+   logging.basicConfig(level=logging.INFO)
+   main(sys.argv[1:])

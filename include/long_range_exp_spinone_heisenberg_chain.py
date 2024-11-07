@@ -1,17 +1,19 @@
-from tenpy.networks.site import SpinSite
-from tenpy.models.model import CouplingMPOModel
-from tenpy.models.lattice import Chain
-from tenpy.tools.fit import sum_of_exp
-import numpy as np
 import math
+import numpy as np
+
+from tenpy.models.lattice import Chain
+from tenpy.models.model import CouplingMPOModel
+from tenpy.networks.site import SpinSite
+from tenpy.tools.fit import sum_of_exp
 
 import include.utilities as utilities
 
-class LongRangeSpin1ChainExp(CouplingMPOModel):
+
+class LongRangeSpinOneChain(CouplingMPOModel):
     r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
 
        .. math ::
-           H = J \sum_i \vec{S}_i \cdot \vec{S}_{i+1} + B \sum_i S^x_i + D \sum_i (S^z_i)^2
+           H = J \sum_i \vec{S}_i \cdot \vec{S}_{i+1} + B \sum_i (-1)^i (S^x_i + S^y_i) + D \sum_i (S^z_i)^2
        """
     default_lattice = Chain
     force_default_lattice = True
@@ -36,10 +38,17 @@ class LongRangeSpin1ChainExp(CouplingMPOModel):
         n_exp = model_params.get('n_exp', 2)  # Number of exponentials in fit
         fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
 
+        # add on-site terms
+        # uniform auxillary field
+        #self.add_onsite(B, 0, 'Sx')
+        #self.add_onsite(B, 0, 'Sy')
+        # staggered auxillary field
+        Bstag = [B, -B] * (self.lat.N_sites // 2)
+        self.add_onsite(Bstag, 0, 'Sx')
+        self.add_onsite(Bstag, 0, 'Sy')
 
-        for u in range(len(self.lat.unit_cell)):
-            self.add_onsite(B, u, 'Sx')
-            self.add_onsite(D, u, 'Sz Sz')
+        # Sz anisotropy
+        self.add_onsite(D, 0, 'Sz Sz')
 
         if math.isinf(alpha):
             for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
@@ -71,4 +80,3 @@ class LongRangeSpin1ChainExp(CouplingMPOModel):
                 odd_sites = list(range(1,self.lat.N_sites,2))
                 self.add_exponentially_decaying_coupling(0.5*prprime, laprime, 'Sp', 'Sm', subsites=odd_sites, plus_hc=True)
                 self.add_exponentially_decaying_coupling(prprime, laprime, 'Sz', 'Sz', subsites=odd_sites)
-

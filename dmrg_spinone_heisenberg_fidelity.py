@@ -128,24 +128,6 @@ def write_quantity_to_file(quantity_string, quantity, chi, alpha, D, L):
                 writer.writerow([D, quantity])  # Append D and fidelity
 
 
-def write_quantity_to_file2(quantity_string, quantity, alpha, D, eps, L):
-
-    # Open a file in write mode
-    filename = f'output/spinone_heisenberg_{quantity_string}_alpha{alpha}_L{L}.csv'  # FIXME
-
-    # lock files when writing (necessary when using a joblist)
-    with FileLock(filename + ".lock"):
-        if os.path.isfile(filename):
-            with open(filename, 'a') as file:
-                writer = csv.writer(file)
-                writer.writerow([D, quantity])  # Append D and fidelity
-        else:
-            with open(filename, 'w') as file:
-                writer = csv.writer(file)
-                writer.writerow(["D", "fidelity"])
-                writer.writerow([D, quantity])  # Append D and fidelity
-
-
 
 def alternating_power_law_decay(dist, alpha):
     return (-1) ** (dist + 1) / dist ** alpha
@@ -253,8 +235,6 @@ class LongRangeSpin1ChainExp(CouplingMPOModel):
             #print(lam, pref)
             #plot_fit(x, power_law_decay(x, alpha), sum_of_exp(lam, pref, x) )
             print("*" * 100)
-
-            sys.exit()
 
             # add exponentially_decaying terms
             for pr, la in zip(pref, lam):
@@ -460,12 +440,6 @@ def calc_fidelity(psi, psi_eps, eps):
     return -2 * np.log(overlap) / (eps ** 2)  # fidelity susceptiblity
 
 
-def calc_fidelity_ed(psi, psi_eps, eps):
-    overlap = npc.inner(psi, psi_eps, axes='range', do_conj=True)
-    print(f"ed_overlap: {overlap}")
-    return -2 * np.log(overlap) / (eps ** 2)  # fidelity susceptiblity
-
-
 def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, n_exp=2, eps=1e-3, conserve='best'):
     model_params = dict(
         L=L,
@@ -496,7 +470,7 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, n_exp=2,
             #    12: 400,
             #    16: 600,
         },
-        'max_E_err': 1.e-9,
+        'max_E_err': 1.e-8,
         'max_S_err': 1.e-7,
         'norm_tol': 5.e-7,
         'max_sweeps': 100,

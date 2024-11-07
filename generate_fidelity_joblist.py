@@ -4,7 +4,7 @@ import numpy as np
 #filename = "joblist_ed.txt"
 filename = "joblist_dmrg.txt"
 #script = "ed_fidelity.py"
-script = "dmrg_spinone_heisenberg_lr_couplings.py"
+script = "dmrg_spinone_heisenberg_fidelity.py"
 L = 20
 alpha = 10.0
 Ds = np.arange(-1.0,0.5,0.02)
