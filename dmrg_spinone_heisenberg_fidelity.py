@@ -268,8 +268,9 @@ def main(argv):
     # save observables
     overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
     fidelity = utilities.calc_fidelity(psi, psi_eps, eps)
-    obs = [overlap, fidelity]
-    str_observables = ["overlap", "fidelity"]
+    log_fidelity = utilities.calc_log_fidelity(psi, psi_eps, eps)
+    obs = [eps, overlap, fidelity, log_fidelity]
+    str_observables = ["eps", "overlap", "fidelity", "log_fidelity"]
     data_io.write_observables_to_file("spinone_heisenberg_fidelity_obs", str_observables, obs, L, alpha, D, chi_limit)
 
 
