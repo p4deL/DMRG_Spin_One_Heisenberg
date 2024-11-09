@@ -106,13 +106,15 @@ def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alp
                 writer.writerow([D, quantity])  # Append D and fidelity
 
 
-def write_observables_to_file(str_observables : list, observables : list, L : int, alpha : float, D : list, chi : int):
+def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : list, chi : int):
     if len(str_observables) != len(observables):
         print("Length of str_observables does not match length of observables.")
+        print(str_observables)
+        print(observables)
         return
 
     # Open a file in write mode
-    filename = f'output/spinone_heisenberg_obs_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
+    filename = f'output/{str_base}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
 
     observables.insert(0, D)
     str_observables.insert(0, "D")

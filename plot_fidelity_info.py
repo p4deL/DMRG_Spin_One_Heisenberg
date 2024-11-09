@@ -10,9 +10,9 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 
-L = 20  # system size
+L = 100  # system size
 alpha = 10.0
-chi = 400
+chi = 300
 
 max_sweeps = 100
 
@@ -62,7 +62,7 @@ for i, (quantities, label) in enumerate(zip(all_quantities, labels)):
         axs[i].legend(loc="upper right")
 
 # Label the x-axis on the last subplot only (shared x-axis)
-axs[0].set_ylim(-0.5,6)
+axs[0].set_ylim(-0.5,80)
 #axs[1].set_ylim(1.-2e-6,1.+2e-6)
 axs[4].set_ylim(-1.2,1.2)
 axs[-2].set_ylim(0,chi+50)

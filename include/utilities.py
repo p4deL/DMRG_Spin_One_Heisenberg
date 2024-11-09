@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import tenpy.linalg.np_conserved as npc
 
 
 def power_law_decay(dist, alpha):
@@ -57,4 +58,67 @@ def plot_fit(x_vals, y_powerlaw, y_sumexp):
     plt.plot(x_vals, y_sumexp, marker='x', label='sum exp')
     plt.legend(loc='best')
     plt.show()
+
+
+def calc_tracking_quantities(psi, info, dmrg_params):
+    # sweeps
+    nsweeps = len(info['sweep_statistics']['sweep'])
+    #max_sweeps = dmrg_params['max_sweeps']
+
+    # bond dimensions
+    chi_max = max(psi.chi)
+    _ , chi_limit = list(dmrg_params['chi_list'].items())[-1]
+    chi = (chi_limit, chi_max)
+
+    # calculate x- and z-parity
+    id = psi.sites[0].Id
+    Sz2 = psi.sites[0].multiply_operators(['Sz','Sz'])
+    rotz = id - 2*Sz2
+    Px = psi.expectation_value_multi_sites([rotz]*psi.L, 0)
+
+    # Calculate S_tot^2
+    corrzz = psi.correlation_function('Sz','Sz')
+    corrpm = psi.correlation_function('Sp','Sm')
+    corrmp = psi.correlation_function('Sm','Sp')
+    Stot_sq = np.real(np.sum(np.triu(corrpm,k=1))+np.sum(np.triu(corrmp,k=1))+2*np.sum(np.triu(corrzz,k=1))) + 2*psi.L
+
+    return nsweeps, chi, Px, Stot_sq
+
+
+def calc_observables(psi):
+    L = psi.L
+
+    # von Neumann entanglement entropy
+    SvN = psi.entanglement_entropy()[(L-1)//2]
+
+    # transverse magnetization
+    corr_pm = psi.correlation_function('Sp','Sm')
+    corr_pm_stag = np.array([[(-1) ** (i + j) * corr_pm[i][j] for j in range(L)] for i in range(L)])
+    mag_pm_stag = np.sqrt(np.mean(corr_pm_stag))
+
+    # longitudinal magnetization
+    corr_zz = psi.correlation_function('Sz','Sz')
+    corr_zz_stag = np.array([[(-1) ** (i + j) * corr_zz[i][j] for j in range(L)] for i in range(L)])
+    mag_zz_stag = np.sqrt(np.mean(corr_zz_stag))
+
+    # string_order parameter
+    Sz = psi.sites[0].Sz
+    exp = npc.expm(1.j * np.pi * Sz)
+    corr_str_order = -1*psi.correlation_function("Sz", "Sz", opstr=exp, str_on_first=False)
+    i = L//4
+    j = i + L//2
+    str_order = corr_str_order[i, j]
+
+    return SvN, mag_pm_stag, mag_zz_stag, str_order
+
+
+def calc_log_fidelity(psi, psi_eps, eps):
+    overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
+    return -2 * np.log(overlap) / (eps ** 2)  # fidelity susceptiblity
+
+
+def calc_fidelity(psi, psi_eps, eps):
+    overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
+    constant = 2/ (eps**2)
+    return constant * (1-overlap)  # fidelity susceptiblity
 

@@ -13,11 +13,11 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 
-L = 32  # system size
-alpha = 2.0
+L = 14  # system size
+alpha = 1.1
 
 # output filename
-output_file = f"fidelity_alpha{alpha}_L{L}.pdf"
+output_file = f"plots/fidelity_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
 data_dir = 'output/'

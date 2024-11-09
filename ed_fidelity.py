@@ -119,11 +119,11 @@ def main(argv):
 
     # init static interactionsl
     # OBC
-    #J = [[(-1) ** (delta - 1) / delta ** alpha, i, (i + delta)] for i in range(L) for delta in range(1, L - i)]
-    #Jxy = [[1./2*(-1) ** (delta - 1) / delta ** alpha, i, (i + delta)] for i in range(L) for delta in range(1, L - i)]
+    J = [[(-1) ** (delta - 1) / delta ** alpha, i, (i + delta)] for i in range(L) for delta in range(1, L - i)]
+    Jxy = [[1./2*(-1) ** (delta - 1) / delta ** alpha, i, (i + delta)] for i in range(L) for delta in range(1, L - i)]
     # Frust
-    J = [[1. / delta ** alpha, i, (i + delta)] for i in range(L) for delta in range(1, L - i)]
-    Jxy = [[0.5 / delta ** alpha, i, (i + delta)] for i in range(L) for delta in range(1, L - i)]
+    #J = [[1. / delta ** alpha, i, (i + delta)] for i in range(L) for delta in range(1, L - i)]
+    #Jxy = [[0.5 / delta ** alpha, i, (i + delta)] for i in range(L) for delta in range(1, L - i)]
     # NN
     #J = [[1.,i,i+1] for i in range(L-1)]
     #Jxy = [[1./2, i,i+1] for i in range(L-1)]

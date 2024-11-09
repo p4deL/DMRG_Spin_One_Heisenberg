@@ -3,11 +3,11 @@ import sys
 import time
 
 from tenpy.algorithms import dmrg
-import tenpy.linalg.np_conserved as npc
 from tenpy.networks.mps import MPS
 
 import include.data_io as data_io
 from include.long_range_exp_spinone_heisenberg_chain import LongRangeSpinOneChain
+import include.utilities as utilities
 
 
 # Set the number of BLAS threads
@@ -16,55 +16,6 @@ from include.long_range_exp_spinone_heisenberg_chain import LongRangeSpinOneChai
 #os.environ["MKL_NUM_THREADS"] = "1"       # For MKL
 #os.environ["VECLIB_MAXIMUM_THREADS"] = "1"  # For Accelerate (macOS)
 #os.environ["NUMEXPR_NUM_THREADS"] = "1"  # For NumExpr, if used
-
-
-def calc_tracking_quantities(psi, info, dmrg_params):
-    # sweeps
-    sweeps = len(info['sweep_statistics']['sweep'])
-    #max_sweeps = dmrg_params['max_sweeps']
-
-    # bond dimensions
-    chi_max = max(psi.chi)
-    _ , chi_limit = list(dmrg_params['chi_list'].items())[-1]
-    chi = (chi_limit, chi_max)
-
-    # calculate x- and z-parity
-    id = psi.sites[0].Id
-    Sz2 = psi.sites[0].multiply_operators(['Sz','Sz'])
-    rotz = id - 2*Sz2
-    Px = psi.expectation_value_multi_sites([rotz]*psi.L, 0)
-
-    # Calculate S_tot^2
-    corrzz = psi.correlation_function('Sz','Sz')
-    corrpm = psi.correlation_function('Sp','Sm')
-    corrmp = psi.correlation_function('Sm','Sp')
-    Stot_sq = (np.sum(np.triu(corrpm,k=1))+np.sum(np.triu(corrmp,k=1))+2*np.sum(np.triu(corrzz,k=1))) + 2*psi.L
-
-    return sweeps, chi, Px, Stot_sq
-
-
-def calc_observables(psi):
-    L = psi.L
-
-    # von Neumann entanglement entropy
-    SvN = psi.entanglement_entropy()[(L-1)//2]
-
-    # transverse magnetization
-    corr_pm = psi.correlation_function('Sp','Sm')
-    corr_pm_stag = np.array([[(-1) ** (i + j) * corr_pm[i][j] for j in range(L)] for i in range(L)])
-    mag_pm_stag = np.sqrt(np.mean(corr_pm_stag))
-
-    # longitudinal magnetization
-    corr_zz = psi.correlation_function('Sz','Sz')
-    corr_zz_stag = np.array([[(-1) ** (i + j) * corr_zz[i][j] for j in range(L)] for i in range(L)])
-    mag_zz_stag = np.sqrt(np.mean(corr_zz_stag))
-
-    # string_order parameter
-    Sz = psi.sites[0].Sz
-    Bk = npc.expm(1.j * np.pi * Sz)
-    str_order = psi.correlation_function("Sz", "Sz", opstr=Bk, str_on_first=False)
-
-    return SvN, mag_pm_stag, mag_zz_stag, str_order
 
 
 def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve='best'):
@@ -123,10 +74,10 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve
     E = info['E']
 
     # calc observables for tracking convergence
-    tracking_obs = calc_tracking_quantities(psi, info, dmrg_params)
+    tracking_obs = utilities.calc_tracking_quantities(psi, info, dmrg_params)
 
     # calculate observables
-    obs = calc_observables(psi)
+    obs = utilities.calc_observables(psi)
 
     # save everything to a hdf5 file
     filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
@@ -162,16 +113,15 @@ def main(argv):
     ###########################
     # writing the data to files
     # unpack
-    sweeps, chi, Px, Stot_sq = tracking_obs
+    nsweeps, chi, Px, Stot_sq = tracking_obs
     chi_limit, chi_max = chi
     # save tracking obs
-    str_tracking_obs = ["gs_energy", "parity_x", "s_total", "nsweeps", "chi_max"]
-    tracking_obs = [E, Px, Stot_sq, chi_max, chi_max]
-    data_io.write_observables_to_file(str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
+    str_tracking_obs = ["gs_energy", "parity_x", "s_total", "chi_max", "nsweeps"]
+    tracking_obs = [E, Px, Stot_sq, chi_max, nsweeps]
+    data_io.write_observables_to_file("spinone_heisenberg_all_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
     # save observables
     str_observables = ["SvN", "m_trans", "m_long", "str_order"]
-    data_io.write_observables_to_file(str_observables, list(obs), L, alpha, D, chi_limit)
-
+    data_io.write_observables_to_file("spinone_heisenberg_all_obs", str_observables, list(obs), L, alpha, D, chi_limit)
 
 
 if __name__ == "__main__":
