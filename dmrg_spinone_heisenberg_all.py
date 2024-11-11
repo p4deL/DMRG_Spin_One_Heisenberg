@@ -18,11 +18,11 @@ import include.utilities as utilities
 #os.environ["NUMEXPR_NUM_THREADS"] = "1"  # For NumExpr, if used
 
 
-def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve='best'):
+def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, conserve='best'):
     model_params = dict(
         L=L,
-        D=D,  # couplings
-        B=0.0, # FIXME use parameterlist
+        D=D,
+        B=B,
         alpha=alpha,
         n_exp=n_exp,
         bc_MPS='finite',
@@ -70,7 +70,6 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve
 
     # run dmrg
     info = dmrg.run(psi, M, dmrg_params)
-    data_io.log_sweep_statistics(L, alpha, D, info['sweep_statistics'])
     E = info['E']
 
     # calc observables for tracking convergence
@@ -80,16 +79,16 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve
     obs = utilities.calc_observables(psi)
 
     # save everything to a hdf5 file
-    filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
-    data_io.save_results_obs(filename,  model_params=model_params,
-                                    init_state=product_state,
-                                    dmrg_params=dmrg_params,
-                                    dmrg_info=info,
-                                    mpo=M,
-                                    mps=psi,
-                                    observables=obs,
-                                    tracking_observables=tracking_obs
-                         )
+    #filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
+    #data_io.save_results_obs(filename,  model_params=model_params,
+    #                                init_state=product_state,
+    #                                dmrg_params=dmrg_params,
+    #                                dmrg_info=info,
+    #                                mpo=M,
+    #                                mps=psi,
+    #                                observables=obs,
+    #                                tracking_observables=tracking_obs
+    #                     )
 
     # output to check sanity
     print("E = {E:.13f}".format(E=info['E']))

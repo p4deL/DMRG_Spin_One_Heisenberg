@@ -159,11 +159,11 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, n_exp=2,
 
 
 
-def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve='best'):
+def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, conserve='best'):
     model_params = dict(
         L=L,
-        D=D,  # couplings
-        B=0.0, # FIXME use parameterlist
+        D=D,
+        B=B,
         alpha=alpha,
         n_exp=n_exp,
         bc_MPS='finite',
@@ -211,7 +211,6 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve
 
     # run dmrg
     info = dmrg.run(psi, M, dmrg_params)
-    data_io.log_sweep_statistics(L, alpha, D, info['sweep_statistics'])
     E = info['E']
 
     # calc observables for tracking convergence
@@ -221,16 +220,17 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, n_exp=2, conserve
     #obs = utilities.calc_observables(psi)
 
     # save everything to a hdf5 file
-    filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
-    data_io.save_results_obs(filename,  model_params=model_params,
-                                    init_state=product_state,
-                                    dmrg_params=dmrg_params,
-                                    dmrg_info=info,
-                                    mpo=M,
-                                    mps=psi,
-                                    observables={},
-                                    tracking_observables=tracking_obs
-                         )
+    # TODO: add empty data dir to repo
+    #filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
+    #data_io.save_results_obs(filename,  model_params=model_params,
+    #                                init_state=product_state,
+    #                                dmrg_params=dmrg_params,
+    #                                dmrg_info=info,
+    #                                mpo=M,
+    #                                mps=psi,
+    #                                observables={},
+    #                                tracking_observables=tracking_obs
+    #                     )
 
     # output to check sanity
     print("E = {E:.13f}".format(E=info['E']))
@@ -247,10 +247,18 @@ def main(argv):
     eps = 1e-3
 
     ##########
+    # AUXFIELD ?
+    #B = 0.
+    if alpha > 3.0:
+        B = 1e-6
+    else:
+        B = 0.
+
+    ##########
     # run dmrg
     start_time = time.time()
-    E, tracking_obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, alpha=alpha, n_exp=n_exp)
-    E_eps, tracking_obs_eps, psi_eps = dmrg_lr_spinone_heisenberg_finite(L=L, D=D+eps, alpha=alpha, n_exp=n_exp)
+    E, tracking_obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, alpha=alpha, B=B, n_exp=n_exp)
+    E_eps, tracking_obs_eps, psi_eps = dmrg_lr_spinone_heisenberg_finite(L=L, D=D+eps, alpha=alpha, B=B, n_exp=n_exp)
     print("--- %s seconds ---" % (time.time() - start_time))
 
     ###########################
