@@ -13,7 +13,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
     r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
 
        .. math ::
-           H = J \sum_i \vec{S}_i \cdot \vec{S}_{i+1} + B \sum_i (-1)^i (S^x_i + S^y_i) + D \sum_i (S^z_i)^2
+           H = J \sum_{i,j} \vec{S}_{i} \cdot \vec{S}_{j} + B \sum_i (-1)^i S^z_i  + D \sum_i (S^z_i)^2
        """
     default_lattice = Chain
     force_default_lattice = True
@@ -39,14 +39,9 @@ class LongRangeSpinOneChain(CouplingMPOModel):
         fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
 
         # add on-site terms
-        # uniform auxillary field
-        #self.add_onsite(B, 0, 'Sx')
-        #self.add_onsite(B, 0, 'Sy')
         # staggered auxillary field
         Bstag = [B, -B] * (self.lat.N_sites // 2)
-        self.add_onsite(Bstag, 0, 'Sx')
-        self.add_onsite(Bstag, 0, 'Sy')
-
+        self.add_onsite(Bstag, 0, 'Sz')
         # Sz anisotropy
         self.add_onsite(D, 0, 'Sz Sz')
 

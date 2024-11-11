@@ -61,9 +61,9 @@ def dmrg_lr_spinone_heisenberg_finite_fidelity(L=10, alpha=10.0, D=0.0, n_exp=2,
 
 
     # create spine one model
-    M = LongRangeSpin1ChainExp(model_params)
+    M = LongRangeSpinOneChain(model_params)
     model_params['D'] = D+eps
-    M_eps = LongRangeSpin1ChainExp(model_params)
+    M_eps = LongRangeSpinOneChain(model_params)
 
     # TODO: Do not delete me
     #print("."*100)
