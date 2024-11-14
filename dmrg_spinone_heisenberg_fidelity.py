@@ -107,7 +107,7 @@ def main(argv):
     # AUXFIELD ?
     #B = 0.
     if alpha > 3.0:
-        B = 1e-6
+        B = -1e-2
     else:
         B = 0.
 

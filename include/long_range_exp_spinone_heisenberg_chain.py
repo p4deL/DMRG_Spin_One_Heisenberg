@@ -40,8 +40,11 @@ class LongRangeSpinOneChain(CouplingMPOModel):
 
         # add on-site terms
         # staggered auxillary field
-        Bstag = [B, -B] * (self.lat.N_sites // 2)
-        self.add_onsite(Bstag, 0, 'Sz')
+        #Bstag = [B, -B] * (self.lat.N_sites // 2)
+        #self.add_onsite(Bstag, 0, 'Sz')
+        # single-site aux field to lift edge-state degeneracy
+        self.add_onsite_term(B, 0, 'Sz')
+        #self.add_onsite_term(-B, self.lat.N_sites-1, 'Sz')  # TODO: Try if things get better if I include two terms
         # Sz anisotropy
         self.add_onsite(D, 0, 'Sz Sz')
 

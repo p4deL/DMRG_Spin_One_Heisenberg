@@ -99,6 +99,13 @@ def main(argv):
     # read terminal inputs
     L, D, alpha, n_exp = data_io.param_use(argv)
 
+    # AUXFIELD ?
+    #B = 0.
+    if alpha > 3.0:
+        B = -1e-2
+    else:
+        B = 0.
+
     ##########
     # run dmrg
     start_time = time.time()
