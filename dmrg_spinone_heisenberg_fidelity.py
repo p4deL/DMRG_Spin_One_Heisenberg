@@ -31,12 +31,12 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
     dmrg_params = {
         'mixer': False,  # TODO: Turn off mixer for large alpha!? For small alpha it may be worth a try increasing
         #'mixer_params': {
-        #    'amplitude': 1.e-4,
-        #    'decay': 2.0
-        #    'disable_after': 12,
+        #    'amplitude': 1.e-4,  # FIXME: should be chosen larger than smallest svd vals kept
+        #    'decay': 1.0
+        #    'disable_after': 10,
         #},
         'trunc_params': {
-            'svd_min': 1.e-9,
+            'svd_min': 1.e-5,
         },
         #'chi_max': 150,
         'chi_list': {
@@ -44,16 +44,13 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
             2: 20,
             3: 80,
             4: 100,
-            8: 200,
-            10: 300,
-            #8: 200,
-            #    12: 400,
-            #    16: 600,
+            6: 200,
+            8: 300,
         },
         'max_E_err': 1.e-9,
-        'max_S_err': 1.e-9,
-        'norm_tol': 1.e-9,
-        'max_sweeps': 50,
+        'max_S_err': 1.e-7,
+        'norm_tol': 1.e-7,
+        'max_sweeps': 100,
     }
 
 

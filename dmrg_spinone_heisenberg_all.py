@@ -30,9 +30,9 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
     dmrg_params = {
         'mixer': False,  # TODO: Turn off mixer for large alpha!? For small alpha it may be worth a try increasing
         #'mixer_params': {
-        #    'amplitude': 1.e-4,
+        #    'amplitude': 1.e-4,  # FIXME: should be chosen larger than smallest svd vals kept
         #    'decay': 2.0
-        #    'disable_after': 12,
+        #    'disable_after': 10,
         #},
         'trunc_params': {
             'svd_min': 1.e-5,
@@ -43,18 +43,14 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
             2: 20,
             3: 80,
             4: 100,
-            8: 200,
-            10: 300,
-            #8: 200,
-            #    12: 400,
-            #    16: 600,
+            6: 200,
+            8: 300,
         },
         'max_E_err': 1.e-9,
-        'max_S_err': 1.e-7,
-        'norm_tol': 5.e-7,
-        'max_sweeps': 100,
+        'max_S_err': 1.e-6,
+        'norm_tol': 1.e-6,
+        'max_sweeps': 50,
     }
-
 
     # create spine one model
     M = LongRangeSpinOneChain(model_params)
@@ -79,16 +75,16 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
     obs = utilities.calc_observables(psi)
 
     # save everything to a hdf5 file
-    #filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
-    #data_io.save_results_obs(filename,  model_params=model_params,
-    #                                init_state=product_state,
-    #                                dmrg_params=dmrg_params,
-    #                                dmrg_info=info,
-    #                                mpo=M,
-    #                                mps=psi,
-    #                                observables=obs,
-    #                                tracking_observables=tracking_obs
-    #                     )
+    filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
+    data_io.save_results_obs(filename,  model_params=model_params,
+                                    init_state=product_state,
+                                    dmrg_params=dmrg_params,
+                                    dmrg_info=info,
+                                    mpo=M,
+                                    mps=psi,
+                                    observables=obs,
+                                    tracking_observables=tracking_obs
+                         )
 
     # output to check sanity
     print("E = {E:.13f}".format(E=info['E']))

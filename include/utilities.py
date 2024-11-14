@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import tenpy.linalg.np_conserved as npc
+from tenpy.tools.fit import sum_of_exp
 
 
 def power_law_decay(dist, alpha):
@@ -59,6 +60,28 @@ def plot_fit(x_vals, y_powerlaw, y_sumexp):
     plt.legend(loc='best')
     plt.show()
 
+def determine_n_exp(n_exp_min=1, err_tol=1e-10, L=1000, alpha=100.0, plot=False):
+    n_exp = n_exp_min
+    n_exp_max = L//2
+    fit_range = L
+
+    while n_exp_min < n_exp_max:
+        lam, pref = fit_with_sum_of_exp(power_law_decay, alpha, n_exp, L)
+        x = np.arange(1, fit_range + 1)
+        err = np.sum(np.abs(power_law_decay(x, alpha) - sum_of_exp(lam, pref, x)))
+
+        if err < err_tol:
+            print("*"*100)
+            print(f"alpha = {alpha}, n_exp = {n_exp}")
+            print('error in fit: {0:.3e}'.format(err))
+            if plot:
+                plot_fit(x, power_law_decay(x, alpha), sum_of_exp(lam, pref, x) )
+            break
+
+        n_exp += 1
+
+    return n_exp
+
 
 def calc_tracking_quantities(psi, info, dmrg_params):
     # sweeps
@@ -67,7 +90,7 @@ def calc_tracking_quantities(psi, info, dmrg_params):
 
     # bond dimensions
     chi_max = max(psi.chi)
-    _ , chi_limit = list(dmrg_params['chi_list'].items())[-1]
+    _ , chi_limit = list(dmrg_params['chi_list'].items())[-1]  # FIXME this only works if there is indeed a chi list
     chi = (chi_limit, chi_max)
 
     # calculate x- and z-parity

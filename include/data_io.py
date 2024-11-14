@@ -59,6 +59,31 @@ def param_use(argv):
     return L, D, alpha, n_exp
 
 
+def write_joblist_files(basename, script, L, alpha, Ds, n_exp):
+    # Writing to file
+    filename = f"{basename}_L{L}_alpha{alpha}.txt"
+    with open(filename, "w") as file:
+        for D in Ds:
+            line = f"python {script} -L {L} -D {D} -a {alpha} -e {n_exp}\n"
+            file.write(line)
+
+    print(f"Output written to {filename}")
+
+
+def write_one_joblist_file(filename, script, L, alpha, Ds, n_exp, append=True):
+    write_flag = 'w'
+    if append:
+        write_flag = 'a'
+
+    # Writing to file
+    with open(filename, write_flag) as file:
+        for D in Ds:
+            line = f"python {script} -L {L} -D {D} -a {alpha} -e {n_exp}\n"
+            file.write(line)
+
+    print(f"Output written to {filename}")
+
+
 def log_sweep_statistics(L, alpha, D, sweep_info):
     # global log number of sweeps
     # TODO: I could also print other info here like max bond dimension
