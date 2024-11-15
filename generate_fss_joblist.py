@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     #######################################################
     # Parameters
-    script = "dmrg_spinone_heisenberg_fidelity.py"
+    script = "dmrg_spinone_heisenberg_fss.py"
     basename = "joblist_dmrg_fss"
     plotflag = False
     alpha = float('inf')

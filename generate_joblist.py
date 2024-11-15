@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     #######################################################
     # Parameters
-    script = "dmrg_spinone_heisenberg_all.py"
+    script = "dmrg_spinone_heisenberg.py"
     basename = "joblist_dmrg"
     plotflag = False
     L = 100

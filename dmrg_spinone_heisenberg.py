@@ -1,4 +1,3 @@
-# padelhardt
 import numpy as np
 import sys
 import time
@@ -32,7 +31,7 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
         'mixer': False,  # TODO: Turn off mixer for large alpha!? For small alpha it may be worth a try increasing
         #'mixer_params': {
         #    'amplitude': 1.e-4,  # FIXME: should be chosen larger than smallest svd vals kept
-        #    'decay': 1.0
+        #    'decay': 2.0
         #    'disable_after': 10,
         #},
         'trunc_params': {
@@ -48,11 +47,10 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
             8: 300,
         },
         'max_E_err': 1.e-9,
-        'max_S_err': 1.e-7,
-        'norm_tol': 1.e-7,
-        'max_sweeps': 100,
+        'max_S_err': 1.e-6,
+        'norm_tol': 1.e-6,
+        'max_sweeps': 50,
     }
-
 
     # create spine one model
     M = LongRangeSpinOneChain(model_params)
@@ -74,26 +72,25 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
     tracking_obs = utilities.calc_tracking_quantities(psi, info, dmrg_params)
 
     # calculate observables
-    #obs = utilities.calc_observables(psi)
+    obs = utilities.calc_observables(psi)
 
     # save everything to a hdf5 file
-    # TODO: add empty data dir to repo
-    #filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
-    #data_io.save_results_obs(filename,  model_params=model_params,
-    #                                init_state=product_state,
-    #                                dmrg_params=dmrg_params,
-    #                                dmrg_info=info,
-    #                                mpo=M,
-    #                                mps=psi,
-    #                                observables={},
-    #                                tracking_observables=tracking_obs
-    #                     )
+    filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
+    data_io.save_results_obs(filename,  model_params=model_params,
+                                    init_state=product_state,
+                                    dmrg_params=dmrg_params,
+                                    dmrg_info=info,
+                                    mpo=M,
+                                    mps=psi,
+                                    observables=obs,
+                                    tracking_observables=tracking_obs
+                         )
 
     # output to check sanity
     print("E = {E:.13f}".format(E=info['E']))
     print("final bond dimensions psi: ", psi.chi)
 
-    return E, tracking_obs, psi
+    return E, tracking_obs, obs
 
 
 def main(argv):
@@ -101,9 +98,7 @@ def main(argv):
     ######################
     # read terminal inputs
     L, D, alpha, n_exp = data_io.param_use(argv)
-    eps = 1e-3
 
-    ##########
     # AUXFIELD ?
     #B = 0.
     if alpha > 3.0:
@@ -114,32 +109,24 @@ def main(argv):
     ##########
     # run dmrg
     start_time = time.time()
-    E, tracking_obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, alpha=alpha, B=B, n_exp=n_exp)
-    E_eps, tracking_obs_eps, psi_eps = dmrg_lr_spinone_heisenberg_finite(L=L, D=D+eps, alpha=alpha, B=B, n_exp=n_exp)
+    E, tracking_obs, obs = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, alpha=alpha, n_exp=n_exp)
     print("--- %s seconds ---" % (time.time() - start_time))
 
     ###########################
     # writing the data to files
-    # unpack and prepare
+    # unpack
     nsweeps, chi, Px, Stot_sq = tracking_obs
     chi_limit, chi_max = chi
-    nsweeps_eps, chi_eps, Px_eps, Stot_sq_eps = tracking_obs_eps
-    chi_limit, chi_max_eps = chi_eps
-    delta_E = E_eps - E
     # save tracking obs
-    str_tracking_obs = ["gs_energy", "gs_energy_eps", "gs_energy_diff", "parity_x", "parity_x_eps", "s_total", "s_total_eps", "chi_max", "chi_max_eps", "nsweeps", "nsweeps_eps"]
-    tracking_obs = [E, E_eps, delta_E, Px, Px_eps, Stot_sq, Stot_sq_eps, chi_max, chi_max_eps, nsweeps, nsweeps_eps]
-    data_io.write_observables_to_file("spinone_heisenberg_fidelity_trackobs", str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
+    str_tracking_obs = ["gs_energy", "parity_x", "s_total", "chi_max", "nsweeps"]
+    tracking_obs = [E, Px, Stot_sq, chi_max, nsweeps]
+    data_io.write_observables_to_file("spinone_heisenberg_all_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
     # save observables
-    overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
-    fidelity = utilities.calc_fidelity(psi, psi_eps, eps)
-    log_fidelity = utilities.calc_log_fidelity(psi, psi_eps, eps)
-    obs = [eps, overlap, fidelity, log_fidelity]
-    str_observables = ["eps", "overlap", "fidelity", "log_fidelity"]
-    data_io.write_observables_to_file("spinone_heisenberg_fidelity_obs", str_observables, obs, L, alpha, D, chi_limit)
+    str_observables = ["SvN", "m_trans", "m_long", "str_order"]
+    data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, chi_limit)
 
 
 if __name__ == "__main__":
-    import logging
-    logging.basicConfig(level=logging.INFO)
-    main(sys.argv[1:])
+   import logging
+   logging.basicConfig(level=logging.INFO)
+   main(sys.argv[1:])
