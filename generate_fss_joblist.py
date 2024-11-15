@@ -19,24 +19,25 @@ if __name__ == "__main__":
     #Dcmax = -0.28
     koppa = 1.
     nu = 1.
-    nonuni_pref_Dc = (Dcmin-Dcinf)*Ls[0]**(koppa/nu)  # choose such that it coincides with Dcmin
+    #nonuni_pref_Dc = (Dcmin-Dcinf)*Ls[0]**(koppa/nu)  # choose such that it coincides with Dcmin
     nonuni_pref_range = 4.
     # should locate peak for min and max length, then scale appropriately with expected exponent
-    Dcs = [nonuni_pref_Dc*L**(-koppa/nu) + Dcinf for L in Ls]
+    #Dcs = [nonuni_pref_Dc*L**(-koppa/nu) + Dcinf for L in Ls]
     #Dcs = np.linspace(Dcmin, Dcmax, len(Ls))  # Can also be used if nu=1
-    n_datapoints = 25
+    n_datapoints = 40
     err_tol = 1e-9
     #alphas = np.reciprocal(np.arange(0.0, 0.82, 0.02))
     #print(alphas)
     #######################################################
 
     n_exp_min = n_exp = 1
-    for i, (L, Dc) in enumerate(zip(Ls, Dcs)):
+    #for i, (L, Dc) in enumerate(zip(Ls, Dcs)):
+    for i, L in enumerate(Ls):
         print(f"L={L}")
-        Dmin = Dc - nonuni_pref_range*L**(-koppa/nu)
-        Dmax = Dc + nonuni_pref_range*L**(-koppa/nu)
+        Dmin = Dcinf - nonuni_pref_range*L**(-koppa/nu)
+        Dmax = Dcinf + nonuni_pref_range*L**(-koppa/nu)
         Ds = np.linspace(Dmin, Dmax, n_datapoints)
-        print(f"Dc={Dc}")
+        #print(f"Dc={Dc}")
         print(f"Dmin={Dmin}, Dmax={Dmax}")
 
         if math.isinf(alpha):
