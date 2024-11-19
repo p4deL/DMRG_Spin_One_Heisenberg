@@ -46,7 +46,7 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
             6: 200,
             8: 300,
         },
-        'max_E_err': 1.e-9,
+        'max_E_err': 1.e-8,
         'max_S_err': 1.e-6,
         'norm_tol': 1.e-6,
         'max_sweeps': 50,
@@ -120,7 +120,7 @@ def main(argv):
     # save tracking obs
     str_tracking_obs = ["gs_energy", "parity_x", "s_total", "chi_max", "nsweeps"]
     tracking_obs = [E, Px, Stot_sq, chi_max, nsweeps]
-    data_io.write_observables_to_file("spinone_heisenberg_all_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
     # save observables
     str_observables = ["SvN", "m_trans", "m_long", "str_order"]
     data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, chi_limit)

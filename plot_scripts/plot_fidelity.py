@@ -13,8 +13,9 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 
-L = 14  # system size
-alpha = 1.1
+L = 60  # system size
+alpha = 'inf'
+chi = 300
 
 # output filename
 output_file = f"plots/fidelity_alpha{alpha}_L{L}.pdf"

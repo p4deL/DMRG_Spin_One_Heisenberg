@@ -13,7 +13,7 @@ if __name__ == "__main__":
     basename = "joblist_dmrg"
     plotflag = False
     L = 100
-    Ds = np.arange(-1.0, 0.5, 0.02)
+    Ds = np.arange(-0.6, 1.22, 0.02)
     err_tol = 1e-9
     alphas = np.reciprocal(np.arange(0.0, 0.82, 0.02))
     print(alphas)

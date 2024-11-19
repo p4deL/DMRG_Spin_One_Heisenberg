@@ -11,20 +11,20 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 L = 100  # system size
-alpha = 10.0
+alpha = "inf"
 chi = 300
 
-max_sweeps = 100
+max_sweeps = 200
 
 # output filename
 output_file = f"plots/fidelity_info_chi{chi}_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
 #data_dir = f"output/L{L}/"
-data_dir = f"output/"
+data_dir = f"output/B-1e-2/"
 
 
-all_quantities = [["fidelity"], ["overlap"], ["gs_energy", "gs_energy_eps"], ["gs_energy_diff"], ["parity_x", "parity_x_eps"], ["s_total", "s_total_eps"], ["chi_max", "chi_max_eps"], ["nsweeps", "nsweeps_eps"]]
+all_quantities = [["fidelity", "log_fidelity"], ["overlap"], ["gs_energy", "gs_energy_eps"], ["gs_energy_diff"], ["parity_x", "parity_x_eps"], ["s_total", "s_total_eps"], ["chi_max", "chi_max_eps"], ["nsweeps", "nsweeps_eps"]]
 
 markers = ["+", "x"]
 labels = ["$\\chi_{\\rm fidelity}$", "$\\langle \\psi(D) \\vert \\psi(D+\\epsilon) \\rangle$", "$\\epsilon_{\\rm gs}$", "$\\Delta \\epsilon_{\\rm gs}$", "$P_x$", "$S_{\\rm tot}$", "$\\chi_{\\rm bond}$", "$N_{\\rm sweeps}$"]
@@ -34,13 +34,21 @@ fig, axs = plt.subplots(8, 1, figsize=(8, 10), sharex=True)
 
 for i, (quantities, label) in enumerate(zip(all_quantities, labels)):
     
+    if i < 2:
+        file =  f'spinone_heisenberg_fidelity_obs_chi{chi}_alpha{alpha}_L{L}.csv'
+    else:
+        file =  f'spinone_heisenberg_fidelity_trackobs_chi{chi}_alpha{alpha}_L{L}.csv'
+
     axs[i].set_ylabel(label)
     for j, quantity in enumerate(quantities):
-        file =  f'spinone_heisenberg_{quantity}_chi{chi}_alpha{alpha}_L{L}.csv'
+        
         # Read the data
         data = pd.read_csv(data_dir + file)
         x = data["D"].values
         y = data[quantity].values
+
+        if quantity == "fidelity" or quantity == "log_fidelity":
+            y = y/L
 
         combined = list(zip(x, y))
         sorted_combined = sorted(combined)
@@ -62,7 +70,8 @@ for i, (quantities, label) in enumerate(zip(all_quantities, labels)):
         axs[i].legend(loc="upper right")
 
 # Label the x-axis on the last subplot only (shared x-axis)
-axs[0].set_ylim(-0.5,80)
+axs[0].set_ylim(0.0,0.8)
+axs[1].set_ylim(0.99985,1.00000)
 #axs[1].set_ylim(1.-2e-6,1.+2e-6)
 axs[4].set_ylim(-1.2,1.2)
 axs[-2].set_ylim(0,chi+50)
