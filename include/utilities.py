@@ -131,8 +131,9 @@ def calc_observables(psi):
     i = L//4
     j = i + L//2
     str_order = corr_str_order[i, j]
+    eff_str_order = corr_str_order[i, j] - corr_zz[i, j]
 
-    return SvN, mag_pm_stag, mag_zz_stag, str_order
+    return SvN, mag_pm_stag, mag_zz_stag, str_order, eff_str_order
 
 
 def calc_log_fidelity(psi, psi_eps, eps):

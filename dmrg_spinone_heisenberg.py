@@ -122,7 +122,7 @@ def main(argv):
     tracking_obs = [E, Px, Stot_sq, chi_max, nsweeps]
     data_io.write_observables_to_file("spinone_heisenberg_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
     # save observables
-    str_observables = ["SvN", "m_trans", "m_long", "str_order"]
+    str_observables = ["SvN", "m_trans", "m_long", "str_order", "eff_str_order"]
     data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, chi_limit)
 
 
