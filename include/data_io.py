@@ -2,7 +2,10 @@ import csv
 from filelock import FileLock
 import getopt
 import h5py
+import numpy as np
 import os
+import pandas as pd
+import re
 import sys
 from tenpy.tools import hdf5_io
 
@@ -82,6 +85,65 @@ def write_one_joblist_file(filename, script, L, alpha, Ds, n_exp, append=True):
             file.write(line)
 
     print(f"Output written to {filename}")
+
+
+def read_fss_data(path, obs_string, alpha, chi, cutoff_l=0, cutoff_r=0, reciprocal=False):
+    """read data for given observable (as string) and return prepared data"""
+
+    data_L = []
+    data_tuning_param = []
+    data_obs = []
+    # iterate over files in path
+    for f in os.listdir(path):
+        # check if indeed is file
+        if os.path.isfile(os.path.join(path, f)):
+            # check if filename contains string of observable
+            if "fss_obs" in f:
+                print(f)
+                # extract system size from filename
+                # FIXME: TRACKOBS doesn't work if there are other files...
+                system_size = int(re.search(f"spinone_heisenberg_fss_obs_chi{chi}_alpha{alpha}_L(.*).csv", f).group(1))
+
+                # import csv with panda
+                df = pd.read_csv(path + f)
+                # data_array = df.to_numpy()
+                # sigmas = data_array[:,0]
+                # FIXME
+                # hs = data_array[:,0]
+                # obs = data_array[:,3] # FIXME do i need to multiply with L again?
+
+                Ds = df["D"].values
+                obs = df[obs_string].values
+
+                # TODO: only if necessary
+                # prepare list with j as control fixed_param
+                tmp = list(zip(Ds, obs))
+                tmp.sort(key=lambda x: x[0])
+                sorted_Ds = [tuples[0] for tuples in tmp]
+                sorted_obs = [tuples[1] for tuples in tmp]
+                l = len(sorted_Ds)
+
+                L = list(np.ones(len(Ds[cutoff_l:l - cutoff_r])) * system_size)
+                data_L += L
+                data_tuning_param += sorted_Ds[cutoff_l:l - cutoff_r]
+                data_obs += sorted_obs[cutoff_l:l - cutoff_r]
+
+                # TODO: WRITE DOWN WHAT'S GOING ON
+                # L = list(np.ones(len(hs))*system_size)
+                # data_L += L
+                # data_tuning_param += sorted_hs
+                # data_obs += sorted_obs
+
+                print(len(data_L))
+                print(len(data_tuning_param))
+
+    dim = len(sorted_Ds[cutoff_l:l - cutoff_r])
+    if reciprocal:
+        data = np.stack((np.array(data_L), np.reciprocal(data_tuning_param), np.array(data_obs)))
+    else:
+        data = np.stack((np.array(data_L), np.array(data_tuning_param), np.array(data_obs)))
+
+    return data, dim
 
 
 def log_sweep_statistics(L, alpha, D, sweep_info):

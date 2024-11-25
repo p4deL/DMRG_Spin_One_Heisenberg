@@ -1,5 +1,3 @@
-import os
-import re
 import numpy as np
 import matplotlib
 matplotlib.rcParams['text.usetex'] = True
@@ -17,88 +15,44 @@ rc('text.latex', preamble = r"\usepackage[greek, english]{babel}")
 rcParams['pgf.preamble'] = r"\usepackage[greek, english]{babel}"
 from matplotlib import pyplot as plt
 from scipy import optimize
-import pandas as pd
 import sys
 
+import include.data_io as data_io
 
-alpha = 6.0
+alpha = 2.5
 chi = 300
 #sigma = float(fixed_sigma)
 #koppa = np.maximum(1, 2./(3*sigma))
 koppa = 1.
 #print(koppa)
 
+reciprocal_lambda = True
 
 # global xc and nu guess
 #obs_string = "fidelity"
-obs_string = "m_long"
+#obs_string = "m_long"
+obs_string = "m_trans"
 
-#ylabel = "$\\chi_L$"
-ylabel =  "$M_{\\rm \\parallel}$"
-
-data_path = f"output/fss/alpha{alpha}/"
-out_file = f"plots/fss_fidelity_alpha{alpha}.pdf"
 cutoff_left = 0
-cutoff_right = 20
+cutoff_right = 0
 
+if obs_string == "fidelity":
+    ylabels = ("$\\chi_{\\rm fidelity}$", '$L^{-2/\\nu}\\chi_{\\rm fidelity}$')  # FIXME
+elif obs_string == "m_long":
+    ylabels = ("$M_{z}$", "$L^{\\beta/\\nu}M_{z}$")
+else:
+    ylabels = ("$M_{\\rm \\perp}$", "$L^{\\beta/\\nu}M_{\\rm \\perp}$")
 
+if reciprocal_lambda:
+    xlabels = ("$\\lambda$", "$L^{1/\\nu}(\\lambda-\\lambda_c)$")
+else:
+    xlabels = ("$D$", "$L^{1/\\nu}(D-D_c)$")
 
-def read_data(path, obs_string, alpha, chi, cutoff_l=0, cutoff_r=0):
-    """read data for given observable (as string) and return prepared data"""
+labels = (xlabels, ylabels)
 
-    data_L = []
-    data_tuning_param = []
-    data_obs = []
-    # iterate over files in path
-    for f in os.listdir(path):
-        # check if indeed is file
-        if os.path.isfile(os.path.join(path, f)):
-            # check if filename contains string of observable
-            if "fss_obs" in f:
-                print(f)
-                # extract system size from filename
-                # FIXME: TRACKOBS doesn't work if there are other files...
-                system_size = int(re.search(f"spinone_heisenberg_fss_obs_chi{chi}_alpha{alpha}_L(.*).csv", f).group(1))
+data_path = f"data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
+out_file = f"plots/fss_{obs_string}_alpha{alpha}.pdf"
 
-                # import csv with panda
-                df = pd.read_csv(path + f)
-                #data_array = df.to_numpy()
-                #sigmas = data_array[:,0]
-                # FIXME
-                #hs = data_array[:,0]
-                #obs = data_array[:,3] # FIXME do i need to multiply with L again?
-
-                Ds = df["D"].values
-                obs = df[obs_string].values
-
-
-                # TODO: only if necessary
-                # prepare list with j as control fixed_param
-                tmp = list(zip(Ds, obs))
-                tmp.sort(key=lambda x: x[0])
-                sorted_Ds = [tuples[0] for tuples in tmp]
-                sorted_obs = [tuples[1] for tuples in tmp]
-                l = len(sorted_Ds)
-
-                L = list(np.ones(len(Ds[cutoff_l:l-cutoff_r]))*system_size)
-                data_L += L
-                data_tuning_param += sorted_Ds[cutoff_l:l-cutoff_r]
-                data_obs += sorted_obs[cutoff_l:l-cutoff_r]
-
-                # TODO: WRITE DOWN WHAT'S GOING ON
-                #L = list(np.ones(len(hs))*system_size)
-                #data_L += L
-                #data_tuning_param += sorted_hs
-                #data_obs += sorted_obs
-
-                print(len(data_L))
-                print(len(data_tuning_param))
-
-    dim = len(sorted_Ds[cutoff_l:l-cutoff_r])
-    data = np.stack((np.array(data_L), np.array(data_tuning_param), np.array(data_obs)))
-
-  
-    return data, dim
 
 
 def fss_fid_suscept_fit_func(data, x_c, invnu, exponent, *coefs):
@@ -138,7 +92,7 @@ def perform_data_collapse(data, fit_func):
     
     return params, params_covariance
 
-def plot_data_collapse(out_file, data, dim, params, params_covariance, ylabel):
+def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_string, labels):
 
     #fix, ax = plt.subplots()
     #ins_ax = ax.inset_axes([.3, .1, .45, .35])  # [x, y, width, height] w.r.t. ax
@@ -152,10 +106,10 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, ylabel):
     invnu = params[1]
     beta = params[2]
     nu = 1/params[1]
-    print(f"koppa={koppa}")
-    print(f"invnu={invnu}")
-    print(f"beta={beta}")
-    print(f"nu={nu}")
+    #print(f"koppa={koppa}")
+    #print(f"invnu={invnu}")
+    #print(f"beta={beta}")
+    #print(f"nu={nu}")
 
     #exp = 0.5
 
@@ -170,38 +124,44 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, ylabel):
         #nu = 1.0
         #beta = 0.125
         #x_c = 1.0
-        ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(1*beta*invnu)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
-        #ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(-2*invnu)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
+        if obs_string == "fidelity":
+            ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(-2*invnu)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
+        else:
+            ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(1*beta*invnu)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
+
         ins_ax.plot(x[start:end], obs[start:end])
 
 
+    (xlabel, xlabel_scaling), (ylabel, ylabel_scaling) = labels
+
     print("x_c: ", x_c, np.sqrt(params_covariance[0,0]))
-    print("beta: ", beta, np.sqrt(params_covariance[2,2]))
     print("nu: ", nu, np.sqrt(params_covariance[1,1]))
     print("FIXME: covriance for nu")
-
-    #resstr = '\n'.join(('$h_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, )))
-    resstr = '\n'.join(('$h_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\beta=%.4f$' % beta, ))
+    if obs_string != "fidelity":
+        print("beta: ", beta, np.sqrt(params_covariance[2,2]))
+        resstr = '\n'.join((xlabel + '$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\beta=%.4f$' % beta, ))
+    else:
+        resstr = '\n'.join((xlabel +'$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, )))
 
     # these are matplotlib.patch.Patch properties
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 
     # place a text box in upper left in axes coords
-    ax.text(0.025, 0.1, resstr, transform=ax.transAxes, fontsize=12, verticalalignment='center', bbox=props)
+    ax.text(0.025, 0.9, resstr, transform=ax.transAxes, fontsize=12, verticalalignment='center', bbox=props)
     #ax.text(0.025, 0.9, resstr, transform=ax.transAxes, fontsize=12, verticalalignment='center', bbox=props)
+
 
     #ax.set_xlabel('$L^{ {\\selectlanguage{greek}\\qoppa}/\\nu}(h-h_c)$' , fontsize=16)
     #ax.set_ylabel('$L^{2\\beta\\selectlanguage{greek}\\qoppa/\\nu}\\left\\langle M^2 \\right\\rangle_L$', fontsize=16)
-    ax.set_xlabel('$L^{1/\\nu}(D-D_c)$' , fontsize=16)
-    ax.set_ylabel('$L^{\\beta/\\nu}$' + ylabel, fontsize=16)
-    #ax.set_ylabel('$L^{-2/\\nu}$' + ylabel, fontsize=16)
+    ax.set_xlabel(xlabel_scaling, fontsize=16)
+    ax.set_ylabel(ylabel_scaling, fontsize=16)
 
-    ins_ax.set_xlabel('$D$' , fontsize=16)
+    ins_ax.set_xlabel(xlabel, fontsize=16)
     ins_ax.set_ylabel(ylabel, fontsize=16)
 
     handles, labels = ax.get_legend_handles_labels()
     labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-    ax.legend(handles, labels, loc="upper right")
+    ax.legend(handles, labels, loc="lower right")
     #ax.legend()
 
     plt.savefig(out_file, bbox_inches='tight')
@@ -209,14 +169,13 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, ylabel):
 
 
 def main(argv):
-    data, dim = read_data(data_path, obs_string, alpha, chi, cutoff_l=cutoff_left, cutoff_r=cutoff_right)
-    if obs_string == "m_long":
-        params, params_covariance = perform_data_collapse(data, fss_mag_fit_func)
-        print("mag fit")
-    else:
+    data, dim = data_io.read_fss_data(data_path, obs_string, alpha, chi, cutoff_l=cutoff_left, cutoff_r=cutoff_right, reciprocal=reciprocal_lambda)
+    if obs_string == "fidelity":
         params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func)
+    else:
+        params, params_covariance = perform_data_collapse(data, fss_mag_fit_func)
 
-    plot_data_collapse(out_file, data, dim, params, params_covariance, ylabel)
+    plot_data_collapse(out_file, data, dim, params, params_covariance, obs_string, labels)
 
 
 if __name__ == "__main__":
