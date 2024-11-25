@@ -31,7 +31,7 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
         'mixer': False,  # TODO: Turn off mixer for large alpha!? For small alpha it may be worth a try increasing
         #'mixer_params': {
         #    'amplitude': 1.e-4,  # FIXME: should be chosen larger than smallest svd vals kept
-        #    'decay': 2.0
+        #    'decay': 2.0,
         #    'disable_after': 10,
         #},
         'trunc_params': {
@@ -61,6 +61,7 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
     else:
         product_state = [1] * L
 
+
     # initial guess mps
     psi = MPS.from_product_state(M.lat.mps_sites(), product_state, bc=M.lat.bc_MPS)
 
@@ -75,22 +76,22 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
     obs = utilities.calc_observables(psi)
 
     # save everything to a hdf5 file
-    filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
-    data_io.save_results_obs(filename,  model_params=model_params,
-                                    init_state=product_state,
-                                    dmrg_params=dmrg_params,
-                                    dmrg_info=info,
-                                    mpo=M,
-                                    mps=psi,
-                                    observables=obs,
-                                    tracking_observables=tracking_obs
-                         )
+    #filename = f"output/data/dmrg_data_observables_alpha{alpha}_D{D}_L{L}.h5"
+    #data_io.save_results_obs(filename,  model_params=model_params,
+    #                                init_state=product_state,
+    #                                dmrg_params=dmrg_params,
+    #                                dmrg_info=info,
+    #                                mpo=M,
+    #                                mps=psi,
+    #                                observables=obs,
+    #                                tracking_observables=tracking_obs
+    #                     )
 
     # output to check sanity
     print("E = {E:.13f}".format(E=info['E']))
     print("final bond dimensions psi: ", psi.chi)
 
-    return E, tracking_obs, obs
+    return E, tracking_obs, obs, psi
 
 
 def main(argv):
@@ -106,10 +107,11 @@ def main(argv):
     else:
         B = 0.
 
+
     ##########
     # run dmrg
     start_time = time.time()
-    E, tracking_obs, obs = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, alpha=alpha, n_exp=n_exp)
+    E, tracking_obs, obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, alpha=alpha, B=B, n_exp=n_exp)
     print("--- %s seconds ---" % (time.time() - start_time))
 
     ###########################

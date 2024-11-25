@@ -47,7 +47,7 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
             6: 200,
             8: 300,
         },
-        'max_E_err': 1.e-8,
+        'max_E_err': 1.e-9,
         'max_S_err': 1.e-7,
         'norm_tol': 1.e-7,
         'max_sweeps': 100,
@@ -75,9 +75,6 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, c
 
     # calculate observables
     obs = utilities.calc_observables(psi)
-
-    # calculate observables
-    #obs = utilities.calc_observables(psi)
 
     # save everything to a hdf5 file
     # TODO: add empty data dir to repo
@@ -115,7 +112,7 @@ def main(argv):
         B = 0.
 
     # TODO: Introduce parameter to decide whether we should calculate fidelity or not
-
+    
 
     ##########
     # run dmrg
