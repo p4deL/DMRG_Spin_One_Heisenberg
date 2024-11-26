@@ -16,7 +16,7 @@ if __name__ == "__main__":
     alpha = float('inf')
     Ls = [40, 50, 60]
     #Ls = [40, 60, 80, 100, 120, 140, 100, 240, 280, 320]
-    xcmin = 0.38
+    #xcmin = 0.38
     xcinf = 0.385  # guess for phase transition point
     koppa = 1.
     nu = 1.

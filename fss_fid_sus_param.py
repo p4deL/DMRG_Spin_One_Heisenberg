@@ -19,7 +19,7 @@ import sys
 
 import include.data_io as data_io
 
-alpha = 2.5
+alpha = 1.25
 chi = 300
 #sigma = float(fixed_sigma)
 #koppa = np.maximum(1, 2./(3*sigma))
@@ -103,9 +103,13 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
     x = data[1,:]
     obs = data[2,:]
     x_c = params[0]
+    dx_c = np.sqrt(params_covariance[0,0])
     invnu = params[1]
+    dinvnu = np.sqrt(params_covariance[1,1])
     beta = params[2]
+    dbeta = np.sqrt(params_covariance[2,2])
     nu = 1/params[1]
+    dnu = dinvnu/nu**2
     #print(f"koppa={koppa}")
     #print(f"invnu={invnu}")
     #print(f"beta={beta}")
@@ -134,11 +138,10 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
 
     (xlabel, xlabel_scaling), (ylabel, ylabel_scaling) = labels
 
-    print("x_c: ", x_c, np.sqrt(params_covariance[0,0]))
-    print("nu: ", nu, np.sqrt(params_covariance[1,1]))
-    print("FIXME: covriance for nu")
+    print(f"x_c = {x_c:.6f}±{dx_c:.6f}")
+    print(f"nu = {nu:.6f}±{dnu:.6f}")
     if obs_string != "fidelity":
-        print("beta: ", beta, np.sqrt(params_covariance[2,2]))
+        print(f"beta = {beta:.6f}±{dbeta:.6f}")
         resstr = '\n'.join((xlabel + '$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\beta=%.4f$' % beta, ))
     else:
         resstr = '\n'.join((xlabel +'$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, )))

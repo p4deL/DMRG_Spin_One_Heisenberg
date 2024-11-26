@@ -9,14 +9,26 @@ if __name__ == "__main__":
 
     #######################################################
     # Parameters
-    script = "dmrg_spinone_heisenberg.py"
+    script = "dmrg_spinone_heisenberg_fss.py"
     basename = "joblist_dmrg"
     plotflag = False
-    L = 100
-    Ds = np.arange(-0.6, 1.22, 0.02)
+    L = 20
+    #################
+    # D phase diagram
+    #Ds = np.arange(-0.4, 1.0, 0.02)
+    #alphas = np.reciprocal(np.arange(0.0, 0.82, 0.02))
+    # adaptive D phase diagram
+    Ds = np.arange(-0.4, 1.0, 0.02)
+    alphas1 = np.reciprocal(np.arange(0.0, 0.42, 0.02))
+    alphas2 = np.reciprocal(np.arange(0.45, 0.85, 0.05))
+    alphas = np.concatenate((alphas1, alphas2))
+    # lambda phase diagram
+    #lambdas = np.arange(0.02, 1.02, 0.02)
+    #Ds = np.reciprocal(lambdas)
+    #alphas = np.reciprocal(np.arange(0.0, 0.82, 0.02))
+    #################
+
     err_tol = 1e-9
-    alphas = np.reciprocal(np.arange(0.0, 0.82, 0.02))
-    print(alphas)
     #######################################################
 
     n_exp_min = n_exp = 1
