@@ -105,11 +105,11 @@ def main(argv):
 
     ##########
     # AUXFIELD ?
-    #B = 0.
-    if alpha > 3.0:
-        B = -1e-2
-    else:
-        B = 0.
+    B = 1.e-2
+    #if alpha > 3.0:
+    #    B = -1e-2
+    #else:
+    #    B = 0.
 
     # TODO: Introduce parameter to decide whether we should calculate fidelity or not
     
