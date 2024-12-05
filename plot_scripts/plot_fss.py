@@ -19,25 +19,25 @@ import sys
 
 import include.data_io as data_io
 
-alpha = 1.25
+alpha = 'inf'
 chi = 300
 #sigma = float(fixed_sigma)
 #koppa = np.maximum(1, 2./(3*sigma))
 koppa = 1.
 #print(koppa)
 
-reciprocal_lambda = True
+reciprocal_lambda = False
 
 # global xc and nu guess
-#obs_string = "fidelity"
+obs_string = "fidelity"
 #obs_string = "m_long"
-obs_string = "m_trans"
+#obs_string = "m_trans"
 
 cutoff_left = 0
-cutoff_right = 0
+cutoff_right = 10
 
 if obs_string == "fidelity":
-    ylabels = ("$\\chi_{\\rm fidelity}$", '$L^{-2/\\nu}\\chi_{\\rm fidelity}$')  # FIXME
+    ylabels = ("$\\chi_{\\rm fidelity}$", '$L^{-\\mu}\\chi_{\\rm fidelity}$')  # FIXME
 elif obs_string == "m_long":
     ylabels = ("$M_{z}$", "$L^{\\beta/\\nu}M_{z}$")
 else:
@@ -50,12 +50,13 @@ else:
 
 labels = (xlabels, ylabels)
 
-data_path = f"data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
+#data_path = f"data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
+data_path = f"data/fss/ising_transition/alpha{alpha}/"
 out_file = f"plots/fss_{obs_string}_alpha{alpha}.pdf"
 
 
 
-def fss_fid_suscept_fit_func(data, x_c, invnu, exponent, *coefs):
+def fss_fid_suscept_fit_func(data, x_c, invnu, mu, *coefs):
     L = data[0,:]
     x = data[1,:]
 
@@ -64,7 +65,7 @@ def fss_fid_suscept_fit_func(data, x_c, invnu, exponent, *coefs):
     for power, coef in enumerate(coefs):
         poly += coef*(L**(invnu)*(x-x_c))**power
 
-    return L**(2*invnu)*poly
+    return L**(mu)*poly
 
 def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
     L = data[0,:]
@@ -81,7 +82,7 @@ def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
 
 def perform_data_collapse(data, fit_func):
 
-    tuning_param_guess = -0.31
+    tuning_param_guess = -0.21
     invnu_guess = 1.
     exponent_guess = 0.125
     #print(fss_mag_fit_func(data[:2,:], tuning_param_guess, beta_guess, nu_guess, 1,1,1,1))
@@ -106,8 +107,8 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
     dx_c = np.sqrt(params_covariance[0,0])
     invnu = params[1]
     dinvnu = np.sqrt(params_covariance[1,1])
-    beta = params[2]
-    dbeta = np.sqrt(params_covariance[2,2])
+    exp = params[2]
+    dexp = np.sqrt(params_covariance[2,2])
     nu = 1/params[1]
     dnu = dinvnu/nu**2
     #print(f"koppa={koppa}")
@@ -129,9 +130,9 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
         #beta = 0.125
         #x_c = 1.0
         if obs_string == "fidelity":
-            ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(-2*invnu)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
+            ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(-exp)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
         else:
-            ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(1*beta*invnu)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
+            ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(exp*invnu)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
 
         ins_ax.plot(x[start:end], obs[start:end])
 
@@ -141,10 +142,11 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
     print(f"x_c = {x_c:.6f}±{dx_c:.6f}")
     print(f"nu = {nu:.6f}±{dnu:.6f}")
     if obs_string != "fidelity":
-        print(f"beta = {beta:.6f}±{dbeta:.6f}")
-        resstr = '\n'.join((xlabel + '$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\beta=%.4f$' % beta, ))
+        print(f"beta = {exp:.6f}±{dexp:.6f}")
+        resstr = '\n'.join((xlabel + '$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\beta=%.4f$' % exp, ))
     else:
-        resstr = '\n'.join((xlabel +'$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, )))
+        print(f"mu = {exp:.6f}±{dexp:.6f}")
+        resstr = '\n'.join((xlabel +'$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\mu=%.4f$' % exp, ))
 
     # these are matplotlib.patch.Patch properties
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)

@@ -14,7 +14,7 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 # system size 
-L = 60
+L = 110
 chi = 300
 
 # which phase diagram
@@ -25,11 +25,11 @@ phase_diag = "lambda_alpha"
 data_dir = f'../data/phase_diagram/{phase_diag}_observables/L{L}/'
 print(data_dir)
 
-#quantity = ['SvN', r'$S_{\rm VN}$']
+quantity = ['SvN', r'$S_{\rm VN}$']
 #quantity = ['str_order', r'$O^{\rm str}_{\frac{L}{4}, \frac{3L}{4}}$']
-#quantity = ['str_order', r'$O^{z,\rm str}_{\frac{L}{4}, \frac{3L}{4}}- \langle S^z_{\frac{L}{4}}S^z_{\frac{3L}{4}}\rangle$']
+#quantity = ['eff_str_order', r'$O^{z,\rm str}_{\frac{L}{4}, \frac{3L}{4}}- \langle S^z_{\frac{L}{4}}S^z_{\frac{3L}{4}}\rangle$']
 #quantity = ['m_long', r'$M_z$']  # TODO. different mag directions
-quantity = ['m_trans', r'$M_{\perp}$']  # TODO. different mag directions
+#quantity = ['m_trans', r'$M_{\perp}$']  # TODO. different mag directions
 #quantity = ['fidelity', 'fidelity', r'$\chi_{\rm fidelity}$']
 
 # output filename
@@ -129,7 +129,7 @@ alpha_values = np.concatenate(alpha_values)
 # sort transition values
 combined = zip(transition_alpha, transition_D)
 sorted_combined = sorted(combined, key=lambda x: x[0])
-transition_alpha , transition_D = zip(*sorted_combined)
+#transition_alpha , transition_D = zip(*sorted_combined)
 
 for Dc, alphac in zip(transition_D, np.reciprocal(transition_alpha)):
     print(f"alphac={alphac}, lambdac={Dc}")
@@ -140,12 +140,13 @@ for Dc, alphac in zip(transition_D, np.reciprocal(transition_alpha)):
 
 # Now create a grid of D and alphaval values for contouring
 D_grid, alpha_grid = np.meshgrid(np.unique(D_values), np.unique(alpha_values))
+print(z_values)
 
 # Create the contour plot
 plt.figure(figsize=(8, 6))
 
 colorplot = plt.pcolor(D_grid, alpha_grid, z_values.reshape(D_grid.shape), cmap='viridis')
-plt.plot(transition_D, transition_alpha, color='k')
+#plt.plot(transition_D, transition_alpha, color='k')
 #plt.scatter([-1.5, 0, 0, 0.5, 1.5], [0, 0, 0.5, 0.5, 0.], color='red', marker='o', s=100)
 
 # Add colorbar

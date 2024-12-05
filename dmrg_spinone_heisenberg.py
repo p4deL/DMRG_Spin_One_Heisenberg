@@ -101,7 +101,7 @@ def main(argv):
     L, D, alpha, n_exp = data_io.param_use(argv)
 
     # AUXFIELD ?
-    B = 1.e-2
+    B = -1.e-2
     #if alpha > 3.0:
     #    B = -1e-2
     #else:

@@ -29,7 +29,7 @@ def get_color_gradient(c1, c2, n):
 colors = get_color_gradient("#ff006e", "#3a86ff", 5)
 
 
-def plot_heisenberg_chain():
+def plot():
 
     fig = plt.figure(figsize = (5.51,5.51))
     #matplotlib.figure.SubplotParams(left=0.0,right=1.0,bottom=0.5,top=1.0)
@@ -67,8 +67,8 @@ def plot_heisenberg_chain():
 
     ax1.set_xlabel('$\\alpha$', fontsize=fs)
     ax1.set_ylabel('$\\lambda_c$', fontsize=fs)
-    #ax1.set_xlim([0.,6.2])
-    ax1.set_ylim([0.,0.5])
+    ax1.set_xlim([1., 3.])
+    ax1.set_ylim([0.,0.6])
     ax1.xaxis.set_major_locator(MultipleLocator(0.5))
     ax1.xaxis.set_minor_locator(MultipleLocator(0.25))
     ax1.yaxis.set_major_locator(MultipleLocator(0.2))
@@ -80,7 +80,7 @@ def plot_heisenberg_chain():
     ax2.errorbar(alphas, nus, yerr=dnus, color=exp[0], fmt=exp[1], ms=exp[2])
     ax2.set_xlabel('$\\alpha$', fontsize=fs)
     ax2.set_ylabel('$\\nu$', fontsize=fs)
-    #ax2.set_xlim([0.,6.2])
+    ax2.set_xlim([1.,3.])
     ax2.set_ylim([0.5,2.0])
     ax2.xaxis.set_major_locator(MultipleLocator(0.5))
     ax2.xaxis.set_minor_locator(MultipleLocator(0.25))
@@ -90,7 +90,7 @@ def plot_heisenberg_chain():
     ax3.errorbar(alphas, betas, yerr=dbetas, color=exp[0], fmt=exp[1], ms=exp[2])
     ax3.set_xlabel('$\\alpha$', fontsize=fs)
     ax3.set_ylabel('$\\beta$', fontsize=fs)
-    #ax3.set_xlim([0.,6.2])
+    ax3.set_xlim([1., 3.])
     ax3.set_ylim([0.0,0.5])
     #ax3.plot(sigmas,2*np.ones(200)-sigmas,color='black',linestyle='--')
     ax3.xaxis.set_major_locator(MultipleLocator(0.5))
@@ -123,6 +123,6 @@ def plot_heisenberg_chain():
 
 
 if __name__ == '__main__':
-    plot_heisenberg_chain()
+    plot()
 
 

@@ -17,11 +17,11 @@ chi = 300
 max_sweeps = 200
 
 # output filename
-output_file = f"plots/fidelity_info_chi{chi}_alpha{alpha}_L{L}.pdf"
+output_file = f"../plots/fidelity_info_chi{chi}_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
 #data_dir = f"output/L{L}/"
-data_dir = f"output/B-1e-2/"
+data_dir = f"../output/B-1e-2/"
 
 
 all_quantities = [["fidelity", "log_fidelity"], ["overlap"], ["gs_energy", "gs_energy_eps"], ["gs_energy_diff"], ["parity_x", "parity_x_eps"], ["s_total", "s_total_eps"], ["chi_max", "chi_max_eps"], ["nsweeps", "nsweeps_eps"]]
