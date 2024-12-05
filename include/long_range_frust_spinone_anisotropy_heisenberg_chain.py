@@ -13,8 +13,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
     r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
 
        .. math ::
-           H = \sum_i \vec{S}_i \cdot \vec{S}_{j} + \Gamma \sum_{j>i+1} (-1)^{i-j+1}/|i-j|^{\alpha}} \vec{S}_i \cdot \vec{S}_{j} + B S^z_0 + + D \sum_i (S^z_i)^2
-           H = (1-\Gamma)\sum_i \vec{S}_i \cdot \vec{S}_{j} + \Gamma \sum_{j>i} (-1)^{i-j+1}/|i-j|^{\alpha}} \vec{S}_i \cdot \vec{S}_{j} + B S^z_0 + + D \sum_i (S^z_i)^2
+           H = \sum_{j>i} 1/|i-j|^{\alpha}  \vec{S}_{i} \cdot \vec{S}_{j} + B \sum_i (-1)^i S^z_i  + D \sum_i (S^z_i)^2
        """
     default_lattice = Chain
     force_default_lattice = True
@@ -32,7 +31,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
         return spin_site
 
     def init_terms(self, model_params):
-        Gamma = model_params.get('Gamma', 0.)
+        B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
         alpha = model_params.get('alpha', float('inf'))
         n_exp = model_params.get('n_exp', 2)  # Number of exponentials in fit
@@ -40,19 +39,16 @@ class LongRangeSpinOneChain(CouplingMPOModel):
 
         # add on-site terms
         # staggered auxillary field
-        #Bstag = [B, -B] * (self.lat.N_sites // 2)
-        #self.add_onsite(Bstag, 0, 'Sz')
-        # single-site aux field to lift edge-state degeneracy
-        self.add_onsite_term(B, 0, 'Sz')
-        #self.add_onsite_term(-B, self.lat.N_sites-1, 'Sz')  # TODO: Try if things get better if I include two terms
+        Bstag = [B, -B] * (self.lat.N_sites // 2)
+        self.add_onsite(Bstag, 0, 'Sz')
         # Sz anisotropy
         self.add_onsite(D, 0, 'Sz Sz')
 
-        for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
-            self.add_coupling((1. - Gamma) / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
-            self.add_coupling((1. - Gamma), u1, 'Sz', u2, 'Sz', dx)
-
-        if not math.isinf(alpha):
+        if math.isinf(alpha):
+            for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
+                self.add_coupling(1. / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
+                self.add_coupling(1., u1, 'Sz', u2, 'Sz', dx)
+        else:
             # fit power-law decay with sum of exponentials
             lam, pref = utilities.fit_with_sum_of_exp(utilities.power_law_decay, alpha, n_exp, fit_range)
             x = np.arange(1, fit_range + 1)
@@ -63,23 +59,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
             #plot_fit(x, power_law_decay(x, alpha), sum_of_exp(lam, pref, x) )
             print("*" * 100)
 
-            # rescale linear prefactors with coupling constant of long-range terms
-            print(pref)
-            pref = Gamma * pref
-            print(pref)
-
             # add exponentially_decaying terms
             for pr, la in zip(pref, lam):
                 self.add_exponentially_decaying_coupling(0.5*pr, la, 'Sp', 'Sm', plus_hc=True)
                 self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz')
-                # change sign of Ferro couplings
-                prprime = -2*pr
-                laprime = la**2
-                # couplings on even sites
-                even_sites = list(range(0,self.lat.N_sites,2))
-                self.add_exponentially_decaying_coupling(0.5*prprime, laprime, 'Sp', 'Sm', subsites=even_sites, plus_hc=True)
-                self.add_exponentially_decaying_coupling(prprime, laprime, 'Sz', 'Sz', subsites=even_sites)
-                # couplings on odd sites
-                odd_sites = list(range(1,self.lat.N_sites,2))
-                self.add_exponentially_decaying_coupling(0.5*prprime, laprime, 'Sp', 'Sm', subsites=odd_sites, plus_hc=True)
-                self.add_exponentially_decaying_coupling(prprime, laprime, 'Sz', 'Sz', subsites=odd_sites)

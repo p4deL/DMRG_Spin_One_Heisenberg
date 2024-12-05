@@ -7,7 +7,7 @@ from tenpy.algorithms import dmrg
 from tenpy.networks.mps import MPS
 
 import include.data_io as data_io
-from include.long_range_exp_spinone_heisenberg_chain import LongRangeSpinOneChain
+from include.long_range_exp_spinone_anisotropy_heisenberg_chain import LongRangeSpinOneChain
 import include.utilities as utilities
 
 
