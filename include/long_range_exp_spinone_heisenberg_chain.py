@@ -33,6 +33,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
 
     def init_terms(self, model_params):
         Gamma = model_params.get('Gamma', 0.)
+        B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
         alpha = model_params.get('alpha', float('inf'))
         n_exp = model_params.get('n_exp', 2)  # Number of exponentials in fit
