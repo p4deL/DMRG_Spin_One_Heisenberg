@@ -11,55 +11,53 @@ from tenpy.tools import hdf5_io
 
 
 def usage():
-    print("Usage: dmrg_spinone_heisenberg_lr_coupling.py -L <length of chain> -D <single ion anisotropy strength> -a <decay exponent alpha> -e <number of exp terms to fit power law>")
+    print("Usage: dmrg_spinone_heisenberg_lr_coupling.py -L <length of chain> -D <single ion anisotropy strength> -G <Beyond-NN coupling parameter> -a <decay exponent alpha> -e <number of exp terms to fit power law>")
 
 
 def param_use(argv):
     L = 0
     D = 1.
+    Gamma = 1.
     alpha = 10.
     n_exp = 0
-    found_l = found_D = found_a = found_exp = False
+    found_l = found_a = found_exp = False
 
     try:
-        opts, args = getopt.getopt(argv, "L:D:a:e:h", ["Length=", "D=", "alpha=", "nexp=", "help"])
+        opts, args = getopt.getopt(argv, "L:D:G:a:e:h", ["Length=", "D=", "Gamma=", "alpha=", "nexp=", "help"])
     except getopt.GetoptError:
-      usage()
-      sys.exit(2)
+        usage()
+        sys.exit(2)
     for opt, arg in opts:
-      if opt in ("-h", "--help"):
-         usage()
-      elif opt in ("-L", "--Length"):
-        L = int(arg)
-        found_l = True
-      elif opt in ("-D", "--D"):
-        D = float(arg)
-        found_D = True
-      elif opt in ("-a", "--alpha"):
-        alpha = float(arg)
-        found_a = True
-      elif opt in ("-e", "--nexp"):
-          n_exp = int(arg)
-          found_exp = True
+        if opt in ("-h", "--help"):
+            usage()
+        elif opt in ("-L", "--Length"):
+            L = int(arg)
+            found_l = True
+        elif opt in ("-D", "--D"):
+            D = float(arg)
+        elif opt in ("-G", "--Gamma"):
+            Gamma = float(arg)
+        elif opt in ("-a", "--alpha"):
+            alpha = float(arg)
+            found_a = True
+        elif opt in ("-e", "--nexp"):
+            n_exp = int(arg)
+            found_exp = True
 
     if not found_l:
-     print("Length of ladder (system size) not given.")
-     usage()
-     sys.exit(2)
-    if not found_D:
-      print("single-ion anisotropy strength not given.")
-      usage()
-      sys.exit(2)
+        print("Length of ladder (system size) not given.")
+        usage()
+        sys.exit(2)
     if not found_a:
-      print("decay exponent not given.")
-      usage()
-      sys.exit(2)
+        print("decay exponent not given.")
+        usage()
+        sys.exit(2)
     if not found_exp:
         print("number of exponential terms not given.")
         usage()
         sys.exit(2)
 
-    return L, D, alpha, n_exp
+    return L, D, Gamma, alpha, n_exp
 
 
 def write_joblist_files(basename, script, L, alpha, Ds, n_exp):
@@ -245,7 +243,7 @@ def save_results_obs(filename,  model_params={},
     # TODO: what about exp fit parameters? I could save some storage, if I save the parameters instead of entire MPO
     data = {
         "Model" : {
-            "Hamiltonian" : r"H = J \sum_i \vec {S}_i \cdot \vec {S}_{i + 1} + B \sum_i(-1) ^ i(S ^ x_i + S ^ y_i) + D \sum_i(S ^ z_i) ^ 2",
+            "Hamiltonian" : r"H = \sum_i \vec{S}_i \cdot \vec{S}_{j} + \Gamma \sum_{j>i+1} (-1)^{i-j+1}/|i-j|^{\alpha}} \vec{S}_i \cdot \vec{S}_{j} + B S^z_0 + + D \sum_i (S^z_i)^2",
             "model parameters" : model_params,
        },
        "DMRG": {

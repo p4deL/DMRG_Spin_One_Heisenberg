@@ -19,17 +19,18 @@ import include.utilities as utilities
 #os.environ["NUMEXPR_NUM_THREADS"] = "1"  # For NumExpr, if used
 
 
-def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, B=0.0, n_exp=2, conserve='best'):
+def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Gamma=1.0, B=0.0, n_exp=2, conserve='best'):
     model_params = dict(
         L=L,
         D=D,
+        Gamma=Gamma,
         B=B,
         alpha=alpha,
         n_exp=n_exp,
         bc_MPS='finite',
         conserve=conserve)
     dmrg_params = {
-        'mixer': False,  # TODO: Turn off mixer for large alpha!? For small alpha it may be worth a try increasing
+        'mixer': False,  # TODO: Don't turn on if not stuck in Minima
         #'mixer_params': {
         #    'amplitude': 1.e-4,  # FIXME: should be chosen larger than smallest svd vals kept
         #    'decay': 1.0
@@ -100,7 +101,7 @@ def main(argv):
 
     ######################
     # read terminal inputs
-    L, D, alpha, n_exp = data_io.param_use(argv)
+    L, D, Gamma, alpha, n_exp = data_io.param_use(argv)
     eps = 2e-3
 
     ##########
@@ -117,8 +118,8 @@ def main(argv):
     ##########
     # run dmrg
     start_time = time.time()
-    E, tracking_obs, obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, alpha=alpha, B=B, n_exp=n_exp)
-    E_eps, tracking_obs_eps, obs_eps, psi_eps = dmrg_lr_spinone_heisenberg_finite(L=L, D=D+eps, alpha=alpha, B=B, n_exp=n_exp)
+    E, tracking_obs, obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, Gamma=Gamma, alpha=alpha, B=B, n_exp=n_exp)
+    E_eps, tracking_obs_eps, obs_eps, psi_eps = dmrg_lr_spinone_heisenberg_finite(L=L, D=D+eps, Gamma=Gamma, alpha=alpha, B=B, n_exp=n_exp)
     print("--- %s seconds ---" % (time.time() - start_time))
 
     ###########################
