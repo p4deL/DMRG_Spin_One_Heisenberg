@@ -7,6 +7,7 @@ from tenpy.networks.mps import MPS
 
 import include.data_io as data_io
 from include.long_range_exp_spinone_anisotropy_heisenberg_chain import LongRangeSpinOneChain
+#from include.long_range_exp_spinone_heisenberg_chain import LongRangeSpinOneChain
 import include.utilities as utilities
 
 
@@ -123,11 +124,17 @@ def main(argv):
     # save tracking obs
     str_tracking_obs = ["gs_energy", "parity_x", "s_total", "chi_max", "nsweeps"]
     tracking_obs = [E, Px, Stot_sq, chi_max, nsweeps]
-    data_io.write_observables_to_file("spinone_heisenberg_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, Gamma, chi_limit)
     # save observables
     str_observables = ["SvN", "m_trans", "m_long", "str_order", "eff_str_order"]
-    data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, Gamma, chi_limit)
 
+    # save corraltors
+    #corr_pm, corr_mp, corr_zz, corr_str_order = utilities.calc_correlations(psi)
+    #str_correlators = ["pos", "corr_pm", "corr_mp", "corr_zz", "corr_str_order"]
+    #pos = np.arange(len(corr_pm))
+    #correlators = [pos, corr_pm, corr_mp, corr_zz, corr_str_order]
+    #data_io.write_correlations_to_file(str_correlators, correlators, L, alpha, D, Gamma, chi_limit)
 
 if __name__ == "__main__":
    import logging

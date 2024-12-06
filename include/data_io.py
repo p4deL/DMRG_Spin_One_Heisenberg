@@ -60,18 +60,19 @@ def param_use(argv):
     return L, D, Gamma, alpha, n_exp
 
 
-def write_joblist_files(basename, script, L, alpha, Ds, n_exp):
+def write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp):
     # Writing to file
     filename = f"{basename}_L{L}_alpha{alpha}.txt"
     with open(filename, "w") as file:
         for D in Ds:
-            line = f"python {script} -L {L} -D {D} -a {alpha} -e {n_exp}\n"
-            file.write(line)
+            for Gamma in Gammas:
+                line = f"python {script} -L {L} -D {D} -G {Gamma} -a {alpha} -e {n_exp}\n"
+                file.write(line)
 
     print(f"Output written to {filename}")
 
 
-def write_one_joblist_file(filename, script, L, alpha, Ds, n_exp, append=True):
+def write_one_joblist_file(filename, script, L, alpha, Ds, Gammas, n_exp, append=True):
     write_flag = 'w'
     if append:
         write_flag = 'a'
@@ -79,8 +80,9 @@ def write_one_joblist_file(filename, script, L, alpha, Ds, n_exp, append=True):
     # Writing to file
     with open(filename, write_flag) as file:
         for D in Ds:
-            line = f"python {script} -L {L} -D {D} -a {alpha} -e {n_exp}\n"
-            file.write(line)
+            for Gamma in Gammas:
+                line = f"python {script} -L {L} -D {D} -G {Gamma} -a {alpha} -e {n_exp}\n"
+                file.write(line)
 
     print(f"Output written to {filename}")
 
@@ -110,6 +112,7 @@ def read_fss_data(path, obs_string, alpha, chi, cutoff_l=0, cutoff_r=0, reciproc
                 # hs = data_array[:,0]
                 # obs = data_array[:,3] # FIXME do i need to multiply with L again?
 
+                # FIXME: What if I want to read in Gamma as parameter? add input parameter
                 Ds = df["D"].values
                 obs = df[obs_string].values
 
@@ -144,22 +147,22 @@ def read_fss_data(path, obs_string, alpha, chi, cutoff_l=0, cutoff_r=0, reciproc
     return data, dim
 
 
-def log_sweep_statistics(L, alpha, D, sweep_info):
+def log_sweep_statistics(L, alpha, D, Gamma, sweep_info):
     # global log number of sweeps
     # TODO: I could also print other info here like max bond dimension
     with open(f"logs/0_spinone_heisenberg_L{L}_alpha{alpha}_nsweeps.log", 'a') as file:
         # If the file is empty, write the header first
         if file.tell() == 0:
-            file.write("D,nsweeps\n")
+            file.write("D,Gamma,nsweeps\n")
 
 
         nsweeps = len(sweep_info['sweep'])
         # Write the two values in CSV format
-        file.write(f"{D},{nsweeps}\n")
+        file.write(f"{D},{Gamma},{nsweeps}\n")
 
-    # TODO: Whould be nice to also depict convergence criteria values in plots. Where and how to include?
+    # TODO: Would be nice to also depict convergence criteria values in plots. Where and how to include?
     # write detailed info in seperate file
-    with open(f"logs/1_spinone_heisenberg_L{L}_alpha{alpha}_D{D}_info.log", 'w', newline='') as file:
+    with open(f"logs/1_spinone_heisenberg_L{L}_alpha{alpha}_D{D}_Gamma{Gamma}_info.log", 'w', newline='') as file:
         writer = csv.writer(file)
 
         # Write the header
@@ -173,7 +176,7 @@ def log_sweep_statistics(L, alpha, D, sweep_info):
             writer.writerow(row)
 
 
-def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alpha, D, chi : int):
+def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alpha, D, Gamma, chi : int):
 
     # Open a file in write mode
     filename = f'output/spinone_heisenberg_{quantity_string}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
@@ -183,15 +186,15 @@ def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alp
         if os.path.isfile(filename):
             with open(filename, 'a') as file:
                 writer = csv.writer(file)
-                writer.writerow([D, quantity])  # Append D and fidelity
+                writer.writerow([D, Gamma, quantity])  # Append D and fidelity
         else:
             with open(filename, 'w') as file:
                 writer = csv.writer(file)
                 writer.writerow(["D", quantity_string])
-                writer.writerow([D, quantity])  # Append D and fidelity
+                writer.writerow([D, Gamma, quantity])  # Append D and fidelity
 
 
-def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : list, chi : int):
+def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : list, Gamma : list, chi : int):
     if len(str_observables) != len(observables):
         print("Length of str_observables does not match length of observables.")
         print(str_observables)
@@ -201,6 +204,8 @@ def write_observables_to_file(str_base : str, str_observables : list, observable
     # Open a file in write mode
     filename = f'output/{str_base}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
 
+    observables.insert(0, Gamma)
+    str_observables.insert(0, "Gamma")
     observables.insert(0, D)
     str_observables.insert(0, "D")
 
@@ -215,6 +220,15 @@ def write_observables_to_file(str_base : str, str_observables : list, observable
                 writer = csv.writer(file)
                 writer.writerow(str_observables)
                 writer.writerow(observables)  # Append D and fidelity
+
+
+def write_correlations_to_file(correlator_strings : list, correlators : list, L : int, alpha, D, Gamma, chi : int):
+
+    # Open a file in write mode
+    filename = f'output/spinone_heisenberg_correlations_chi{chi}_D{D}_Gamma{Gamma}_alpha{alpha}_L{L}.csv'
+
+    correlator_array = np.vstack(correlators).T
+    np.savetxt(filename, correlator_array, fmt='%f', delimiter=',', header=",".join(correlator_strings), comments='')
 
 
 def save_results_obs(filename,  model_params={},

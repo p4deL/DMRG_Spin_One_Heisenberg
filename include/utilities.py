@@ -135,6 +135,16 @@ def calc_observables(psi):
 
     return SvN, mag_pm_stag, mag_zz_stag, str_order, eff_str_order
 
+def calc_correlations(psi):
+    corr_pm = psi.correlation_function('Sp','Sm')
+    corr_mp = psi.correlation_function('Sm','Sp')
+    corr_zz = psi.correlation_function('Sz','Sz')
+    Sz = psi.sites[0].Sz
+    exp = npc.expm(1.j * np.pi * Sz)
+    corr_str_order = -1*psi.correlation_function("Sz", "Sz", opstr=exp, str_on_first=False)
+
+    return corr_pm[0,:], corr_mp[0,:], corr_zz[0,:], corr_str_order[0,:]
+
 
 def calc_log_fidelity(psi, psi_eps, eps):
     overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
