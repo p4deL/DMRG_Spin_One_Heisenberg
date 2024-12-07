@@ -14,18 +14,19 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 # system size 
-L = 110
+L = 20
 chi = 300
 
 # which phase diagram
 phase_diag = "lambda_alpha"
+phase_diag = "Gamma_alpha"
 #phase_diag = "D_alpha"
 
 # Directory where your CSV files are stored
 data_dir = f'../data/phase_diagram/{phase_diag}_observables/L{L}/'
 print(data_dir)
 
-quantity = ['SvN', r'$S_{\rm VN}$']
+#quantity = ['SvN', r'$S_{\rm VN}$']
 #quantity = ['str_order', r'$O^{\rm str}_{\frac{L}{4}, \frac{3L}{4}}$']
 #quantity = ['eff_str_order', r'$O^{z,\rm str}_{\frac{L}{4}, \frac{3L}{4}}- \langle S^z_{\frac{L}{4}}S^z_{\frac{3L}{4}}\rangle$']
 #quantity = ['m_long', r'$M_z$']  # TODO. different mag directions
@@ -95,6 +96,8 @@ for file in csv_files:
     # sort by D values
     if phase_diag == "lambda_alpha":
         combined = list(zip(np.reciprocal(data["D"].values), data[quantity[0]].values))
+    elif phase_diag == "Gamma_alpha":
+        combined = list(zip(data["Gamma"].values, data[quantity[0]].values))
     else:
         combined = list(zip(data["D"].values, data[quantity[0]].values))
 
@@ -109,7 +112,10 @@ for file in csv_files:
     D_values.append(d)
     z_values.append(z)
 
-    alpha_values.append(np.full_like(data["D"].values, 1./alpha))  # Create an array of alphaval for each D
+    if phase_diag == "Gamma_alpha":
+        alpha_values.append(np.full_like(data["Gamma"].values, 1./alpha))  # Create an array of alphaval for each Gamma
+    else:
+        alpha_values.append(np.full_like(data["D"].values, 1./alpha))  # Create an array of alphaval for each D
 
 # sort by alpha values
 #if phase_diag == "lambda_alpha":
@@ -156,6 +162,8 @@ cbar.set_label(quantity[1], fontsize=fs2)
 # Label axes
 if phase_diag == "D_alpha":
     plt.xlabel(r'$D$', fontsize=fs2)
+elif phase_diag == "Gamma_alpha":
+    plt.xlabel('$\\Gamma$', fontsize=fs2)
 else:
     plt.xlabel('$\\lambda$', fontsize=fs2)
 plt.ylabel('$1/\\alpha$', fontsize=fs2)

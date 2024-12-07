@@ -140,10 +140,10 @@ def plot():
     ax4b.plot((+d, -d), (+d * s, -d * s), **kwa)
     ax4b.plot((+d, -d), (1 + d * s, 1 - d * s), **kwa)
 
-    qpt = ("#3a86ff", '.-', 7, 1, "data collapse - $M_z$")
-    qpt2 = ("#ff006e", '.-', 7, 1, "data collapse - $\\chi_{\\rm fidelity}$")
-    exp = ("#3a86ff", '.', 7, "data collapse - $M_z$")
-    exp2 = ("#ff006e", '.', 7, "data collapse - $\\chi_{\\rm fidelity}$")
+    qpt = ("#3a86ff", '.-', 9, 1, "data collapse - $M_z$")
+    qpt2 = ("#ff006e", '.-', 9, 1, "data collapse - $\\chi_{\\rm fidelity}$")
+    exp = ("#3a86ff", '.', 11, "data collapse - $M_z$")
+    exp2 = ("#ff006e", '.', 11, "data collapse - $\\chi_{\\rm fidelity}$")
 
     file = "../data/fss/ising_transition/data_collapse_mag.csv"
     data = pd.read_csv(file)
@@ -235,6 +235,18 @@ def plot():
     ax4b.errorbar(alphas2[:1], mus2[:1], yerr=dmus2[:1], color=exp2[0], fmt=exp2[1], ms=exp2[2])
     ax4b.set_xlim([999998, 1000000])
     ax4b.set_ylim([1.0, 3.0])
+
+    xnu, ynu = [3.0, 1000000], [1.0, 1.0]
+    ax2.plot(xnu, ynu, c='gray', linewidth=2, zorder=-1)
+    ax2b.plot(xnu, ynu, c='gray', linewidth=2, zorder=-1)
+
+    xbeta, ybeta = [3.0, 1000000], [0.125, 0.125]
+    ax3.plot(xbeta, ybeta, c='gray', linewidth=2, zorder=-1)
+    ax3b.plot(xbeta, ybeta, c='gray', linewidth=2, zorder=-1)
+
+    xmu, ymu = [3.0, 1000000], [2.0, 2.0]
+    ax4.plot(xmu, ymu, c='gray', linewidth=2, zorder=-1)
+    ax4b.plot(xmu, ymu, c='gray', linewidth=2, zorder=-1)
 
     # plt.tight_layout()
     fig.legend(loc='lower right', bbox_to_anchor=(0.98,0.15), handletextpad=0.2, fontsize=14)

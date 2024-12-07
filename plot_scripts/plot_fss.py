@@ -16,10 +16,12 @@ rcParams['pgf.preamble'] = r"\usepackage[greek, english]{babel}"
 from matplotlib import pyplot as plt
 from scipy import optimize
 import sys
+import os
 
+sys.path.insert(0, os.path.abspath('../'))
 import include.data_io as data_io
 
-alpha = 'inf'
+alpha = 3.5
 chi = 300
 #sigma = float(fixed_sigma)
 #koppa = np.maximum(1, 2./(3*sigma))
@@ -51,8 +53,8 @@ else:
 labels = (xlabels, ylabels)
 
 #data_path = f"data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
-data_path = f"data/fss/ising_transition/alpha{alpha}/"
-out_file = f"plots/fss_{obs_string}_alpha{alpha}.pdf"
+data_path = f"../data/fss/ising_transition/alpha{alpha}/"
+out_file = f"../plots/fss_{obs_string}_alpha{alpha}.pdf"
 
 
 
@@ -82,7 +84,7 @@ def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
 
 def perform_data_collapse(data, fit_func):
 
-    tuning_param_guess = -0.21
+    tuning_param_guess = -0.18
     invnu_guess = 1.
     exponent_guess = 0.125
     #print(fss_mag_fit_func(data[:2,:], tuning_param_guess, beta_guess, nu_guess, 1,1,1,1))

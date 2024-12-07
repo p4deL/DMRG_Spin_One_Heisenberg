@@ -11,17 +11,17 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 L = 60  # system size
-alpha = "inf"
+alpha = 1.1
 chi = 300
 
-max_sweeps = 50
+max_sweeps = 100
 
 # output filename
 output_file = f"../plots/svn_info_chi{chi}_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
 #data_dir = f"output/L{L}/"
-data_dir = f"../output/"
+data_dir = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
 
 
 all_quantities = [["SvN"], ["fidelity", "log_fidelity"], ["overlap"], ["gs_energy", "gs_energy_eps"], ["gs_energy_diff"], ["parity_x", "parity_x_eps"], ["s_total", "s_total_eps"], ["chi_max", "chi_max_eps"], ["nsweeps", "nsweeps_eps"]]
@@ -47,6 +47,8 @@ for i, (quantities, label) in enumerate(zip(all_quantities, labels)):
         x = data["D"].values
         y = data[quantity].values
 
+        x = np.reciprocal(x)
+
         if quantity == "fidelity" or quantity == "log_fidelity":
             y = y/L
 
@@ -69,7 +71,7 @@ for i, (quantities, label) in enumerate(zip(all_quantities, labels)):
         axs[i].legend(loc="upper right")
 
 # Label the x-axis on the last subplot only (shared x-axis)
-axs[1].set_ylim(0.0,0.7)
+#axs[1].set_ylim(0.0,0.7)
 #axs[2].set_ylim(0.99,1.00000)
 #axs[1].set_ylim(1.-2e-6,1.+2e-6)
 axs[5].set_ylim(-1.2,1.2)
