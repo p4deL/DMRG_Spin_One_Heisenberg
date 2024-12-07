@@ -129,7 +129,7 @@ def main(argv):
     str_observables = ["SvN", "m_trans", "m_long", "str_order", "eff_str_order"]
     data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, Gamma, chi_limit)
 
-    # save corraltors
+    # save correlators
     #corr_pm, corr_mp, corr_zz, corr_str_order = utilities.calc_correlations(psi)
     #str_correlators = ["pos", "corr_pm", "corr_mp", "corr_zz", "corr_str_order"]
     #pos = np.arange(len(corr_pm))

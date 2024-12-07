@@ -9,10 +9,10 @@ if __name__ == "__main__":
 
     #######################################################
     # Parameters
-    script = "dmrg_spinone_heisenberg.py"
-    basename = "joblist_dmrg"
+    script = "ed_spectrum.py"
+    basename = "joblist_ed"
     plotflag = False
-    L = 20
+    L = 12
     #################
     # D phase diagram
     #Gammas = np.array([1.0])
@@ -25,14 +25,17 @@ if __name__ == "__main__":
     #alphas2 = np.reciprocal(np.arange(0.45, 0.85, 0.05))
     #alphas = np.concatenate((alphas1, alphas2))
     # lambda phase diagram
-    #Gammas = np.array([1.0])
-    #lambdas = np.arange(0.02, 1.02, 0.02)
-    #Ds = np.reciprocal(lambdas)
-    #alphas = np.reciprocal(np.arange(0.0, 0.82, 0.02))
-    # Gamma phase diagram
-    Ds = np.array([0.0])
-    Gammas = np.arange(0.0, 2.0, 0.05)
+    Gammas = np.array([1.0])
+    lambdas = np.arange(0.02, 1.02, 0.02)
+    Ds = np.reciprocal(lambdas)
     alphas = np.reciprocal(np.arange(0.0, 0.82, 0.02))
+    #lambdas = np.arange(0.01, 1.01, 0.01)
+    #Ds = np.reciprocal(lambdas)
+    #alphas = np.array([1.25,2.5])
+    # Gamma phase diagram
+    #Ds = np.array([0.0])
+    #Gammas = np.arange(0.0, 2.0, 0.05)
+    #alphas = np.reciprocal(np.arange(0.0, 0.82, 0.02))
     #################
 
     err_tol = 1e-9

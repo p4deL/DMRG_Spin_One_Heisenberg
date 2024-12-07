@@ -49,11 +49,17 @@ class LongRangeSpinOneChain(CouplingMPOModel):
         # Sz anisotropy
         self.add_onsite(D, 0, 'Sz Sz')
 
-        for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
-            self.add_coupling((1. - Gamma) / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
-            self.add_coupling((1. - Gamma), u1, 'Sz', u2, 'Sz', dx)
+        if math.isinf(alpha):
+            # add only NN term
+            for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
+                self.add_coupling(1. / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
+                self.add_coupling(1., u1, 'Sz', u2, 'Sz', dx)
+        else:
+            # NN interactions
+            for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
+                self.add_coupling((1. - Gamma) / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
+                self.add_coupling((1. - Gamma), u1, 'Sz', u2, 'Sz', dx)
 
-        if not math.isinf(alpha):
             # fit power-law decay with sum of exponentials
             lam, pref = utilities.fit_with_sum_of_exp(utilities.power_law_decay, alpha, n_exp, fit_range)
             x = np.arange(1, fit_range + 1)

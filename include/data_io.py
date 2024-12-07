@@ -176,7 +176,7 @@ def log_sweep_statistics(L, alpha, D, Gamma, sweep_info):
             writer.writerow(row)
 
 
-def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alpha, D, Gamma, chi : int):
+def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alpha : float, D : float, Gamma : float, chi : int):
 
     # Open a file in write mode
     filename = f'output/spinone_heisenberg_{quantity_string}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
@@ -190,11 +190,11 @@ def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alp
         else:
             with open(filename, 'w') as file:
                 writer = csv.writer(file)
-                writer.writerow(["D", quantity_string])
+                writer.writerow(["D", "Gamma", quantity_string])
                 writer.writerow([D, Gamma, quantity])  # Append D and fidelity
 
 
-def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : list, Gamma : list, chi : int):
+def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : float, Gamma : float, chi : int):
     if len(str_observables) != len(observables):
         print("Length of str_observables does not match length of observables.")
         print(str_observables)
@@ -222,7 +222,7 @@ def write_observables_to_file(str_base : str, str_observables : list, observable
                 writer.writerow(observables)  # Append D and fidelity
 
 
-def write_correlations_to_file(correlator_strings : list, correlators : list, L : int, alpha, D, Gamma, chi : int):
+def write_correlations_to_file(correlator_strings : list, correlators : list, L : int, alpha : float, D : float, Gamma : float, chi : int):
 
     # Open a file in write mode
     filename = f'output/spinone_heisenberg_correlations_chi{chi}_D{D}_Gamma{Gamma}_alpha{alpha}_L{L}.csv'
