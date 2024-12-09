@@ -13,7 +13,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
     r"""An example for a custom model, implementing the Hamiltonian of :arxiv:`1204.0704`.
 
        .. math ::
-           H = \sum_{j>i} 1/|i-j|^{\alpha}  \vec{S}_{i} \cdot \vec{S}_{j} + B \sum_i (-1)^i S^z_i  + D \sum_i (S^z_i)^2
+           H = \sum_{j>i} 1/|i-j|^{\alpha}  \vec{S}_{i} \cdot \vec{S}_{j} + B S^z_0 + D \sum_i (S^z_i)^2
        """
     default_lattice = Chain
     force_default_lattice = True
@@ -33,21 +33,23 @@ class LongRangeSpinOneChain(CouplingMPOModel):
     def init_terms(self, model_params):
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
+        Delta = model_params.get('Delta', 1.)
         alpha = model_params.get('alpha', float('inf'))
         n_exp = model_params.get('n_exp', 2)  # Number of exponentials in fit
         fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
 
         # add on-site terms
         # staggered auxillary field
-        Bstag = [B, -B] * (self.lat.N_sites // 2)
-        self.add_onsite(Bstag, 0, 'Sz')
+        #Bstag = [B, -B] * (self.lat.N_sites // 2)
+        #self.add_onsite(Bstag, 0, 'Sz')
+        self.add_onsite_term(B, 0, 'Sz')
         # Sz anisotropy
         self.add_onsite(D, 0, 'Sz Sz')
 
         if math.isinf(alpha):
             for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
                 self.add_coupling(1. / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
-                self.add_coupling(1., u1, 'Sz', u2, 'Sz', dx)
+                self.add_coupling(Delta, u1, 'Sz', u2, 'Sz', dx)
         else:
             # fit power-law decay with sum of exponentials
             lam, pref = utilities.fit_with_sum_of_exp(utilities.power_law_decay, alpha, n_exp, fit_range)
@@ -62,4 +64,4 @@ class LongRangeSpinOneChain(CouplingMPOModel):
             # add exponentially_decaying terms
             for pr, la in zip(pref, lam):
                 self.add_exponentially_decaying_coupling(0.5*pr, la, 'Sp', 'Sm', plus_hc=True)
-                self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz')
+                self.add_exponentially_decaying_coupling(Delta*pr, la, 'Sz', 'Sz')

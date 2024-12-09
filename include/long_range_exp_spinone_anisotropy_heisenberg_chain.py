@@ -33,6 +33,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
     def init_terms(self, model_params):
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
+        Delta = model_params.get('Delta', 1.)
         alpha = model_params.get('alpha', float('inf'))
         n_exp = model_params.get('n_exp', 2)  # Number of exponentials in fit
         fit_range = model_params.get('fit_range', self.lat.N_sites)  # Range of fit for decay
@@ -50,7 +51,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
         if math.isinf(alpha):
             for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
                 self.add_coupling(1. / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
-                self.add_coupling(1., u1, 'Sz', u2, 'Sz', dx)
+                self.add_coupling(Delta, u1, 'Sz', u2, 'Sz', dx)
         else:
             # fit power-law decay with sum of exponentials
             lam, pref = utilities.fit_with_sum_of_exp(utilities.power_law_decay, alpha, n_exp, fit_range)
@@ -65,15 +66,15 @@ class LongRangeSpinOneChain(CouplingMPOModel):
             # add exponentially_decaying terms
             for pr, la in zip(pref, lam):
                 self.add_exponentially_decaying_coupling(0.5*pr, la, 'Sp', 'Sm', plus_hc=True)
-                self.add_exponentially_decaying_coupling(pr, la, 'Sz', 'Sz')
+                self.add_exponentially_decaying_coupling(Delta*pr, la, 'Sz', 'Sz')
                 # change sign of Ferro couplings
                 prprime = -2*pr
                 laprime = la**2
                 # couplings on even sites
                 even_sites = list(range(0,self.lat.N_sites,2))
                 self.add_exponentially_decaying_coupling(0.5*prprime, laprime, 'Sp', 'Sm', subsites=even_sites, plus_hc=True)
-                self.add_exponentially_decaying_coupling(prprime, laprime, 'Sz', 'Sz', subsites=even_sites)
+                self.add_exponentially_decaying_coupling(Delta*prprime, laprime, 'Sz', 'Sz', subsites=even_sites)
                 # couplings on odd sites
                 odd_sites = list(range(1,self.lat.N_sites,2))
                 self.add_exponentially_decaying_coupling(0.5*prprime, laprime, 'Sp', 'Sm', subsites=odd_sites, plus_hc=True)
-                self.add_exponentially_decaying_coupling(prprime, laprime, 'Sz', 'Sz', subsites=odd_sites)
+                self.add_exponentially_decaying_coupling(Delta*prprime, laprime, 'Sz', 'Sz', subsites=odd_sites)

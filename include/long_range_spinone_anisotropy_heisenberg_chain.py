@@ -23,6 +23,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
     def init_terms(self, model_params):
         B = model_params.get('B', 0.)
         D = model_params.get('D', 0.)
+        Delta = model_params.get('Delta', 1.)
         alpha = model_params.get('alpha', 100.)
 
         for u in range(len(self.lat.unit_cell)):
@@ -35,9 +36,9 @@ class LongRangeSpinOneChain(CouplingMPOModel):
 
         for u1, u2, dx in self.lat.pairs['nearest_neighbors']:
             self.add_coupling(1. / 2., u1, 'Sp', u2, 'Sm', dx, plus_hc=True)
-            self.add_coupling(1., u1, 'Sz', u2, 'Sz', dx)
+            self.add_coupling(Delta, u1, 'Sz', u2, 'Sz', dx)
 
         for dist in range(2, self.lat.N_sites):  # Only add for j > i to avoid double counting
             strength = (-1) ** (dist + 1) / (dist ** alpha)  # Long-range decay
-            self.add_coupling(strength, 0, "Sz", 0, "Sz", dx=dist)
             self.add_coupling(0.5 * strength, 0, "Sp", 0, "Sm", dx=dist, plus_hc=True)
+            self.add_coupling(Delta*strength, 0, "Sz", 0, "Sz", dx=dist)
