@@ -9,8 +9,8 @@ if __name__ == "__main__":
 
     #######################################################
     # Parameters
-    script = "ed_spectrum.py"
-    basename = "joblist_ed"
+    script = "dmrg_spinone_heisenberg.py"
+    basename = "joblist_dmrg"
     plotflag = False
     L = 12
     #################

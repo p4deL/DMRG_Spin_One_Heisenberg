@@ -11,19 +11,20 @@ from tenpy.tools import hdf5_io
 
 
 def usage():
-    print("Usage: dmrg_spinone_heisenberg_lr_coupling.py -L <length of chain> -D <single ion anisotropy strength> -G <Beyond-NN coupling parameter> -a <decay exponent alpha> -e <number of exp terms to fit power law>")
+    print("Usage: dmrg_spinone_heisenberg.py -L <length of chain> -D <single ion anisotropy strength> -G <Beyond-NN coupling parameter> -a <decay exponent alpha> -e <number of exp terms to fit power law>")
 
 
 def param_use(argv):
     L = 0
     D = 1.
     Gamma = 1.
+    Jz = 1.
     alpha = 10.
     n_exp = 0
     found_l = found_a = found_exp = False
 
     try:
-        opts, args = getopt.getopt(argv, "L:D:G:a:e:h", ["Length=", "D=", "Gamma=", "alpha=", "nexp=", "help"])
+        opts, args = getopt.getopt(argv, "L:D:J:G:a:e:h", ["Length=", "D=", "Jz", "Gamma=", "alpha=", "nexp=", "help"])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -34,6 +35,8 @@ def param_use(argv):
             L = int(arg)
             found_l = True
         elif opt in ("-D", "--D"):
+            D = float(arg)
+        elif opt in ("-J", "--Jz"):
             D = float(arg)
         elif opt in ("-G", "--Gamma"):
             Gamma = float(arg)
@@ -57,7 +60,7 @@ def param_use(argv):
         usage()
         sys.exit(2)
 
-    return L, D, Gamma, alpha, n_exp
+    return L, D, Jz, Gamma, alpha, n_exp
 
 
 def write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp):
@@ -68,6 +71,17 @@ def write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp):
             for Gamma in Gammas:
                 line = f"python {script} -L {L} -D {D} -G {Gamma} -a {alpha} -e {n_exp}\n"
                 file.write(line)
+
+    print(f"Output written to {filename}")
+
+
+def write_xxz_joblist_files(basename, script, L, alpha, Jzs, n_exp):
+    # Writing to file
+    filename = f"{basename}_L{L}_alpha{alpha}.txt"
+    with open(filename, "w") as file:
+        for Jz in Jzs:
+            line = f"python {script} -L {L} -J {Jz} -a {alpha} -e {n_exp}\n"
+            file.write(line)
 
     print(f"Output written to {filename}")
 
@@ -83,6 +97,20 @@ def write_one_joblist_file(filename, script, L, alpha, Ds, Gammas, n_exp, append
             for Gamma in Gammas:
                 line = f"python {script} -L {L} -D {D} -G {Gamma} -a {alpha} -e {n_exp}\n"
                 file.write(line)
+
+    print(f"Output written to {filename}")
+
+
+def write_one_xxz_joblist_file(filename, script, L, alpha, Jzs, n_exp, append=True):
+    write_flag = 'w'
+    if append:
+        write_flag = 'a'
+
+    # Writing to file
+    with open(filename, write_flag) as file:
+        for Jz in Jzs:
+            line = f"python {script} -L {L} -J {Jz} -a {alpha} -e {n_exp}\n"
+            file.write(line)
 
     print(f"Output written to {filename}")
 
