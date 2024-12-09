@@ -35,9 +35,9 @@ fig, axs = plt.subplots(9, 1, figsize=(8, 10), sharex=True)
 for i, (quantities, label) in enumerate(zip(all_quantities, labels)):
     
     if i < 3:
-        file =  f'spinone_heisenberg_fss_obs_chi{chi}_alpha{alpha}_L{L}.csv'
+        file = f'spinone_heisenberg_fss_obs_chi{chi}_alpha{alpha}_L{L}.csv'
     else:
-        file =  f'spinone_heisenberg_fss_trackobs_chi{chi}_alpha{alpha}_L{L}.csv'
+        file = f'spinone_heisenberg_fss_trackobs_chi{chi}_alpha{alpha}_L{L}.csv'
 
     axs[i].set_ylabel(label)
     for j, quantity in enumerate(quantities):
