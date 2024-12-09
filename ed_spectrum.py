@@ -59,7 +59,7 @@ def param_use(argv):
 def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alpha : float, D : float, Gamma : float):
 
     # Open a file in write mode
-    filename = f'output/spinone_heisenberg_{quantity_string}_alpha{alpha}_L{L}.csv'  # FIXME
+    filename = f'output/spinone_heisenberg_ed_{quantity_string}_alpha{alpha}_L{L}.csv'  # FIXME
 
     # lock files when writing (necessary when using a joblist)
     with FileLock(filename + ".lock"):
@@ -181,7 +181,7 @@ def main(argv):
 
 
     # write results to files
-    write_quantity_to_file("ed_m_long", m_z, L, alpha, D, 1.0)
+    write_quantity_to_file("m_long", m_z, L, alpha, D, 1.0)
     energy_strings = [f"e{i}" for i in range(len(Es))]
     write_observables_to_file("spinone_heisenberg_ed_spectrum", energy_strings, list(Es), L, alpha, D, 1.0)
 
