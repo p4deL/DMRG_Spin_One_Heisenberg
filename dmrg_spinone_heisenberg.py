@@ -125,10 +125,10 @@ def main(argv):
     # save tracking obs
     str_tracking_obs = ["gs_energy", "parity_x", "s_total", "chi_max", "nsweeps"]
     tracking_obs = [E, Px, Stot_sq, chi_max, nsweeps]
-    data_io.write_observables_to_file("spinone_heisenberg_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, Gamma, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, Gamma, Jz, chi_limit)
     # save observables
     str_observables = ["SvN", "m_trans", "m_long", "str_order", "eff_str_order"]
-    data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, Gamma, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, Gamma, Jz, chi_limit)
 
     # save correlators
     #corr_pm, corr_mp, corr_zz, corr_str_order = utilities.calc_correlations(psi)

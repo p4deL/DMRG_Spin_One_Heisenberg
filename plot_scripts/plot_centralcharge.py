@@ -11,8 +11,9 @@ rc('text', usetex=True)
 rc('text.latex', preamble = r'\usepackage{amssymb}')
 rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
-phase_diag = "D_alpha_observables"
+#phase_diag = "D_alpha_observables"
 #phase_diag = "lambda_alpha_observables"
+phase_diag = "Jz_alpha_observables"
 
 L1 = 100  # system size
 L2 = 110
@@ -23,13 +24,14 @@ chi = 300
 # for lambda plot
 #alpha_selected = [0.36, 0.42, 0.44, 0.78]
 # for D plot
-alpha_selected = [0.1, 0.26, 0.6, 0.8]
+#alpha_selected = [0.1, 0.26, 0.6, 0.8]
+alpha_selected = [0.1, 0.2]
 
 # output filename
 output_file = f"../plots/colorplot_{phase_diag}_centralcharge_L1{L1}_L2{L2}.pdf"
 
 # directory and filename
-data_dir = f'../data/phase_diagram/{phase_diag}/B-1e0/'
+data_dir = f'../data/phase_diagram/{phase_diag}/'
 # Use glob to find all csv files that match the pattern
 file_pattern1 = os.path.join(f"{data_dir}L{L1}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
 file_pattern2 = os.path.join(f"{data_dir}L{L2}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
@@ -69,7 +71,12 @@ def read_data(file_patterns, Ls):
             # sort by D values
             if phase_diag == "lambda_alpha_observables":
                 combined = list(zip(np.reciprocal(data["D"].values), data["SvN"].values))
+            elif phase_diag == "Gamma_alpha_observables":
+                    combined = list(zip(data["Gamma"].values, data["SvN"].values))
+            elif phase_diag == "Jz_alpha_observables":
+                        combined = list(zip(data["Jz"].values, data["SvN"].values))
             else:
+                print("not lambda")
                 combined = list(zip(data["D"].values, data["SvN"].values))
 
             sorted_combined = sorted(combined)
@@ -175,14 +182,18 @@ if __name__ == "__main__":
 
     D_selected, ceff_selected = get_selected_values(alpha_values, D_values, ceff_values, alpha_selected)
     for Ds, ceff, invalpha in zip(D_selected, ceff_selected, alpha_selected):
-        #print(Ds)
         ax2.plot(Ds, ceff, marker='o', linestyle='-', label=f"$\\alpha={1./invalpha:.3f}$")
 
     # Label axes
-    if phase_diag == "D_alpha_observables":
-        ax2.set_xlabel(r'$D$', fontsize=fs1)
-    else:
+    if phase_diag == "lambda_alpha_observables":
         ax2.set_xlabel('$\\lambda$', fontsize=fs1)
+    if phase_diag == "Gamma_alpha_observables":
+        ax2.set_xlabel('$\\Gamma$', fontsize=fs1)
+    if phase_diag == "Jz_alpha_observables":
+        ax2.set_xlabel('$J_z$', fontsize=fs1)
+    else:
+        ax2.set_xlabel(r'$D$', fontsize=fs1)
+
     ax1.set_ylabel('$1/\\alpha$', fontsize=fs1)
     ax2.set_ylabel('$c_{\\rm eff}$', fontsize=fs1)
     ax2.set_ylim([-0.1, 3.5])

@@ -14,12 +14,13 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 # system size 
-L = 20
+L = 100
 chi = 300
 
 # which phase diagram
 phase_diag = "lambda_alpha"
 phase_diag = "Gamma_alpha"
+phase_diag = "Jz_alpha"
 #phase_diag = "D_alpha"
 
 # Directory where your CSV files are stored
@@ -29,7 +30,7 @@ print(data_dir)
 #quantity = ['SvN', r'$S_{\rm VN}$']
 #quantity = ['str_order', r'$O^{\rm str}_{\frac{L}{4}, \frac{3L}{4}}$']
 #quantity = ['eff_str_order', r'$O^{z,\rm str}_{\frac{L}{4}, \frac{3L}{4}}- \langle S^z_{\frac{L}{4}}S^z_{\frac{3L}{4}}\rangle$']
-#quantity = ['m_long', r'$M_z$']  # TODO. different mag directions
+quantity = ['m_long', r'$M_z$']  # TODO. different mag directions
 #quantity = ['m_trans', r'$M_{\perp}$']  # TODO. different mag directions
 #quantity = ['fidelity', 'fidelity', r'$\chi_{\rm fidelity}$']
 
@@ -87,7 +88,7 @@ for file in csv_files:
     # Extract alphaval from the filename
     alpha = float(file.split('_alpha')[-1].split(f'_L{L}.csv')[0])  # Extract alpha from filename
     #print(alpha)
-    
+
     # Read the CSV file
     data = pd.read_csv(file)
 
@@ -98,6 +99,8 @@ for file in csv_files:
         combined = list(zip(np.reciprocal(data["D"].values), data[quantity[0]].values))
     elif phase_diag == "Gamma_alpha":
         combined = list(zip(data["Gamma"].values, data[quantity[0]].values))
+    elif phase_diag == "Jz_alpha":
+        combined = list(zip(data["Jz"].values, data[quantity[0]].values))
     else:
         combined = list(zip(data["D"].values, data[quantity[0]].values))
 
@@ -164,6 +167,8 @@ if phase_diag == "D_alpha":
     plt.xlabel(r'$D$', fontsize=fs2)
 elif phase_diag == "Gamma_alpha":
     plt.xlabel('$\\Gamma$', fontsize=fs2)
+elif phase_diag == "Jz_alpha":
+    plt.xlabel("$J_z$", fontsize=fs2)
 else:
     plt.xlabel('$\\lambda$', fontsize=fs2)
 plt.ylabel('$1/\\alpha$', fontsize=fs2)

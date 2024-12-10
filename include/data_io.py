@@ -37,7 +37,7 @@ def param_use(argv):
         elif opt in ("-D", "--D"):
             D = float(arg)
         elif opt in ("-J", "--Jz"):
-            D = float(arg)
+            Jz = float(arg)
         elif opt in ("-G", "--Gamma"):
             Gamma = float(arg)
         elif opt in ("-a", "--alpha"):
@@ -175,7 +175,7 @@ def read_fss_data(path, obs_string, alpha, chi, cutoff_l=0, cutoff_r=0, reciproc
     return data, dim
 
 
-def log_sweep_statistics(L, alpha, D, Gamma, sweep_info):
+def log_sweep_statistics(L, alpha, D, Gamma, Jz, sweep_info):
     # global log number of sweeps
     # TODO: I could also print other info here like max bond dimension
     with open(f"logs/0_spinone_heisenberg_L{L}_alpha{alpha}_nsweeps.log", 'a') as file:
@@ -186,7 +186,7 @@ def log_sweep_statistics(L, alpha, D, Gamma, sweep_info):
 
         nsweeps = len(sweep_info['sweep'])
         # Write the two values in CSV format
-        file.write(f"{D},{Gamma},{nsweeps}\n")
+        file.write(f"{D},{Gamma},{Jz},{nsweeps}\n")
 
     # TODO: Would be nice to also depict convergence criteria values in plots. Where and how to include?
     # write detailed info in seperate file
@@ -204,7 +204,7 @@ def log_sweep_statistics(L, alpha, D, Gamma, sweep_info):
             writer.writerow(row)
 
 
-def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alpha : float, D : float, Gamma : float, chi : int):
+def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
 
     # Open a file in write mode
     filename = f'output/spinone_heisenberg_{quantity_string}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
@@ -218,11 +218,11 @@ def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alp
         else:
             with open(filename, 'w') as file:
                 writer = csv.writer(file)
-                writer.writerow(["D", "Gamma", quantity_string])
-                writer.writerow([D, Gamma, quantity])  # Append D and fidelity
+                writer.writerow(["D", "Gamma", "Jz", quantity_string])
+                writer.writerow([D, Gamma, Jz, quantity])  # Append D and fidelity
 
 
-def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : float, Gamma : float, chi : int):
+def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
     if len(str_observables) != len(observables):
         print("Length of str_observables does not match length of observables.")
         print(str_observables)
@@ -232,6 +232,8 @@ def write_observables_to_file(str_base : str, str_observables : list, observable
     # Open a file in write mode
     filename = f'output/{str_base}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
 
+    observables.insert(0, Jz)
+    str_observables.insert(0, "Jz")
     observables.insert(0, Gamma)
     str_observables.insert(0, "Gamma")
     observables.insert(0, D)
@@ -250,10 +252,10 @@ def write_observables_to_file(str_base : str, str_observables : list, observable
                 writer.writerow(observables)  # Append D and fidelity
 
 
-def write_correlations_to_file(correlator_strings : list, correlators : list, L : int, alpha : float, D : float, Gamma : float, chi : int):
+def write_correlations_to_file(correlator_strings : list, correlators : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
 
     # Open a file in write mode
-    filename = f'output/spinone_heisenberg_correlations_chi{chi}_D{D}_Gamma{Gamma}_alpha{alpha}_L{L}.csv'
+    filename = f'output/spinone_heisenberg_correlations_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
 
     correlator_array = np.vstack(correlators).T
     np.savetxt(filename, correlator_array, fmt='%f', delimiter=',', header=",".join(correlator_strings), comments='')

@@ -72,9 +72,7 @@ class LongRangeSpinOneChain(CouplingMPOModel):
             print("*" * 100)
 
             # rescale linear prefactors with coupling constant of long-range terms
-            print(pref)
             pref = Gamma * pref
-            print(pref)
 
             # add exponentially_decaying terms
             for pr, la in zip(pref, lam):
