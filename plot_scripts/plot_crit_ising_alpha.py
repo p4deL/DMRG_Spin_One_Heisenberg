@@ -54,8 +54,8 @@ def plot():
     #ax3.set_position([0.61, 0.20, 0.32, 0.35], which='both')
 
     # ax1.set_position([0.11,0.65,0.85,0.3],which='both')
-    ax1.set_position([0.11, 0.73, 0.82, 0.25], which='both')
-    ax1b.set_position([0.94, 0.73, 0.02, 0.25], which='both')
+    ax1.set_position([0.125, 0.73, 0.82, 0.25], which='both')
+    ax1b.set_position([0.955, 0.73, 0.02, 0.25], which='both')
     ax1b.set_yticks([])
     ax1b.set_xticks([])
     # ax1b.set_xticklabels([1000000],labels=['$\\infty$'])
@@ -78,8 +78,8 @@ def plot():
     ax1b.plot((+d, -d), (1 + d * s, 1 - d * s), **kwa)
 
     # ax2.set_position([0.11,0.20,0.32,0.35],which='both')
-    ax2.set_position([0.11, 0.40, 0.32, 0.25], which='both')
-    ax2b.set_position([0.44, 0.40, 0.02, 0.25], which='both')
+    ax2.set_position([0.125, 0.40, 0.32, 0.25], which='both')
+    ax2b.set_position([0.455, 0.40, 0.02, 0.25], which='both')
     ax2b.set_yticks([])
     ax2b.set_xticks([])
     ax2b.text(0., -0.09, '$\\infty$', transform=ax2b.transAxes)
@@ -120,8 +120,8 @@ def plot():
     ax3b.plot((+d, -d), (1 + d * s, 1 - d * s), **kwa)
 
     # ax3.set_position([0.64,0.20,0.32,0.35],which='both')
-    ax4.set_position([0.11, 0.07, 0.32, 0.25], which='both')
-    ax4b.set_position([0.44, 0.07, 0.02, 0.25], which='both')
+    ax4.set_position([0.125, 0.07, 0.32, 0.25], which='both')
+    ax4b.set_position([0.455, 0.07, 0.02, 0.25], which='both')
     ax4b.set_yticks([])
     ax4b.set_xticks([])
     ax4b.text(0., -0.09, '$\\infty$', transform=ax4b.transAxes)
@@ -149,8 +149,8 @@ def plot():
     data = pd.read_csv(file)
     alphas = data["alpha"].values
     alphas[np.isinf(alphas)] = 999999
-    lambdas = data["lambda"].values
-    dlambdas = data["dlambda"].values
+    lambdas = data["D"].values
+    dlambdas = data["dD"].values
     nus = data["nu"].values
     dnus = data["dnu"].values
     betas = data["beta"].values
@@ -161,8 +161,8 @@ def plot():
     data = pd.read_csv(file)
     alphas2 = data["alpha"].values
     alphas2[np.isinf(alphas2)] = 999999
-    lambdas2 = data["lambda"].values
-    dlambdas2 = data["dlambda"].values
+    lambdas2 = data["D"].values
+    dlambdas2 = data["dD"].values
     nus2 = data["nu"].values
     dnus2 = data["dnu"].values
     mus2 = data["mu"].values
@@ -172,7 +172,7 @@ def plot():
     ax1.errorbar(alphas2, lambdas2, yerr=dlambdas2, color=qpt2[0], fmt=qpt2[1], ms=qpt2[2], lw=qpt2[3])
     print(alphas, lambdas)
     ax1.set_xlabel('$\\alpha$', fontsize=fs)
-    ax1.set_ylabel('$\\lambda_c$', fontsize=fs)
+    ax1.set_ylabel('$D_c$', fontsize=fs)
     ax1.set_xlim([3., 11.])
     ax1.set_ylim([0., -0.4])
     ax1.xaxis.set_major_locator(MultipleLocator(2.0))

@@ -19,19 +19,19 @@ L1 = 100  # system size
 L2 = 110
 Ls = (L1, L2)
 
-chi = 300
+chi = 500
 
 # for lambda plot
 #alpha_selected = [0.36, 0.42, 0.44, 0.78]
 # for D plot
 #alpha_selected = [0.1, 0.26, 0.6, 0.8]
-alpha_selected = [0.1, 0.2]
+alpha_selected = [0.1, 0.28]
 
 # output filename
 output_file = f"../plots/colorplot_{phase_diag}_centralcharge_L1{L1}_L2{L2}.pdf"
 
 # directory and filename
-data_dir = f'../data/phase_diagram/{phase_diag}/'
+data_dir = f'../data/phase_diagram/{phase_diag}/m500/'
 # Use glob to find all csv files that match the pattern
 file_pattern1 = os.path.join(f"{data_dir}L{L1}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
 file_pattern2 = os.path.join(f"{data_dir}L{L2}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
@@ -46,9 +46,10 @@ def read_data(file_patterns, Ls):
 
     svn_list = []
     for L, file_pattern in zip(Ls, file_patterns):
-        print(L, file_pattern)
 
         csv_files = glob.glob(file_pattern)
+
+        print(f"L={L}: file_pattern={file_pattern}")
 
         # Lists to hold the data
         D_values = []
@@ -59,9 +60,6 @@ def read_data(file_patterns, Ls):
         for file in csv_files:
             # Extract alphaval from the filename
             alpha = float(file.split('_alpha')[-1].split(f'_L{L}.csv')[0])  # Extract alpha from filename
-            # print(alpha)
-
-
 
             # Read the CSV file
             data = pd.read_csv(file)
@@ -72,11 +70,10 @@ def read_data(file_patterns, Ls):
             if phase_diag == "lambda_alpha_observables":
                 combined = list(zip(np.reciprocal(data["D"].values), data["SvN"].values))
             elif phase_diag == "Gamma_alpha_observables":
-                    combined = list(zip(data["Gamma"].values, data["SvN"].values))
+                combined = list(zip(data["Gamma"].values, data["SvN"].values))
             elif phase_diag == "Jz_alpha_observables":
-                        combined = list(zip(data["Jz"].values, data["SvN"].values))
+                combined = list(zip(data["Jz"].values, data["SvN"].values))
             else:
-                print("not lambda")
                 combined = list(zip(data["D"].values, data["SvN"].values))
 
             sorted_combined = sorted(combined)
@@ -102,6 +99,7 @@ def read_data(file_patterns, Ls):
         alpha_values = np.array(alpha_values)
         z_values = np.array(z_values)
         svn_list.append(z_values)
+
 
     ceff_values = 6 * (svn_list[0] - svn_list[1])/(np.log(Ls[0])-np.log(Ls[1]))
     # print(D_values)

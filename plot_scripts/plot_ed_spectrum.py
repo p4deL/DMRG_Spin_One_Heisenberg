@@ -11,11 +11,11 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 L = 12  # system size
-#alpha = 1.25
-alpha = 2.5
+alpha = 1.25
+#alpha = 2.5
 
-#crit_point = 0.096676
-crit_point = 0.384695
+crit_point = 0.096676
+#crit_point = 0.384695
 
 # output filename
 output_file = f"../plots/ed_spectrum_alpha{alpha}_L{L}.pdf"

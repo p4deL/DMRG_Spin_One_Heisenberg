@@ -19,8 +19,8 @@ chi = 300
 
 # which phase diagram
 phase_diag = "lambda_alpha"
-phase_diag = "Gamma_alpha"
-phase_diag = "Jz_alpha"
+#phase_diag = "Gamma_alpha"
+#phase_diag = "Jz_alpha"
 #phase_diag = "D_alpha"
 
 # Directory where your CSV files are stored
@@ -30,8 +30,8 @@ print(data_dir)
 #quantity = ['SvN', r'$S_{\rm VN}$']
 #quantity = ['str_order', r'$O^{\rm str}_{\frac{L}{4}, \frac{3L}{4}}$']
 #quantity = ['eff_str_order', r'$O^{z,\rm str}_{\frac{L}{4}, \frac{3L}{4}}- \langle S^z_{\frac{L}{4}}S^z_{\frac{3L}{4}}\rangle$']
-quantity = ['m_long', r'$M_z$']  # TODO. different mag directions
-#quantity = ['m_trans', r'$M_{\perp}$']  # TODO. different mag directions
+#quantity = ['m_long', r'$M_z$']  # TODO. different mag directions
+quantity = ['m_trans', r'$M_{\perp}$']  # TODO. different mag directions
 #quantity = ['fidelity', 'fidelity', r'$\chi_{\rm fidelity}$']
 
 # output filename
@@ -111,6 +111,7 @@ for file in csv_files:
     if idx > -1:
         transition_D.append(d[idx])
         transition_alpha.append(1./alpha)
+        #transition_alpha.append(np.exp(-1.*alpha))
 
     D_values.append(d)
     z_values.append(z)
@@ -119,6 +120,7 @@ for file in csv_files:
         alpha_values.append(np.full_like(data["Gamma"].values, 1./alpha))  # Create an array of alphaval for each Gamma
     else:
         alpha_values.append(np.full_like(data["D"].values, 1./alpha))  # Create an array of alphaval for each D
+        #alpha_values.append(np.full_like(data["D"].values, np.exp(-1.*alpha)))  # Create an array of alphaval for each D
 
 # sort by alpha values
 #if phase_diag == "lambda_alpha":
@@ -156,7 +158,7 @@ plt.figure(figsize=(8, 6))
 
 colorplot = plt.pcolor(D_grid, alpha_grid, z_values.reshape(D_grid.shape), cmap='viridis')
 #plt.plot(transition_D, transition_alpha, color='k')
-#plt.scatter([-1.5, 0, 0, 0.5, 1.5], [0, 0, 0.5, 0.5, 0.], color='red', marker='o', s=100)
+#plt.scatter([1.4, -0.3, 0., 0.0, 1.0, 0.3], np.reciprocal([10.0, 1.5, 10.0, 1.5, 1.5, 3.2]), color='red', marker='o', s=100)
 
 # Add colorbar
 cbar = plt.colorbar(colorplot)

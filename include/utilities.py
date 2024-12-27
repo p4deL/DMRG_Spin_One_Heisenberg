@@ -60,6 +60,7 @@ def plot_fit(x_vals, y_powerlaw, y_sumexp):
     plt.legend(loc='best')
     plt.show()
 
+
 def determine_n_exp(n_exp_min=1, err_tol=1e-10, L=1000, alpha=100.0, plot=False):
     n_exp = n_exp_min
     n_exp_max = L//2
@@ -145,6 +146,10 @@ def calc_correlations(psi):
 
     return corr_pm[0,:], corr_mp[0,:], corr_zz[0,:], corr_str_order[0,:]
 
+def calc_entropies(psi):
+    # von Neumann entanglement entropy
+    SvN_full = psi.entanglement_entropy()
+    return SvN_full
 
 def calc_log_fidelity(psi, psi_eps, eps):
     overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions

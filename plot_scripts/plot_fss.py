@@ -21,22 +21,22 @@ import os
 sys.path.insert(0, os.path.abspath('../'))
 import include.data_io as data_io
 
-alpha = 1.25
+alpha = 3.125
 chi = 300
 #sigma = float(fixed_sigma)
 #koppa = np.maximum(1, 2./(3*sigma))
 koppa = 1.
 #print(koppa)
 
-reciprocal_lambda = True
+reciprocal_lambda = False
 
 # global xc and nu guess
-#obs_string = "fidelity"
+obs_string = "fidelity"
 #obs_string = "m_long"
-obs_string = "m_trans"
+#obs_string = "m_trans"
 
-cutoff_left = 0
-cutoff_right = 0
+cutoff_left = 10
+cutoff_right = 40
 
 if obs_string == "fidelity":
     ylabels = ("$\\chi_{\\rm fidelity}$", '$L^{-\\mu}\\chi_{\\rm fidelity}$')  # FIXME
@@ -52,8 +52,8 @@ else:
 
 labels = (xlabels, ylabels)
 
-data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
-#data_path = f"../data/fss/ising_transition/alpha{alpha}/"
+#data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
+data_path = f"../data/fss/ising_transition/alpha{alpha}/"
 out_file = f"../plots/fss_{obs_string}_alpha{alpha}.pdf"
 
 
@@ -84,7 +84,7 @@ def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
 
 def perform_data_collapse(data, fit_func):
 
-    tuning_param_guess = 0.2
+    tuning_param_guess = -0.1
     invnu_guess = 1.
     exponent_guess = 0.125
     #print(fss_mag_fit_func(data[:2,:], tuning_param_guess, beta_guess, nu_guess, 1,1,1,1))

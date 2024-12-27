@@ -15,16 +15,16 @@ def usage():
 
 
 def param_use(argv):
-    L = 0
-    D = 1.
+    L = 2
+    D = 0.
     Gamma = 1.
     Jz = 1.
     alpha = 10.
-    n_exp = 0
+    n_exp = 1
     found_l = found_a = found_exp = False
 
     try:
-        opts, args = getopt.getopt(argv, "L:D:J:G:a:e:h", ["Length=", "D=", "Jz", "Gamma=", "alpha=", "nexp=", "help"])
+        opts, args = getopt.getopt(argv, "L:D:J:G:a:e:h", ["Length=", "D=", "Jz=", "Gamma=", "alpha=", "nexp=", "help"])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -260,6 +260,14 @@ def write_correlations_to_file(correlator_strings : list, correlators : list, L 
     correlator_array = np.vstack(correlators).T
     np.savetxt(filename, correlator_array, fmt='%f', delimiter=',', header=",".join(correlator_strings), comments='')
 
+
+def write_entropies_to_file(entropy_strings : list, entropies : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
+
+    # Open a file in write mode
+    filename = f'output/spinone_heisenberg_entropies_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
+
+    correlator_array = np.vstack(entropies).T
+    np.savetxt(filename, correlator_array, fmt='%f', delimiter=',', header=",".join(entropy_strings), comments='')
 
 def save_results_obs(filename,  model_params={},
                                 init_state={},

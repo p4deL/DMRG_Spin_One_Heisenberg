@@ -55,6 +55,8 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Jz=1.0, Gamma=1.0
         'max_sweeps': 50,
     }
 
+    print(f"L={L}, D={D}, Jz={Jz}, Gamma={Gamma}, B={B}, n_exp={n_exp}")
+
     # create spine one model
     M = LongRangeSpinOneChain(model_params)
 
@@ -135,7 +137,33 @@ def main(argv):
     #str_correlators = ["pos", "corr_pm", "corr_mp", "corr_zz", "corr_str_order"]
     #pos = np.arange(len(corr_pm))
     #correlators = [pos, corr_pm, corr_mp, corr_zz, corr_str_order]
-    #data_io.write_correlations_to_file(str_correlators, correlators, L, alpha, D, Gamma, chi_limit)
+    #data_io.write_correlations_to_file(str_correlators, correlators, L, alpha, D, Gamma, Jz, chi_limit)
+
+    # save entropies
+    #entropies = utilities.calc_entropies(psi)
+    #str_entropies = ["pos", "SvN"]
+    #pos = np.arange(len(entropies))
+    #entropies = [pos, entropies]
+    #data_io.write_entropies_to_file(str_entropies, entropies, L, alpha, D, Gamma, Jz, chi_limit)
+
+    #import matplotlib.pyplot as plt
+    #np.set_printoptions(precision=5, suppress=True, linewidth=100)
+    #plt.rcParams['figure.dpi'] = 150
+    import tenpy
+
+    #bonds = np.arange(0.5, psi.L - 1)
+    #plt.plot(bonds, psi.entanglement_entropy(), 'o', label="S")
+
+    # preform fit to extract the central charge
+    #central_charge, const, res = tenpy.tools.fit.central_charge_from_S_profile(psi)
+    #fit = tenpy.tools.fit.entropy_profile_from_CFT(bonds + 0.5, psi.L, central_charge, const)
+    #print(f"extraced central charge {central_charge:.5f} with residuum {res:.2e}")
+    #print("(Expect central charge = 0.5 for the transverse field Ising model.)")
+    #plt.plot(bonds, fit, label=f"fit with $c={central_charge:.3f}$")
+    #plt.xlabel("bond")
+    #plt.ylabel("entanglement entropy $S$")
+    #plt.legend()
+    #plt.show()
 
 if __name__ == "__main__":
    import logging
