@@ -19,7 +19,7 @@ import include.utilities as utilities
 #os.environ["NUMEXPR_NUM_THREADS"] = "1"  # For NumExpr, if used
 
 
-def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Jz=1.0, Gamma=1.0, B=0.0, n_exp=2, conserve='best'):
+def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Jz=1.0, Gamma=1.0, B=0.0, n_exp=2, sz1_flag=False, conserve='best'):
     model_params = dict(
         L=L,
         D=D,
@@ -55,7 +55,7 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Jz=1.0, Gamma=1.0
         'max_sweeps': 50,
     }
 
-    print(f"L={L}, D={D}, Jz={Jz}, Gamma={Gamma}, B={B}, n_exp={n_exp}")
+    print(f"L={L}, D={D}, Jz={Jz}, Gamma={Gamma}, B={B}, n_exp={n_exp}, sz={1 if sz1_flag else 0}")
 
     # create spine one model
     M = LongRangeSpinOneChain(model_params)
@@ -63,8 +63,14 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Jz=1.0, Gamma=1.0
     # create initial state
     if D <= 0.0 or alpha <= 3.0:  # FIXME: Check if boundary should be changed
         product_state = [0, 2] * (L//2)  # initial state down = 0, 0 = 1, up = 2
+        if sz1_flag:
+            product_state[L//2-1] = 1
     else:
         product_state = [1] * L
+        if sz1_flag:
+            product_state[L//2-1] = 2
+
+
 
 
     # initial guess mps
@@ -103,13 +109,13 @@ def main(argv):
 
     ######################
     # read terminal inputs
-    L, D, Jz, Gamma, alpha, n_exp = data_io.param_use(argv)
+    L, D, Jz, Gamma, alpha, n_exp, sz1_flag = data_io.param_use(argv)
 
     # AUXFIELD ?
-    B = -1.e-2  # FIXME
+    B = 1.e-2  # FIXME
     #B = 0.  # FIXME
     #if alpha > 3.0:
-    #    B = -1e-2
+    #    B = 1e-2
     #else:
     #    B = 0.
 
@@ -117,7 +123,7 @@ def main(argv):
     ##########
     # run dmrg
     start_time = time.time()
-    E, tracking_obs, obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, Jz=Jz, Gamma=Gamma, alpha=alpha, B=B, n_exp=n_exp)
+    E, tracking_obs, obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, Jz=Jz, Gamma=Gamma, alpha=alpha, B=B, n_exp=n_exp, sz1_flag=sz1_flag)
     print("--- %s seconds ---" % (time.time() - start_time))
 
     ###########################

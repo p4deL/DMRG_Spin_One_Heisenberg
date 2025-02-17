@@ -22,9 +22,10 @@ def param_use(argv):
     alpha = 10.
     n_exp = 1
     found_l = found_a = found_exp = False
+    sz1_flag = False
 
     try:
-        opts, args = getopt.getopt(argv, "L:D:J:G:a:e:h", ["Length=", "D=", "Jz=", "Gamma=", "alpha=", "nexp=", "help"])
+        opts, args = getopt.getopt(argv, "L:D:J:G:a:e:01h", ["Length=", "D=", "Jz=", "Gamma=", "alpha=", "nexp=", "sz0", "sz1", "help"])
     except getopt.GetoptError:
         usage()
         sys.exit(2)
@@ -46,6 +47,11 @@ def param_use(argv):
         elif opt in ("-e", "--nexp"):
             n_exp = int(arg)
             found_exp = True
+        elif opt in ("-0", "--sz0"):
+            sz1_flag = False
+        elif opt in ("-1", "--sz1"):
+            sz1_flag = True
+
 
     if not found_l:
         print("Length of ladder (system size) not given.")
@@ -60,33 +66,33 @@ def param_use(argv):
         usage()
         sys.exit(2)
 
-    return L, D, Jz, Gamma, alpha, n_exp
+    return L, D, Jz, Gamma, alpha, n_exp, sz1_flag
 
 
-def write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp):
+def write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp, sz1_flag):
     # Writing to file
     filename = f"{basename}_L{L}_alpha{alpha}.txt"
     with open(filename, "w") as file:
         for D in Ds:
             for Gamma in Gammas:
-                line = f"python {script} -L {L} -D {D} -G {Gamma} -a {alpha} -e {n_exp}\n"
+                line = f"python {script} -L {L} -D {D} -G {Gamma} -a {alpha} -e {n_exp} --sz{1 if sz1_flag else 0}\n"
                 file.write(line)
 
     print(f"Output written to {filename}")
 
 
-def write_xxz_joblist_files(basename, script, L, alpha, Jzs, n_exp):
+def write_xxz_joblist_files(basename, script, L, alpha, Jzs, n_exp, sz1_flag):
     # Writing to file
     filename = f"{basename}_L{L}_alpha{alpha}.txt"
     with open(filename, "w") as file:
         for Jz in Jzs:
-            line = f"python {script} -L {L} -J {Jz} -a {alpha} -e {n_exp}\n"
+            line = f"python {script} -L {L} -J {Jz} -a {alpha} -e {n_exp} --sz{1 if sz1_flag else 0}\n"
             file.write(line)
 
     print(f"Output written to {filename}")
 
 
-def write_one_joblist_file(filename, script, L, alpha, Ds, Gammas, n_exp, append=True):
+def write_one_joblist_file(filename, script, L, alpha, Ds, Gammas, n_exp, sz1_flag, append=True):
     write_flag = 'w'
     if append:
         write_flag = 'a'
@@ -95,13 +101,13 @@ def write_one_joblist_file(filename, script, L, alpha, Ds, Gammas, n_exp, append
     with open(filename, write_flag) as file:
         for D in Ds:
             for Gamma in Gammas:
-                line = f"python {script} -L {L} -D {D} -G {Gamma} -a {alpha} -e {n_exp}\n"
+                line = f"python {script} -L {L} -D {D} -G {Gamma} -a {alpha} -e {n_exp} --sz{1 if sz1_flag else 0}\n"
                 file.write(line)
 
     print(f"Output written to {filename}")
 
 
-def write_one_xxz_joblist_file(filename, script, L, alpha, Jzs, n_exp, append=True):
+def write_one_xxz_joblist_file(filename, script, L, alpha, Jzs, n_exp, sz1_flag, append=True):
     write_flag = 'w'
     if append:
         write_flag = 'a'
@@ -109,7 +115,7 @@ def write_one_xxz_joblist_file(filename, script, L, alpha, Jzs, n_exp, append=Tr
     # Writing to file
     with open(filename, write_flag) as file:
         for Jz in Jzs:
-            line = f"python {script} -L {L} -J {Jz} -a {alpha} -e {n_exp}\n"
+            line = f"python {script} -L {L} -J {Jz} -a {alpha} -e {n_exp} --sz{1 if sz1_flag else 0}\n"
             file.write(line)
 
     print(f"Output written to {filename}")

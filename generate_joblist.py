@@ -13,6 +13,7 @@ if __name__ == "__main__":
     basename = "joblist_dmrg"
     plotflag = False
     L = 40
+    sz1_flag = False
     #################
     # D phase diagram
     #Gammas = np.array([1.0])
@@ -46,13 +47,13 @@ if __name__ == "__main__":
     for i, alpha in enumerate(alphas):
         print(alpha)
         if math.isinf(alpha):
-            data_io.write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp)
+            data_io.write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp, sz1_flag)
         else:
             n_exp = utilities.determine_n_exp(n_exp_min=n_exp_min, err_tol=err_tol, L=L, alpha=alpha, plot=plotflag)
             n_exp_min = n_exp
-            data_io.write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp)
+            data_io.write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp, sz1_flag)
 
 
-        data_io.write_one_joblist_file(f"{basename}_all_L{L}.txt", script, L, alpha, Ds, Gammas, n_exp, append=i)
+        data_io.write_one_joblist_file(f"{basename}_all_L{L}.txt", script, L, alpha, Ds, Gammas, n_exp, sz1_flag, append=i)
 
 

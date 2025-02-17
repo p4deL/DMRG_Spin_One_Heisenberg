@@ -11,6 +11,7 @@ if __name__ == "__main__":
     # Parameters
     script = "dmrg_spinone_heisenberg_fss.py"
     basename = "joblist_dmrg_fss"
+    sz1_flag = False
     plotflag = False
     lambdaflag = True
     alpha = float('inf')
@@ -43,13 +44,13 @@ if __name__ == "__main__":
         print(f"xmin={xmin}, xmax={xmax}")
 
         if math.isinf(alpha):
-            data_io.write_joblist_files(basename, script, L, alpha, xs, n_exp)
+            data_io.write_joblist_files(basename, script, L, alpha, xs, n_exp, sz1_flag)
         else:
             n_exp = utilities.determine_n_exp(n_exp_min=n_exp_min, err_tol=err_tol, L=L, alpha=alpha, plot=plotflag)
             n_exp_min = n_exp
-            data_io.write_joblist_files(basename, script, L, alpha, xs, n_exp)
+            data_io.write_joblist_files(basename, script, L, alpha, xs, n_exp, sz1_flag)
 
-        data_io.write_one_joblist_file(f"{basename}_all_alpha{alpha}.txt", script, L, alpha, xs, n_exp, append=i)
+        data_io.write_one_joblist_file(f"{basename}_all_alpha{alpha}.txt", script, L, alpha, xs, n_exp, sz1_flag, append=i)
 
 
 

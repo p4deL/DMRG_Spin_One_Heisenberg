@@ -25,13 +25,13 @@ chi = 500
 #alpha_selected = [0.36, 0.42, 0.44, 0.78]
 # for D plot
 #alpha_selected = [0.1, 0.26, 0.6, 0.8]
-alpha_selected = [0.1, 0.28]
+alpha_selected = [0.28, 0.37, 0.45]
 
 # output filename
 output_file = f"../plots/colorplot_{phase_diag}_centralcharge_L1{L1}_L2{L2}.pdf"
 
 # directory and filename
-data_dir = f'../data/phase_diagram/{phase_diag}/m500/'
+data_dir = f'../data/phase_diagram/{phase_diag}/Sz1/'
 # Use glob to find all csv files that match the pattern
 file_pattern1 = os.path.join(f"{data_dir}L{L1}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
 file_pattern2 = os.path.join(f"{data_dir}L{L2}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
@@ -83,6 +83,7 @@ def read_data(file_patterns, Ls):
             z_values.append(z)
 
             alpha_values.append(np.full_like(data["D"].values, 1. / alpha))  # Create an array of alphaval for each D
+            print(alpha)
 
         # sort by alpha values
         #if phase_diag == "lambda_alpha_observables":
@@ -91,8 +92,34 @@ def read_data(file_patterns, Ls):
 
         # sort colorplot vals
         combined = zip(alpha_values, D_values, z_values)
+        print(len(D_values))
         sorted_combined = sorted(combined, key=lambda x: x[0][0])
+        print(10*"*")
+        print(f"z_vals={z_values[0][0]}")
+        print(10 * "-")
         alpha_values, D_values, z_values = zip(*sorted_combined)
+        print(D_values)
+
+        from collections import Counter
+
+        #D_values = [(1, 2), (3, 4, 5), (6, 7)]
+
+        # Get the lengths of each tuple
+        row_lengths = [len(row) for row in D_values]
+
+        # Count occurrences of each length
+        length_counts = Counter(row_lengths)
+
+        # Find the most common length
+        most_common_length = length_counts.most_common(1)[0][0]
+
+        # Identify rows that differ from the most common length
+        differing_rows = [i for i, row in enumerate(D_values) if len(row) != most_common_length]
+
+        print("Rows that differ:", differing_rows)
+
+        if len(differing_rows) > 0:
+            print(np.reciprocal(alpha_values[differing_rows[0]]))
 
         # Convert lists to arrays for plotting
         D_values = np.array(D_values)
@@ -194,9 +221,9 @@ if __name__ == "__main__":
 
     ax1.set_ylabel('$1/\\alpha$', fontsize=fs1)
     ax2.set_ylabel('$c_{\\rm eff}$', fontsize=fs1)
-    ax2.set_ylim([-0.1, 3.5])
+    ax2.set_ylim([-1.0, 2.0])
     #ax2.set_ylim([-0.1, 5.5])
-    ax2.legend(loc='upper right', fontsize=fs2)
+    ax2.legend(loc='lower left', fontsize=fs2)
 
     # title
     ax1.set_title(f"$L_1={L1}$,~$L_2={L2}$", fontsize=fs2)

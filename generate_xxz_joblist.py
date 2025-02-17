@@ -12,10 +12,11 @@ if __name__ == "__main__":
     script = "dmrg_spinone_heisenberg.py"
     basename = "joblist_dmrg"
     plotflag = False
-    L = 110
+    L = 20
+    sz1_flag = False
     #################
     # D phase diagram
-    Jzs = np.arange(-1.0, 3.1, 0.1)
+    Jzs = np.arange(-0.95, 3.05, 0.05)
     #Ds = np.arange(-0.4, 1.0, 0.02)
     alphas = np.reciprocal(np.arange(0.0, 0.61, 0.01))
     #################
@@ -27,13 +28,13 @@ if __name__ == "__main__":
     for i, alpha in enumerate(alphas):
         print(alpha)
         if math.isinf(alpha):
-            data_io.write_xxz_joblist_files(basename, script, L, alpha, Jzs, n_exp)
+            data_io.write_xxz_joblist_files(basename, script, L, alpha, Jzs, n_exp, sz1_flag)
         else:
             n_exp = utilities.determine_n_exp(n_exp_min=n_exp_min, err_tol=err_tol, L=L, alpha=alpha, plot=plotflag)
             n_exp_min = n_exp
-            data_io.write_xxz_joblist_files(basename, script, L, alpha, Jzs, n_exp)
+            data_io.write_xxz_joblist_files(basename, script, L, alpha, Jzs, n_exp, sz1_flag)
 
 
-        data_io.write_one_xxz_joblist_file(f"{basename}_all_L{L}.txt", script, L, alpha, Jzs, n_exp, append=i)
+        data_io.write_one_xxz_joblist_file(f"{basename}_all_L{L}.txt", script, L, alpha, Jzs, n_exp, sz1_flag, append=i)
 
 
