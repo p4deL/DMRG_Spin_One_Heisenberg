@@ -11,9 +11,9 @@ rc('text', usetex=True)
 rc('text.latex', preamble = r'\usepackage{amssymb}')
 rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
-#phase_diag = "D_alpha_observables"
+phase_diag = "D_alpha_observables"
 #phase_diag = "lambda_alpha_observables"
-phase_diag = "Jz_alpha_observables"
+#phase_diag = "Jz_alpha_observables"
 
 L1 = 100  # system size
 L2 = 110
@@ -25,13 +25,13 @@ chi = 500
 #alpha_selected = [0.36, 0.42, 0.44, 0.78]
 # for D plot
 #alpha_selected = [0.1, 0.26, 0.6, 0.8]
-alpha_selected = [0.28, 0.37, 0.45]
+alpha_selected = [0.1, 0.2, 0.4, 0.7]
 
 # output filename
 output_file = f"../plots/colorplot_{phase_diag}_centralcharge_L1{L1}_L2{L2}.pdf"
 
 # directory and filename
-data_dir = f'../data/phase_diagram/{phase_diag}/Sz1/'
+data_dir = f'../data/phase_diagram/{phase_diag}/Sz1/B-1e-2/'
 # Use glob to find all csv files that match the pattern
 file_pattern1 = os.path.join(f"{data_dir}L{L1}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
 file_pattern2 = os.path.join(f"{data_dir}L{L2}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
@@ -79,6 +79,10 @@ def read_data(file_patterns, Ls):
             sorted_combined = sorted(combined)
             d, z = zip(*sorted_combined)
 
+            #d = d[2:]
+            #z = z[2:]
+
+
             D_values.append(d)
             z_values.append(z)
 
@@ -88,6 +92,8 @@ def read_data(file_patterns, Ls):
         # sort by alpha values
         #if phase_diag == "lambda_alpha_observables":
         #    D_values = np.reciprocal(D_values)
+
+
 
 
         # sort colorplot vals
@@ -129,6 +135,7 @@ def read_data(file_patterns, Ls):
 
 
     ceff_values = 6 * (svn_list[0] - svn_list[1])/(np.log(Ls[0])-np.log(Ls[1]))
+    ceff_values[ceff_values < 0.] = 0.
     # print(D_values)
     # print(alpha_values)
     # print(z_values)
@@ -205,8 +212,11 @@ if __name__ == "__main__":
     cbar.set_label("$c_{\\rm eff}$", fontsize=fs2)
 
 
+
+
     D_selected, ceff_selected = get_selected_values(alpha_values, D_values, ceff_values, alpha_selected)
     for Ds, ceff, invalpha in zip(D_selected, ceff_selected, alpha_selected):
+        ax1.plot(Ds, np.full_like(Ds, invalpha), color='gray', linestyle='--', alpha=0.5)
         ax2.plot(Ds, ceff, marker='o', linestyle='-', label=f"$\\alpha={1./invalpha:.3f}$")
 
     # Label axes
@@ -221,9 +231,9 @@ if __name__ == "__main__":
 
     ax1.set_ylabel('$1/\\alpha$', fontsize=fs1)
     ax2.set_ylabel('$c_{\\rm eff}$', fontsize=fs1)
-    ax2.set_ylim([-1.0, 2.0])
+    ax2.set_ylim([0.0, 4.5])
     #ax2.set_ylim([-0.1, 5.5])
-    ax2.legend(loc='lower left', fontsize=fs2)
+    ax2.legend(loc='upper right', fontsize=fs2)
 
     # title
     ax1.set_title(f"$L_1={L1}$,~$L_2={L2}$", fontsize=fs2)

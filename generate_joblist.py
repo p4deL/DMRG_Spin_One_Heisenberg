@@ -12,7 +12,7 @@ if __name__ == "__main__":
     script = "dmrg_spinone_heisenberg.py"
     basename = "joblist_dmrg"
     plotflag = False
-    L = 40
+    L = 100
     sz1_flag = False
     #################
     # D phase diagram
@@ -21,8 +21,7 @@ if __name__ == "__main__":
     #alphas = np.reciprocal(np.arange(0.0, 0.82, 0.02))
     # adaptive D phase diagram
     Gammas = np.array([1.0])
-    Ds = np.arange(-0.4, 1.0, 0.02)
-    Ds = np.arange(-0.6, -0.1, 0.02)
+    Ds = np.arange(-0.4, 1.02, 0.02)
     alphas1 = np.reciprocal(np.arange(0.0, 0.42, 0.02))
     alphas2 = np.reciprocal(np.arange(0.45, 0.85, 0.05))
     alphas = np.concatenate((alphas1, alphas2))

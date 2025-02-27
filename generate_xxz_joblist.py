@@ -12,12 +12,11 @@ if __name__ == "__main__":
     script = "dmrg_spinone_heisenberg.py"
     basename = "joblist_dmrg"
     plotflag = False
-    L = 20
+    L = 100
     sz1_flag = False
     #################
     # D phase diagram
     Jzs = np.arange(-0.95, 3.05, 0.05)
-    #Ds = np.arange(-0.4, 1.0, 0.02)
     alphas = np.reciprocal(np.arange(0.0, 0.61, 0.01))
     #################
 

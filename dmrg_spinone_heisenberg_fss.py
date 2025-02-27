@@ -111,7 +111,8 @@ def main(argv):
 
     ##########
     # AUXFIELD ?
-    B = 1.e-2
+    B = 1.e-2  # FIXME
+    #B = 0.
     #if alpha > 3.0:
     #    B = 1e-2
     #else:
@@ -138,7 +139,7 @@ def main(argv):
     # save tracking obs
     str_tracking_obs = ["gs_energy", "gs_energy_eps", "gs_energy_diff", "parity_x", "parity_x_eps", "s_total", "s_total_eps", "chi_max", "chi_max_eps", "nsweeps", "nsweeps_eps"]
     tracking_obs = [E, E_eps, delta_E, Px, Px_eps, Stot_sq, Stot_sq_eps, chi_max, chi_max_eps, nsweeps, nsweeps_eps]
-    data_io.write_observables_to_file("spinone_heisenberg_fss_trackobs", str_tracking_obs, tracking_obs, L, alpha, D, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_fss_trackobs", str_tracking_obs, tracking_obs, L, alpha, D, Gamma, Jz, chi_limit)
     # save observables
     SvN, m_trans, m_long, str_order, eff_str_order = obs
     overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
@@ -146,7 +147,7 @@ def main(argv):
     log_fidelity = utilities.calc_log_fidelity(psi, psi_eps, eps)
     obs = [eps, overlap, fidelity, log_fidelity, SvN, m_trans, m_long, str_order, eff_str_order]
     str_observables = ["eps", "overlap", "fidelity", "log_fidelity", "SvN", "m_trans", "m_long", "str_order", "eff_str_order"]
-    data_io.write_observables_to_file("spinone_heisenberg_fss_obs", str_observables, obs, L, alpha, D, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_fss_obs", str_observables, list(obs), L, alpha, D, Gamma, Jz, chi_limit)
 
 
 if __name__ == "__main__":

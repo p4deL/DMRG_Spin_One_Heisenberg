@@ -10,8 +10,8 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 
-L = 60  # system size
-alpha = 1.1
+L = 100  # system size
+alpha = "inf"
 chi = 300
 
 max_sweeps = 100
@@ -20,8 +20,8 @@ max_sweeps = 100
 output_file = f"../plots/svn_info_chi{chi}_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
-#data_dir = f"output/L{L}/"
-data_dir = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
+data_dir = f"../output/"
+#data_dir = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
 
 
 all_quantities = [["SvN"], ["fidelity", "log_fidelity"], ["overlap"], ["gs_energy", "gs_energy_eps"], ["gs_energy_diff"], ["parity_x", "parity_x_eps"], ["s_total", "s_total_eps"], ["chi_max", "chi_max_eps"], ["nsweeps", "nsweeps_eps"]]
@@ -44,10 +44,11 @@ for i, (quantities, label) in enumerate(zip(all_quantities, labels)):
         
         # Read the data
         data = pd.read_csv(data_dir + file)
-        x = data["D"].values
+        #x = data["D"].values
+        x = data["Jz"].values
         y = data[quantity].values
 
-        x = np.reciprocal(x)
+        #x = np.reciprocal(x)
 
         if quantity == "fidelity" or quantity == "log_fidelity":
             y = y/L
@@ -82,7 +83,8 @@ axs[-1].set_ylim(0,max_sweeps+0.3*max_sweeps)
 axs[-1].plot([x[0],x[-1]], [max_sweeps, max_sweeps], lw=2, c="C10")
 axs[-1].text(0.05, 0.85, "max sweeps", color="gray", transform=axs[-1].transAxes)
 
-axs[-1].set_xlabel("$D$")
+#axs[-1].set_xlabel("$D$")
+axs[-1].set_xlabel("$J_z$")
 
 # Adjust layout for readability
 plt.tight_layout()
