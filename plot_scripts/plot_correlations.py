@@ -20,7 +20,7 @@ L = 100  # system size
 output_file = f"../plots/correlations_L{L}.pdf"
 
 # directory and filename
-data_dir = '../data/correlations/L{L}/'
+data_dir = f'../data/correlations/L{L}/'
 
 
 filename_largeD = f'spinone_heisenberg_correlations_chi300_D1.4_Gamma1.0_Jz1.0_alpha10.0_L{L}.csv'
@@ -72,8 +72,6 @@ for idx, (ax, filename, label) in enumerate(zip(axs, filenames, labels)):
         ax.plot(pos, corryy, marker="+", color=colors[2])
         ax.plot(pos, corrzz, marker=".", color=colors[3])
 
-    ax.set_xscale("log")
-    ax.set_yscale("log")
 
 axs[1].set_ylim(-1.35, 1.35)
 

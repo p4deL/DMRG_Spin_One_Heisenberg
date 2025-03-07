@@ -228,35 +228,90 @@ def write_quantity_to_file(quantity_string : str, quantity : float, L : int, alp
                 writer.writerow([D, Gamma, Jz, quantity])  # Append D and fidelity
 
 
-def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
+
+def write_observables_to_file(str_base: str, str_observables: list, observables: list, L: int, alpha: float, D: float, Gamma: float, Jz: float, chi: int):
     if len(str_observables) != len(observables):
         print("Length of str_observables does not match length of observables.")
         print(str_observables)
         print(observables)
         return
 
-    # Open a file in write mode
-    filename = f'output/{str_base}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
+    # Prepare filename
+    filename = f'output/{str_base}_chi{chi}_alpha{alpha}_L{L}.csv'
+    lockfile = filename + ".lock"
 
-    observables.insert(0, Jz)
-    str_observables.insert(0, "Jz")
-    observables.insert(0, Gamma)
-    str_observables.insert(0, "Gamma")
-    observables.insert(0, D)
-    str_observables.insert(0, "D")
+    # Prepend extra observables before locking
+    header = ["Jz", "Gamma", "D"] + str_observables
+    row = [Jz, Gamma, D] + observables
 
-    # lock files when writing (necessary when using a joblist)
-    with FileLock(filename + ".lock"):
-        if os.path.isfile(filename):
-            with open(filename, 'a') as file:
-                writer = csv.writer(file)
-                writer.writerow(observables)  # Append D and fidelity
-        else:
-            with open(filename, 'w') as file:
-                writer = csv.writer(file)
-                writer.writerow(str_observables)
-                writer.writerow(observables)  # Append D and fidelity
+    # Lock files when writing (necessary when using a joblist)
+    with FileLock(lockfile):
+        file_exists = os.path.exists(filename)
 
+        # Open file and write data
+        with open(filename, 'a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists or os.stat(filename).st_size == 0:  # Check if the file is empty
+                writer.writerow(header)
+            writer.writerow(row)
+
+
+# TODO: Remove me.
+#def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
+#    if len(str_observables) != len(observables):
+#        print("Length of str_observables does not match length of observables.")
+#        print(str_observables)
+#        print(observables)
+#        return
+#
+#    # Open a file in write mode
+#    filename = f'output/{str_base}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
+#
+#    observables.insert(0, Jz)
+#    str_observables.insert(0, "Jz")
+#    observables.insert(0, Gamma)
+#    str_observables.insert(0, "Gamma")
+#    observables.insert(0, D)
+#    str_observables.insert(0, "D")
+#
+#    # lock files when writing (necessary when using a joblist)
+#    with FileLock(filename + ".lock"):
+#        if os.path.isfile(filename):
+#            with open(filename, 'a') as file:
+#                writer = csv.writer(file)
+#                writer.writerow(observables)  # Append D and fidelity
+#        else:
+#            with open(filename, 'w') as file:
+#                writer = csv.writer(file)
+#                writer.writerow(str_observables)
+#                writer.writerow(observables)  # Append D and fidelity
+
+
+def write_observables_to_file_fix_D(str_base: str, str_observables: list, observables: list, L: int, alpha: float, D: float, Gamma: float, Jz: float, chi: int):
+    if len(str_observables) != len(observables):
+        print("Length of str_observables does not match length of observables.")
+        print(str_observables)
+        print(observables)
+        return
+
+    # Prepare filename
+    filename = f'output/{str_base}_chi{chi}_D{D}_L{L}.csv'
+    lockfile = filename + ".lock"
+
+    # Prepend extra observables before locking
+    header = ["Jz", "Gamma", "alpha"] + str_observables
+    row = [Jz, Gamma, alpha] + observables
+
+    # Lock files when writing (necessary when using a joblist)
+    with FileLock(lockfile):
+        file_exists = os.path.exists(filename)
+
+        # Open file and write data
+        with open(filename, 'a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists or os.stat(filename).st_size == 0:  # Check if the file is empty
+                writer.writerow(header)
+            writer.writerow(row)
 
 def write_correlations_to_file(correlator_strings : list, correlators : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
 

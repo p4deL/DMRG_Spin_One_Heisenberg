@@ -31,7 +31,7 @@ alpha_selected = [0.1, 0.2, 0.4, 0.7]
 output_file = f"../plots/colorplot_{phase_diag}_centralcharge_L1{L1}_L2{L2}.pdf"
 
 # directory and filename
-data_dir = f'../data/phase_diagram/{phase_diag}/Sz1/B-1e-2/'
+data_dir = f'../data/phase_diagram/{phase_diag}/Sz0/B0/'
 # Use glob to find all csv files that match the pattern
 file_pattern1 = os.path.join(f"{data_dir}L{L1}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
 file_pattern2 = os.path.join(f"{data_dir}L{L2}/", f'spinone_heisenberg_obs_chi{chi}_alpha*.csv')
@@ -232,7 +232,7 @@ if __name__ == "__main__":
     ax1.set_ylabel('$1/\\alpha$', fontsize=fs1)
     ax2.set_ylabel('$c_{\\rm eff}$', fontsize=fs1)
     ax2.set_ylim([0.0, 4.5])
-    #ax2.set_ylim([-0.1, 5.5])
+    #ax2.set_ylim([-1.5, 4.5])
     ax2.legend(loc='upper right', fontsize=fs2)
 
     # title

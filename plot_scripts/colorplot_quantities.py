@@ -15,20 +15,20 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 # system size 
 L = 100
-chi = 500
+chi = 300
 
 # which phase diagram
 #phase_diag = "lambda_alpha"
-#phase_diag = "Gamma_alpha"
-phase_diag = "Jz_alpha"
+phase_diag = "Gamma_alpha"
+#phase_diag = "Jz_alpha"
 #phase_diag = "D_alpha"
 
 # Directory where your CSV files are stored
-data_dir = f'../data/phase_diagram/{phase_diag}_observables/Sz0/L{L}/'
+data_dir = f'../data/phase_diagram/{phase_diag}_observables/L{L}/'
 print(data_dir)
 
-#quantity = ['SvN', r'$S_{\rm VN}$']
-quantity = ['str_order', r'$O^{\rm str}_{\frac{L}{4}, \frac{3L}{4}}$']
+quantity = ['SvN', r'$S_{\rm VN}$']
+#quantity = ['str_order', r'$O^{\rm str}_{\frac{L}{4}, \frac{3L}{4}}$']
 #quantity = ['eff_str_order', r'$O^{z,\rm str}_{\frac{L}{4}, \frac{3L}{4}}- \langle S^z_{\frac{L}{4}}S^z_{\frac{3L}{4}}\rangle$']
 #quantity = ['m_long', r'$M_z$']  # TODO. different mag directions
 #quantity = ['m_trans', r'$M_{\perp}$']  # TODO. different mag directions
@@ -162,7 +162,7 @@ print(z_values)
 # Create the contour plot
 plt.figure(figsize=(8, 6))
 
-colorplot = plt.pcolor(D_grid, alpha_grid, z_values.reshape(D_grid.shape), cmap='rainbow') #cmap='viridis')
+colorplot = plt.pcolor(D_grid, alpha_grid, z_values.reshape(D_grid.shape), cmap='viridis') #cmap='rainbow') #cmap='viridis')
 #plt.plot(transition_D, transition_alpha, color='k')
 #plt.scatter([1.4, -0.3, 0., 0.0, 1.0, 0.3], np.reciprocal([10.0, 1.5, 10.0, 1.5, 1.5, 3.2]), color='red', marker='o', s=100)
 

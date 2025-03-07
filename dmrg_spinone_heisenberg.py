@@ -119,6 +119,14 @@ def main(argv):
     #else:
     #    B = 0.
 
+    ##########################################################################################
+    ### TODO:
+    ### TODO: Benchmark different parts of the code with a timer for a large MPS
+    ### TODO: It seems like saving the data to the file takes forever after DMRG is done
+    ### TODO: Could also be other issue; maybe calculating obs or something...
+    ### TODO:
+    ##########################################################################################
+
 
     ##########
     # run dmrg

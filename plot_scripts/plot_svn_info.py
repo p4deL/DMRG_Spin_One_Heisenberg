@@ -10,7 +10,7 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 
-L = 100  # system size
+L = 500  # system size
 alpha = "inf"
 chi = 300
 
@@ -20,7 +20,7 @@ max_sweeps = 100
 output_file = f"../plots/svn_info_chi{chi}_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
-data_dir = f"../output/"
+data_dir = f"../output/L500/"
 #data_dir = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
 
 

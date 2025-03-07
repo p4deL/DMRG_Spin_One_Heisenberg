@@ -111,8 +111,8 @@ def main(argv):
 
     ##########
     # AUXFIELD ?
-    B = 1.e-2  # FIXME
-    #B = 0.
+    #B = 1.e-2  # FIXME
+    B = 0.
     #if alpha > 3.0:
     #    B = 1e-2
     #else:
@@ -125,6 +125,7 @@ def main(argv):
     # run dmrg
     start_time = time.time()
     E, tracking_obs, obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, Jz=Jz, Gamma=Gamma, alpha=alpha, B=B, n_exp=n_exp, sz1_flag=sz1_flag)
+    # FIXME: Add eps to the correct parameter
     E_eps, tracking_obs_eps, obs_eps, psi_eps = dmrg_lr_spinone_heisenberg_finite(L=L, D=D+eps, Jz=Jz, Gamma=Gamma, alpha=alpha, B=B, n_exp=n_exp, sz1_flag=sz1_flag)
     print("--- %s seconds ---" % (time.time() - start_time))
 
