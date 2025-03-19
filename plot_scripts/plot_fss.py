@@ -21,22 +21,23 @@ import os
 sys.path.insert(0, os.path.abspath('../'))
 import include.data_io as data_io
 
-alpha = 3.125
-chi = 300
+alpha = 2.5
+chi = 500
 #sigma = float(fixed_sigma)
 #koppa = np.maximum(1, 2./(3*sigma))
 koppa = 1.
 #print(koppa)
+L_min = 60
 
-reciprocal_lambda = False
+reciprocal_lambda = True
 
 # global xc and nu guess
-obs_string = "fidelity"
+#obs_string = "fidelity"
 #obs_string = "m_long"
-#obs_string = "m_trans"
+obs_string = "m_trans"
 
-cutoff_left = 10
-cutoff_right = 40
+cutoff_left = 30
+cutoff_right = 20
 
 if obs_string == "fidelity":
     ylabels = ("$\\chi_{\\rm fidelity}$", '$L^{-\\mu}\\chi_{\\rm fidelity}$')  # FIXME
@@ -52,9 +53,9 @@ else:
 
 labels = (xlabels, ylabels)
 
-#data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
-data_path = f"../data/fss/ising_transition/alpha{alpha}/"
-out_file = f"../plots/fss_{obs_string}_alpha{alpha}.pdf"
+data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
+#data_path = f"../data/fss/ising_transition/alpha{alpha}/"
+out_file = f"../plots/fss/fss_{obs_string}_alpha{alpha}.pdf"
 
 
 
@@ -84,9 +85,9 @@ def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
 
 def perform_data_collapse(data, fit_func):
 
-    tuning_param_guess = -0.1
-    invnu_guess = 1.
-    exponent_guess = 0.125
+    tuning_param_guess = 0.385
+    invnu_guess = 1./1.59
+    exponent_guess = 1.
     #print(fss_mag_fit_func(data[:2,:], tuning_param_guess, beta_guess, nu_guess, 1,1,1,1))
 
     params, params_covariance = optimize.curve_fit(fit_func, data[:2,:], data[2,:], p0=[tuning_param_guess, invnu_guess, exponent_guess, 1, 1, 1, 1, 1, 1], maxfev=500000)
@@ -176,7 +177,7 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
 
 
 def main(argv):
-    data, dim = data_io.read_fss_data(data_path, obs_string, alpha, chi, cutoff_l=cutoff_left, cutoff_r=cutoff_right, reciprocal=reciprocal_lambda)
+    data, dim = data_io.read_fss_data(data_path, obs_string, alpha, chi, L_min=L_min, cutoff_l=cutoff_left, cutoff_r=cutoff_right, reciprocal=reciprocal_lambda)
     if obs_string == "fidelity":
         params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func)
     else:

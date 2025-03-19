@@ -28,9 +28,9 @@ filename_af = f'spinone_heisenberg_correlations_chi300_D-0.6_Gamma1.0_Jz1.0_alph
 filename_haldane = f'spinone_heisenberg_correlations_chi300_D0.0_Gamma1.0_Jz1.0_alpha10.0_L{L}.csv'
 #filename_su2csb = f'spinone_heisenberg_correlations_chi300_D0.0_Gamma1.0_Jz1.0_alpha1.5_L{L}.csv'
 #filename_u1csb = f'spinone_heisenberg_correlations_chi300_D1.0_Gamma1.0_Jz1.0_alpha1.5_L{L}.csv'
-##filename_unkown = f"spinone_heisenberg_correlations_chi300_D0.1_Gamma1.0_Jz1.0_alpha2.8_L{L}.csv"
+#filename_unkown = f"spinone_heisenberg_correlations_chi300_D0.1_Gamma1.0_Jz1.0_alpha2.8_L{L}.csv"
 #filename_unkown = f"spinone_heisenberg_correlations_chi300_D0.3_Gamma1.0_Jz1.0_alpha3.2_L{L}.csv"
-filename_unkown = f"spinone_heisenberg_correlations_chi300_D1.0_Gamma1.0_Jz1.0_alpha3.2_L{L}.csv"
+filename_unkown = f"spinone_heisenberg_correlations_chi300_D1.0_Gamma1.0_Jz1.0_alpha2.5_L{L}.csv"
 #filename_other = f'spinone_heisenberg_correlations_D-0.5_alpha1.5_L{L}.csv'
 
 
@@ -43,14 +43,14 @@ filenames = [filename_largeD, filename_haldane, filename_unkown]
 #markers = ["s"]
 
 filenames = [filename_largeD, filename_af, filename_haldane, filename_unkown]
-labels = ["large D $(D=1.4,~\\alpha=10.0)$", "z-AF $(D=-0.3,~\\alpha=1.5)$", "Haldane $(D=0.0,~\\alpha=10.0)$", "unkown $(D=1.0,~\\alpha=3.2)$"]
+labels = ["large D $(D=1.4,~\\alpha=10.0)$", "z-AF $(D=-0.3,~\\alpha=1.5)$", "Haldane $(D=0.0,~\\alpha=10.0)$", "unkown $(D=1.0,~\\alpha=2.5)$"]
 colors = ['C3', 'C0', 'C1', 'C2']
 
 fs1 = 18
 fs2 = 13
 
 # Create the figure and the subplots
-fig, axs = plt.subplots(2, 1, figsize=(6, 8), sharex=True)
+fig, axs = plt.subplots(1, 2, figsize=(10, 5), sharex=True)
 
 # Set labels and titles for each subplot (optional)
 for idx, ax in enumerate(axs):
@@ -102,10 +102,8 @@ for idx, ax in enumerate(axs):
 
 
     # Add a common legend on top
-    #lines_labels = [ax.get_legend_handles_labels() for ax in axs]
-    #lines, labels = [sum(lol, []) for lol in zip(*lines_labels)]
-    #fig.legend(lines, labels, loc='upper center', ncol=4, fontsize='large')
-    fig.legend(loc=(0.15,0.55), ncol=1, fontsize=fs2)
+    #fig.legend(loc=(0.15,0.55), ncol=1, fontsize=fs2)
+    fig.legend(loc=(0.15,0.15), ncol=1, fontsize=fs2)
 
 
     axs[0].set_title(f"$L={L}$", fontsize=fs1)

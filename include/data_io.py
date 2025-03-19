@@ -121,7 +121,7 @@ def write_one_xxz_joblist_file(filename, script, L, alpha, Jzs, n_exp, sz1_flag,
     print(f"Output written to {filename}")
 
 
-def read_fss_data(path, obs_string, alpha, chi, cutoff_l=0, cutoff_r=0, reciprocal=False):
+def read_fss_data(path, obs_string, alpha, chi, L_min=0, cutoff_l=0, cutoff_r=0, reciprocal=False):
     """read data for given observable (as string) and return prepared data"""
 
     data_L = []
@@ -138,39 +138,41 @@ def read_fss_data(path, obs_string, alpha, chi, cutoff_l=0, cutoff_r=0, reciproc
                 # FIXME: TRACKOBS doesn't work if there are other files...
                 system_size = int(re.search(f"spinone_heisenberg_fss_obs_chi{chi}_alpha{alpha}_L(.*).csv", f).group(1))
 
-                # import csv with panda
-                df = pd.read_csv(path + f)
-                # data_array = df.to_numpy()
-                # sigmas = data_array[:,0]
-                # FIXME
-                # hs = data_array[:,0]
-                # obs = data_array[:,3] # FIXME do i need to multiply with L again?
+                if system_size >= L_min:
 
-                # FIXME: What if I want to read in Gamma as parameter? add input parameter
-                Ds = df["D"].values
-                obs = df[obs_string].values
+                    # import csv with panda
+                    df = pd.read_csv(path + f)
+                    # data_array = df.to_numpy()
+                    # sigmas = data_array[:,0]
+                    # FIXME
+                    # hs = data_array[:,0]
+                    # obs = data_array[:,3] # FIXME do i need to multiply with L again?
 
-                # TODO: only if necessary
-                # prepare list with j as control fixed_param
-                tmp = list(zip(Ds, obs))
-                tmp.sort(key=lambda x: x[0])
-                sorted_Ds = [tuples[0] for tuples in tmp]
-                sorted_obs = [tuples[1] for tuples in tmp]
-                l = len(sorted_Ds)
+                    # FIXME: What if I want to read in Gamma as parameter? add input parameter
+                    Ds = df["D"].values
+                    obs = df[obs_string].values
 
-                L = list(np.ones(len(Ds[cutoff_l:l - cutoff_r])) * system_size)
-                data_L += L
-                data_tuning_param += sorted_Ds[cutoff_l:l - cutoff_r]
-                data_obs += sorted_obs[cutoff_l:l - cutoff_r]
+                    # TODO: only if necessary
+                    # prepare list with j as control fixed_param
+                    tmp = list(zip(Ds, obs))
+                    tmp.sort(key=lambda x: x[0])
+                    sorted_Ds = [tuples[0] for tuples in tmp]
+                    sorted_obs = [tuples[1] for tuples in tmp]
+                    l = len(sorted_Ds)
 
-                # TODO: WRITE DOWN WHAT'S GOING ON
-                # L = list(np.ones(len(hs))*system_size)
-                # data_L += L
-                # data_tuning_param += sorted_hs
-                # data_obs += sorted_obs
+                    L = list(np.ones(len(Ds[cutoff_l:l - cutoff_r])) * system_size)
+                    data_L += L
+                    data_tuning_param += sorted_Ds[cutoff_l:l - cutoff_r]
+                    data_obs += sorted_obs[cutoff_l:l - cutoff_r]
 
-                print(len(data_L))
-                print(len(data_tuning_param))
+                    # TODO: WRITE DOWN WHAT'S GOING ON
+                    # L = list(np.ones(len(hs))*system_size)
+                    # data_L += L
+                    # data_tuning_param += sorted_hs
+                    # data_obs += sorted_obs
+
+                    print(len(data_L))
+                    print(len(data_tuning_param))
 
     dim = len(sorted_Ds[cutoff_l:l - cutoff_r])
     if reciprocal:

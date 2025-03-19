@@ -16,6 +16,7 @@ if __name__ == "__main__":
     lambdaflag = True
     alpha = float('inf')
     Ls = [40, 50, 60]
+    Ds = [0.0]
     #Ls = [40, 60, 80, 100, 120, 140, 100, 240, 280, 320]
     #xcmin = 0.38
     xcinf = 0.385  # guess for phase transition point
@@ -44,13 +45,13 @@ if __name__ == "__main__":
         print(f"xmin={xmin}, xmax={xmax}")
 
         if math.isinf(alpha):
-            data_io.write_joblist_files(basename, script, L, alpha, xs, n_exp, sz1_flag)
+            data_io.write_joblist_files(basename, script, L, alpha, Ds, xs, n_exp, sz1_flag)
         else:
             n_exp = utilities.determine_n_exp(n_exp_min=n_exp_min, err_tol=err_tol, L=L, alpha=alpha, plot=plotflag)
             n_exp_min = n_exp
             data_io.write_joblist_files(basename, script, L, alpha, xs, n_exp, sz1_flag)
 
-        data_io.write_one_joblist_file(f"{basename}_all_alpha{alpha}.txt", script, L, alpha, xs, n_exp, sz1_flag, append=i)
+        data_io.write_one_joblist_file(f"{basename}_all_alpha{alpha}.txt", script, L, alpha, Ds, xs, n_exp, sz1_flag, append=i)
 
 
 

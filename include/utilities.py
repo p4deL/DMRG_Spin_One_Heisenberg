@@ -119,6 +119,8 @@ def calc_observables(psi):
     corr_pm = psi.correlation_function('Sp','Sm')
     corr_pm_stag = np.array([[(-1) ** (i + j) * corr_pm[i][j] for j in range(L)] for i in range(L)])
     mag_pm_stag = np.sqrt(np.mean(corr_pm_stag))
+    mag_pm_stag_test = np.sqrt(1/L**2 * np.sum(corr_pm_stag))
+    print(mag_pm_stag, mag_pm_stag_test)
 
     # longitudinal magnetization
     corr_zz = psi.correlation_function('Sz','Sz')

@@ -18,8 +18,8 @@ L = 100
 chi = 300
 
 # which phase diagram
-#phase_diag = "lambda_alpha"
-phase_diag = "Gamma_alpha"
+phase_diag = "lambda_alpha"
+#phase_diag = "Gamma_alpha"
 #phase_diag = "Jz_alpha"
 #phase_diag = "D_alpha"
 
