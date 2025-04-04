@@ -52,7 +52,6 @@ if __name__ == "__main__":
             data_io.write_joblist_files(basename, script, L, alpha, xs, n_exp, sz1_flag)
 
         data_io.write_one_joblist_file(f"{basename}_all_alpha{alpha}.txt", script, L, alpha, Ds, xs, n_exp, sz1_flag, append=i)
-
-
+        data_io.write_fss_meta_data(alpha, xcinf, nonuni_pref_range, koppa, nu, lambdaflag, sz1_flag)
 
 
