@@ -36,8 +36,8 @@ reciprocal_lambda = True
 #obs_string = "m_long"
 obs_string = "m_trans"
 
-cutoff_left = 30
-cutoff_right = 20
+cutoff_left = 25
+cutoff_right = 15
 
 if obs_string == "fidelity":
     ylabels = ("$\\chi_{\\rm fidelity}$", '$L^{-\\mu}\\chi_{\\rm fidelity}$')  # FIXME
@@ -85,9 +85,9 @@ def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
 
 def perform_data_collapse(data, fit_func):
 
-    tuning_param_guess = 0.385
-    invnu_guess = 1./1.59
-    exponent_guess = 1.
+    tuning_param_guess = 0.292
+    invnu_guess = 1./1.3
+    exponent_guess = 0.25
     #print(fss_mag_fit_func(data[:2,:], tuning_param_guess, beta_guess, nu_guess, 1,1,1,1))
 
     params, params_covariance = optimize.curve_fit(fit_func, data[:2,:], data[2,:], p0=[tuning_param_guess, invnu_guess, exponent_guess, 1, 1, 1, 1, 1, 1], maxfev=500000)
