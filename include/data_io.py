@@ -107,6 +107,17 @@ def write_one_joblist_file(filename, script, L, alpha, Ds, Gammas, n_exp, sz1_fl
     print(f"Output written to {filename}")
 
 
+def write_fss_meta_data(alpha, xcinf, nonuni_pref_range, koppa, nu, lambdaflag, sz1_flag):
+    filename = f"output/spinone_heisenberg_fss_metadata_alpha{alpha}.csv"
+
+    meta_data_str = ["alpha", "xcinf", "nonuni_pref_range", "koppa", "nu", "lambda", "sz1_flag"]
+    meta_data = [[alpha, xcinf, nonuni_pref_range, koppa, nu, lambdaflag, sz1_flag]]
+    with open(filename, "w") as file:
+        writer = csv.writer(file)
+        writer.writerow(meta_data_str)
+        writer.writerows(meta_data)
+
+
 def write_one_xxz_joblist_file(filename, script, L, alpha, Jzs, n_exp, sz1_flag, append=True):
     write_flag = 'w'
     if append:
@@ -329,8 +340,16 @@ def write_entropies_to_file(entropy_strings : list, entropies : list, L : int, a
     # Open a file in write mode
     filename = f'output/spinone_heisenberg_entropies_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
 
-    correlator_array = np.vstack(entropies).T
-    np.savetxt(filename, correlator_array, fmt='%f', delimiter=',', header=",".join(entropy_strings), comments='')
+    entropy_array = np.vstack(entropies).T
+    np.savetxt(filename, entropy_array, fmt='%f', delimiter=',', header=",".join(entropy_strings), comments='')
+
+def write_mz_to_file(mz_strings : list, mzs : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
+
+    # Open a file in write mode
+    filename = f'output/spinone_heisenberg_mzs_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
+
+    mz_array = np.array(mzs).T
+    np.savetxt(filename, mz_array, fmt='%f', delimiter=',', header=",".join(mz_strings), comments='')
 
 def save_results_obs(filename,  model_params={},
                                 init_state={},
