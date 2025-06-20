@@ -194,6 +194,19 @@ def read_fss_data(path, obs_string, alpha, chi, L_min=0, cutoff_l=0, cutoff_r=0,
     return data, dim
 
 
+def write_data_collapse_to_file(filename, red_n_points, L_min, x_c, dx_c, nu, dnu, exp, dexp):
+    file_exists = os.path.isfile(filename)
+
+    with open(filename, mode='a', newline='') as file:
+        writer = csv.writer(file)
+
+        # Write header only if file is new
+        if not file_exists:
+            writer.writerow(['red_n_points', 'L_min', 'x_c', 'dx_c', 'nu', 'dnu', 'exp', 'dexp'])
+
+        writer.writerow([red_n_points, L_min, x_c, dx_c, nu, dnu, exp, dexp])
+
+
 def log_sweep_statistics(L, alpha, D, Gamma, Jz, sweep_info):
     # global log number of sweeps
     # TODO: I could also print other info here like max bond dimension
@@ -326,27 +339,27 @@ def write_observables_to_file_fix_D(str_base: str, str_observables: list, observ
                 writer.writerow(header)
             writer.writerow(row)
 
-def write_correlations_to_file(correlator_strings : list, correlators : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
+def write_correlations_to_file(base_name : str, correlator_strings : list, correlators : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
 
     # Open a file in write mode
-    filename = f'output/spinone_heisenberg_correlations_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
+    filename = f'output/{base_name}_correlations_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
 
     correlator_array = np.vstack(correlators).T
     np.savetxt(filename, correlator_array, fmt='%f', delimiter=',', header=",".join(correlator_strings), comments='')
 
 
-def write_entropies_to_file(entropy_strings : list, entropies : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
+def write_entropies_to_file(base_name : str, entropy_strings : list, entropies : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
 
     # Open a file in write mode
-    filename = f'output/spinone_heisenberg_entropies_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
+    filename = f'output/{base_name}_entropies_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
 
     entropy_array = np.vstack(entropies).T
     np.savetxt(filename, entropy_array, fmt='%f', delimiter=',', header=",".join(entropy_strings), comments='')
 
-def write_mz_to_file(mz_strings : list, mzs : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
+def write_mz_to_file(base_name : str, mz_strings : list, mzs : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
 
     # Open a file in write mode
-    filename = f'output/spinone_heisenberg_mzs_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
+    filename = f'output/{base_name}_mzs_chi{chi}_D{D}_Gamma{Gamma}_Jz{Jz}_alpha{alpha}_L{L}.csv'
 
     mz_array = np.array(mzs).T
     np.savetxt(filename, mz_array, fmt='%f', delimiter=',', header=",".join(mz_strings), comments='')

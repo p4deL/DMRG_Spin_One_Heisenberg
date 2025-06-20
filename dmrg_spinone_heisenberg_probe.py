@@ -113,8 +113,8 @@ def main(argv):
     L, D, Jz, Gamma, alpha, n_exp, sz1_flag = data_io.param_use(argv)
 
     # AUXFIELD ?
-    B = 1.e-2  # FIXME
-    #B = 0.  # FIXME
+    #B = 1.e-2  # FIXME
+    B = -1e-2  # FIXME
     #if alpha > 3.0:
     #    B = 1e-2
     #else:
@@ -153,22 +153,21 @@ def main(argv):
     str_correlators = ["pos", "corr_pm", "corr_mp", "corr_zz", "corr_str_order"]
     pos = np.arange(len(corr_pm))
     correlators = [pos, corr_pm, corr_mp, corr_zz, corr_str_order]
-    data_io.write_correlations_to_file(str_correlators, correlators, L, alpha, D, Gamma, Jz, chi_limit)
-
+    data_io.write_correlations_to_file("spinone_heisenberg", str_correlators, correlators, L, alpha, D, Gamma, Jz, chi_limit)
 
     # save entropies
     entropies = utilities.calc_entropies(psi)
     str_entropies = ["pos", "SvN"]
     pos = np.arange(len(entropies))
     entropies = [pos, entropies]
-    data_io.write_entropies_to_file(str_entropies, entropies, L, alpha, D, Gamma, Jz, chi_limit)
+    data_io.write_entropies_to_file("spinone_heisenberg", str_entropies, entropies, L, alpha, D, Gamma, Jz, chi_limit)
 
     # Mz as a function of sites
     mz = psi.expectation_value('Sz')
     str_mz = ["pos", "m_long"]
     pos = np.arange(len(mz))
     mzs = [pos, mz]
-    data_io.write_mz_to_file(str_mz, mzs, L, alpha, D, Gamma, Jz, chi_limit)
+    data_io.write_mz_to_file("spinone_heisenberg", str_mz, mzs, L, alpha, D, Gamma, Jz, chi_limit)
 
     #import matplotlib.pyplot as plt
     #np.set_printoptions(precision=5, suppress=True, linewidth=100)

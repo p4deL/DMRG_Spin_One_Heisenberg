@@ -17,18 +17,20 @@ L = 100 # system size
 D = 0.0
 alpha = 'inf'
 G = 1.0
-Jz = 2.0
+Jz = 1.0
 chi = 300
-
+str = "psi3"
 
 # output filename
-output_file = f"../plots/analyze_gs_alpha{alpha}_L{L}_Jz{Jz}.pdf"
+output_file = f"../plots/analyze_gs_{str}_alpha{alpha}_L{L}_Jz{Jz}.pdf"
 
 # directory and filename
-data_dir = f'../output/Sz1'
-filename_entropy = f"spinone_heisenberg_entropies_chi{chi}_D{D}_Gamma{G}_Jz{Jz}_alpha{alpha}_L{L}.csv"
-filename_mz = f"spinone_heisenberg_mzs_chi{chi}_D{D}_Gamma{G}_Jz{Jz}_alpha{alpha}_L{L}.csv"
-filename_correlations = f"spinone_heisenberg_correlations_chi{chi}_D{D}_Gamma{G}_Jz{Jz}_alpha{alpha}_L{L}.csv"
+data_dir = f'../output/'
+
+
+filename_entropy = f"spinone_heisenberg_{str}_entropies_chi{chi}_D{D}_Gamma{G}_Jz{Jz}_alpha{alpha}_L{L}.csv"
+filename_mz = f"spinone_heisenberg_{str}_mzs_chi{chi}_D{D}_Gamma{G}_Jz{Jz}_alpha{alpha}_L{L}.csv"
+filename_correlations = f"spinone_heisenberg_{str}_correlations_chi{chi}_D{D}_Gamma{G}_Jz{Jz}_alpha{alpha}_L{L}.csv"
 
 
 def plot_entropy_profile(ax, filename):
@@ -49,6 +51,7 @@ def plot_entropy_profile(ax, filename):
 
     ax.set_ylabel("$S_{\\rm VN}$", fontsize=fs2)
     ax.set_xlabel("$\\ell$", fontsize=fs2)
+
 
 def plot_correlations(ax, filename):
     file = os.path.join(data_dir, filename)
@@ -71,6 +74,7 @@ def plot_correlations(ax, filename):
     #ax.set_ylim(-0.85, 0.85)
     ax.set_xlabel("$j$", fontsize=fs2)
 
+
 def plot_mz_profile(ax, filename):
     # Set labels and titles for each subplot (optional)
     file = os.path.join(data_dir, filename)
@@ -90,16 +94,6 @@ def plot_mz_profile(ax, filename):
     ax.set_ylabel("$M^{z}$", fontsize=fs2)
     ax.set_xlabel("$j$", fontsize=fs2)
 
-#labels = ["large D $(D=1.4,~\\alpha=10.0)$", "Haldane $(D=0.0,~\\alpha=10.0)$", "unkown $(D=1.0,~\\alpha=3.0)$"]
-#markers = ["x", "s", "."]
-
-#filenames = [filename_haldane]
-#labels = ["Haldane $(D=0.0,~\\alpha=10.0)$"]
-#markers = ["s"]
-
-#filenames = [filename_largeD, filename_af, filename_haldane, filename_unkown]
-#labels = ["large D $(D=1.4,~\\alpha=10.0)$", "z-AF $(D=-0.3,~\\alpha=1.5)$", "Haldane $(D=0.0,~\\alpha=10.0)$", "unkown $(D=1.0,~\\alpha=3.2)$"]
-#colors = ['C3', 'C0', 'C1', 'C2']
 
 fs1 = 18
 fs2 = 13

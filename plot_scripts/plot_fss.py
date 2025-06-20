@@ -3,12 +3,6 @@ import matplotlib
 matplotlib.rcParams['text.usetex'] = True
 from matplotlib import use, rc, rcParams
 rc('text', usetex=True)
-#rc('text.latex', preamble = r"\usepackage[greek, english]{babel}")
-#rcParams['pgf.preamble'] = r"\usepackage[greek, english]{babel}"
-#rcParams['pgf.preamble'] = r"\usepackage[polutonikogreek]{babel}"
-#rc('text', usetex=True)
-#rc('text.latex', preamble = r"\usepackage[greek, english]{babel}\usepackage{amsmath}")
-#rcParams['pgf.preamble'] = r"\usepackage[greek, english]{babel}"
 rc('font', **{'family': 'serif', 'serif': ['Computer Modern']})
 rc('text', usetex=True)
 rc('text.latex', preamble = r"\usepackage[greek, english]{babel}")
@@ -27,17 +21,26 @@ chi = 500
 #koppa = np.maximum(1, 2./(3*sigma))
 koppa = 1.
 #print(koppa)
-L_min = 60
+L_min = 100
+L_mins = [60, 100, 140, 180, 200, 220, 240, 260]
 
 reciprocal_lambda = True
+loop = True
 
 # global xc and nu guess
 #obs_string = "fidelity"
 #obs_string = "m_long"
 obs_string = "m_trans"
 
-cutoff_left = 25
-cutoff_right = 15
+# data collapse guess ####
+tuning_param_guess = 0.38
+invnu_guess = 1. / 1.3
+exponent_guess = 0.25
+guess = (tuning_param_guess, invnu_guess, exponent_guess)
+
+red_n_points = 16
+cutoff_left = red_n_points//2
+cutoff_right = red_n_points//2
 
 if obs_string == "fidelity":
     ylabels = ("$\\chi_{\\rm fidelity}$", '$L^{-\\mu}\\chi_{\\rm fidelity}$')  # FIXME
@@ -56,8 +59,9 @@ labels = (xlabels, ylabels)
 data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
 #data_path = f"../data/fss/ising_transition/alpha{alpha}/"
 out_file = f"../plots/fss/fss_{obs_string}_alpha{alpha}.pdf"
+out_data_file = f"../plots/fss/data_collapse_{obs_string}_alpha{alpha}.csv"
 
-
+print(data_path)
 
 def fss_fid_suscept_fit_func(data, x_c, invnu, mu, *coefs):
     L = data[0,:]
@@ -83,14 +87,11 @@ def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
     return L**(-1.*beta*koppanu)*poly
 
 
-def perform_data_collapse(data, fit_func):
-
-    tuning_param_guess = 0.292
-    invnu_guess = 1./1.3
-    exponent_guess = 0.25
-    #print(fss_mag_fit_func(data[:2,:], tuning_param_guess, beta_guess, nu_guess, 1,1,1,1))
+def perform_data_collapse(data, fit_func, guess):
+    tuning_param_guess, invnu_guess, exponent_guess = guess
 
     params, params_covariance = optimize.curve_fit(fit_func, data[:2,:], data[2,:], p0=[tuning_param_guess, invnu_guess, exponent_guess, 1, 1, 1, 1, 1, 1], maxfev=500000)
+    #print(fss_mag_fit_func(data[:2,:], tuning_param_guess, beta_guess, nu_guess, 1,1,1,1))
     #print(params)
     #ax.plot(L_range, params[1]*L_range**params[0] + params[2], c='C1')
     
@@ -175,16 +176,33 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
     plt.savefig(out_file, bbox_inches='tight')
     plt.show()
 
+    return x_c, dx_c, nu, dnu, exp, dexp
+
 
 def main(argv):
-    data, dim = data_io.read_fss_data(data_path, obs_string, alpha, chi, L_min=L_min, cutoff_l=cutoff_left, cutoff_r=cutoff_right, reciprocal=reciprocal_lambda)
-    if obs_string == "fidelity":
-        params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func)
+    if loop:
+        for L in L_mins:
+            data, dim = data_io.read_fss_data(data_path, obs_string, alpha, chi, L_min=L, cutoff_l=cutoff_left,
+                                          cutoff_r=cutoff_right, reciprocal=reciprocal_lambda)
+            if obs_string == "fidelity":
+                params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func, guess)
+            else:
+                params, params_covariance = perform_data_collapse(data, fss_mag_fit_func, guess)
+
+            x_c, dx_c, nu, dnu, exp, dexp = plot_data_collapse(out_file, data, dim, params, params_covariance, obs_string, labels)
+            data_io.write_data_collapse_to_file(out_data_file, red_n_points, L, x_c, dx_c, nu, dnu, exp, dexp)
+
+
     else:
-        params, params_covariance = perform_data_collapse(data, fss_mag_fit_func)
+        data, dim = data_io.read_fss_data(data_path, obs_string, alpha, chi, L_min=L_min, cutoff_l=cutoff_left,
+                                          cutoff_r=cutoff_right, reciprocal=reciprocal_lambda)
+        if obs_string == "fidelity":
+            params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func, guess)
+        else:
+            params, params_covariance = perform_data_collapse(data, fss_mag_fit_func, guess)
 
-    plot_data_collapse(out_file, data, dim, params, params_covariance, obs_string, labels)
-
+        x_c, dx_c, nu, dnu, exp, dexp = plot_data_collapse(out_file, data, dim, params, params_covariance, obs_string, labels)
+        data_io.write_data_collapse_to_file(out_data_file, red_n_points, L_min, x_c, dx_c, nu, dnu, exp, dexp)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
