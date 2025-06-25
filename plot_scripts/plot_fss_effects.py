@@ -37,13 +37,13 @@ obs_string = "m_trans"
 cutoff_left = 0
 cutoff_right = 0
 
-if obs_string == "fidelity":
-    ylabel = "$\\chi_{\\rm fidelity}$"
-elif obs_string == "m_long":
-    ylabel = "$M_{z}$"
-else:
-    ylabel = "$M_{\\rm \\perp}$"
+ylabels_dict = {
+    "fidelity": ("$\\chi_{\\rm fidelity}$", "$L^{-\\mu}\\chi_{\\rm fidelity}$"),
+    "m_long": ("$M_{z}$", "$L^{\\beta/\\nu}M_{z}$"),
+    "m_trans":  ("$M_{\\rm \\perp}$", "$L^{\\beta/\\nu}M_{\\rm \\perp}$"),
+}
 
+ylabel = ylabels_dict.get(obs_string)
 xlabel = "$\\Gamma$"
 
 labels = (xlabel, ylabel)
@@ -83,7 +83,7 @@ def plot_data_collapse(out_file, data, dim, labels):
 
 
 def main(argv):
-    data, dim = data_io.read_fss_data(data_path, obs_string, alpha, chi, L_min=L_min, cutoff_l=cutoff_left, cutoff_r=cutoff_right, reciprocal=False)
+    data, dim = data_io.read_fss_data(data_path, obs_string, "D", alpha, chi, L_min=L_min, cutoff_l=cutoff_left, cutoff_r=cutoff_right, reciprocal=False)
     plot_data_collapse(out_file, data, dim, labels)
 
 

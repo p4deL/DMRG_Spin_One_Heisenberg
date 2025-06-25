@@ -80,6 +80,15 @@ def write_joblist_files(basename, script, L, alpha, Ds, Gammas, n_exp, sz1_flag)
 
     print(f"Output written to {filename}")
 
+def write_alpha_joblist_files(basename, script, L, alphas, D, n_exps, sz1_flag):
+    # Writing to file
+    filename = f"{basename}_L{L}_D{D}.txt"
+    with open(filename, "w") as file:
+        for alpha, n_exp in zip(alphas, n_exps):
+            line = f"python {script} -L {L} -D {D} -a {alpha} -e {n_exp} --sz{1 if sz1_flag else 0}\n"
+            file.write(line)
+
+    print(f"Output written to {filename}")
 
 def write_xxz_joblist_files(basename, script, L, alpha, Jzs, n_exp, sz1_flag):
     # Writing to file
@@ -107,6 +116,20 @@ def write_one_joblist_file(filename, script, L, alpha, Ds, Gammas, n_exp, sz1_fl
     print(f"Output written to {filename}")
 
 
+def write_alpha_one_joblist_file(filename, script, L, alphas, D, n_exps, sz1_flag, append=True):
+    write_flag = 'w'
+    if append:
+        write_flag = 'a'
+
+    # Writing to file
+    with open(filename, write_flag) as file:
+        for alpha, n_exp in zip(alphas, n_exps):
+            line = f"python {script} -L {L} -D {D} -a {alpha} -e {n_exp} --sz{1 if sz1_flag else 0}\n"
+            file.write(line)
+
+    print(f"Output written to {filename}")
+
+
 def write_fss_meta_data(alpha, xcinf, nonuni_pref_range, koppa, nu, lambdaflag, sz1_flag):
     filename = f"output/spinone_heisenberg_fss_metadata_alpha{alpha}.csv"
 
@@ -117,6 +140,16 @@ def write_fss_meta_data(alpha, xcinf, nonuni_pref_range, koppa, nu, lambdaflag, 
         writer.writerow(meta_data_str)
         writer.writerows(meta_data)
 
+
+def write_alpha_fss_meta_data(D, alphacinf, nonuni_pref_range, koppa, nu, lambdaflag, sz1_flag):
+    filename = f"output/spinone_heisenberg_fss_metadata_D{D}.csv"
+
+    meta_data_str = ["D", "alphacinf", "nonuni_pref_range", "koppa", "nu", "lambda", "sz1_flag"]
+    meta_data = [[D, alphacinf, nonuni_pref_range, koppa, nu, lambdaflag, sz1_flag]]
+    with open(filename, "w") as file:
+        writer = csv.writer(file)
+        writer.writerow(meta_data_str)
+        writer.writerows(meta_data)
 
 def write_one_xxz_joblist_file(filename, script, L, alpha, Jzs, n_exp, sz1_flag, append=True):
     write_flag = 'w'
@@ -132,9 +165,9 @@ def write_one_xxz_joblist_file(filename, script, L, alpha, Jzs, n_exp, sz1_flag,
     print(f"Output written to {filename}")
 
 
-def read_fss_data(path, obs_string, alpha, chi, L_min=0, cutoff_l=0, cutoff_r=0, reciprocal=False):
+#def read_fss_data(path, obs_string, alpha, chi, L_min=0, cutoff_l=0, cutoff_r=0, reciprocal=False):
+def read_fss_data(path, obs_string, variable_string, fixed_variable, chi, L_min=0, cutoff_l=0, cutoff_r=0):
     """read data for given observable (as string) and return prepared data"""
-
     data_L = []
     data_tuning_param = []
     data_obs = []
@@ -147,7 +180,10 @@ def read_fss_data(path, obs_string, alpha, chi, L_min=0, cutoff_l=0, cutoff_r=0,
                 print(f)
                 # extract system size from filename
                 # FIXME: TRACKOBS doesn't work if there are other files...
-                system_size = int(re.search(f"spinone_heisenberg_fss_obs_chi{chi}_alpha{alpha}_L(.*).csv", f).group(1))
+                if variable_string == "alpha":
+                    system_size = int(re.search(f"spinone_heisenberg_fss_obs_chi{chi}_D{fixed_variable}_L(.*).csv", f).group(1))
+                else:
+                    system_size = int(re.search(f"spinone_heisenberg_fss_obs_chi{chi}_alpha{fixed_variable}_L(.*).csv", f).group(1))
 
                 if system_size >= L_min:
 
@@ -160,7 +196,7 @@ def read_fss_data(path, obs_string, alpha, chi, L_min=0, cutoff_l=0, cutoff_r=0,
                     # obs = data_array[:,3] # FIXME do i need to multiply with L again?
 
                     # FIXME: What if I want to read in Gamma as parameter? add input parameter
-                    Ds = df["D"].values
+                    Ds = df[variable_string].values
                     obs = df[obs_string].values
 
                     # TODO: only if necessary
@@ -186,7 +222,7 @@ def read_fss_data(path, obs_string, alpha, chi, L_min=0, cutoff_l=0, cutoff_r=0,
                     print(len(data_tuning_param))
 
     dim = len(sorted_Ds[cutoff_l:l - cutoff_r])
-    if reciprocal:
+    if variable_string == "lambda":
         data = np.stack((np.array(data_L), np.reciprocal(data_tuning_param), np.array(data_obs)))
     else:
         data = np.stack((np.array(data_L), np.array(data_tuning_param), np.array(data_obs)))
@@ -281,36 +317,6 @@ def write_observables_to_file(str_base: str, str_observables: list, observables:
                 writer.writerow(header)
             writer.writerow(row)
 
-
-# TODO: Remove me.
-#def write_observables_to_file(str_base : str, str_observables : list, observables : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
-#    if len(str_observables) != len(observables):
-#        print("Length of str_observables does not match length of observables.")
-#        print(str_observables)
-#        print(observables)
-#        return
-#
-#    # Open a file in write mode
-#    filename = f'output/{str_base}_chi{chi}_alpha{alpha}_L{L}.csv'  # FIXME
-#
-#    observables.insert(0, Jz)
-#    str_observables.insert(0, "Jz")
-#    observables.insert(0, Gamma)
-#    str_observables.insert(0, "Gamma")
-#    observables.insert(0, D)
-#    str_observables.insert(0, "D")
-#
-#    # lock files when writing (necessary when using a joblist)
-#    with FileLock(filename + ".lock"):
-#        if os.path.isfile(filename):
-#            with open(filename, 'a') as file:
-#                writer = csv.writer(file)
-#                writer.writerow(observables)  # Append D and fidelity
-#        else:
-#            with open(filename, 'w') as file:
-#                writer = csv.writer(file)
-#                writer.writerow(str_observables)
-#                writer.writerow(observables)  # Append D and fidelity
 
 
 def write_observables_to_file_fix_D(str_base: str, str_observables: list, observables: list, L: int, alpha: float, D: float, Gamma: float, Jz: float, chi: int):

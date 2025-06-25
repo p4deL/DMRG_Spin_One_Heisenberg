@@ -13,32 +13,35 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 
-L = 60  # system size
+Ls = [60, 80, 100]  # system size
 alpha = 'inf'
 chi = 300
 
 # output filename
-output_file = f"plots/fidelity_alpha{alpha}_L{L}.pdf"
+output_file = f"../plots/fidelity_alpha{alpha}.pdf"
 
 # directory and filename
-data_dir = 'output/'
-filename = f'spinone_heisenberg_fidelity_alpha{alpha}_L{L}.csv'
+data_dir = '../output/fidelity/Sz1/'
 
 fs1 = 18
 fs2 = 16
 
-
-file = os.path.join(data_dir, filename)
-data = pd.read_csv(file)
-
 # Create the contour plot
 plt.figure(figsize=(8, 6))
 
-combined = list(zip(data["D"].values, data["fidelity"].values))
-sorted_combined = sorted(combined)
-Ds, fidelity = zip(*sorted_combined)
+for L in Ls:
 
-plt.plot(Ds, fidelity)
+    filename = f'spinone_heisenberg_fss_obs_chi{chi}_alpha{alpha}_L{L}.csv'
+    file = os.path.join(data_dir, filename)
+    data = pd.read_csv(file)
+
+
+
+    combined = list(zip(data["D"].values, data["fidelity"].values))
+    sorted_combined = sorted(combined)
+    Ds, fidelity = zip(*sorted_combined)
+
+    plt.plot(Ds, fidelity)
 
 
 # Label axes
@@ -49,7 +52,7 @@ plt.ylabel(r'$\chi_{\rm fidelity}$', fontsize=fs2)
 #plt.legend(fontsize=fs2)
 
 # title
-plt.title(f"$L={L}$", fontsize=fs1)
+#plt.title(f"$L={L}$", fontsize=fs1)
 
 # save figure
 plt.savefig(output_file)

@@ -10,11 +10,10 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 
-Ls = [60, 80, 100, 120, 140] # system size
+Ls = [60, 80] # system size
 alpha = "inf"
 chi = 300
 
-max_sweeps = 50
 
 # output filename
 output_file = f"../plots/svn_fss_chi{chi}_alpha{alpha}.pdf"
@@ -23,10 +22,9 @@ output_file = f"../plots/svn_fss_chi{chi}_alpha{alpha}.pdf"
 #data_dir = f"output/L{L}/"
 data_dir = f"../output/"
 
-files = [f"{data_dir}L{L}/spinone_heisenberg_fss_obs_chi{chi}_alpha{alpha}_L{L}.csv" for L in Ls]
+files = [f"{data_dir}spinone_heisenberg_obs_chi{chi}_alpha{alpha}_L{L}.csv" for L in Ls]
 
 quantity = "SvN"
-
 
 #markers = ["+", "x"]
 label = "$S_{\\rm VN}$"

@@ -47,6 +47,7 @@ def plot():
     qpt = ("#3a86ff", 's-', 5, 1, "DMRG - data collapse - $M_{\\perp}$")
     qpt2 = ("#ff006e", '.-', 9, 1, "pCUT - DlogPadé- $\\Delta$")
     exp = ("#3a86ff", 's', 6, "DMRG - data collapse - $M_{\\perp}$")
+    exp_bias = ("#83BCA9", '*', 6, "DMRG biased - data collapse - $M_{\\perp}$")
     exp2 = ("#ff006e", '.', 11, "pCUT -DlogPadé - $\\Delta$")
 
     file = "../data/fss/largeD_U(1)CSB_transition/data_collapse_mag.csv"
@@ -70,6 +71,15 @@ def plot():
     znus = data["znu"].values
     dznus = data["dznu"].values
 
+    file = "../data/fss/largeD_U(1)CSB_transition/data_collapse_mag_biased.csv"
+    data = pd.read_csv(file)
+    alphas_bias = data["alpha"].values
+    alphas_bias[np.isinf(alphas)] = 999999
+    nus_bias = data["nu"].values
+    dnus_bias = data["dnu"].values
+    betas_bias = data["beta"].values
+    dbetas_bias = data["dbeta"].values
+
     ax1.errorbar(alphas, lambdas, yerr=dlambdas, color=qpt[0], fmt=qpt[1], ms=qpt[2], lw=qpt[3])
     ax1.errorbar(alphas2, lambdas2, yerr=dlambdas2, color=qpt2[0], fmt=qpt2[1], ms=qpt2[2], lw=qpt2[3])
     print(alphas, lambdas)
@@ -86,20 +96,22 @@ def plot():
     ax1.text(0.75, 0.2, "large D phase", fontsize=fs2, color='black', transform=ax1.transAxes)
 
     ax2.errorbar(alphas, nus, yerr=dnus, color=exp[0], fmt=exp[1], ms=exp[2])
+    ax2.errorbar(alphas_bias, nus_bias, yerr=dnus_bias, color=exp_bias[0], fmt=exp_bias[1], ms=exp_bias[2])
     ax2.set_xlabel('$\\alpha$', fontsize=fs)
     ax2.set_ylabel('$\\nu$', fontsize=fs)
     ax2.set_xlim([1., 3.])
-    ax2.set_ylim([0.5, 3.0])
+    ax2.set_ylim([0.5, 5.0])
     ax2.xaxis.set_major_locator(MultipleLocator(0.5))
     ax2.xaxis.set_minor_locator(MultipleLocator(0.25))
     ax2.yaxis.set_major_locator(MultipleLocator(0.5))
     ax2.yaxis.set_minor_locator(MultipleLocator(0.25))
 
     ax3.errorbar(alphas, betas, yerr=dbetas, color=exp[0], fmt=exp[1], ms=exp[2], label=exp[3])
+    ax3.errorbar(alphas_bias, betas_bias, yerr=dbetas_bias, color=exp_bias[0], fmt=exp_bias[1], ms=exp_bias[2], label=exp_bias[3])
     ax3.set_xlabel('$\\alpha$', fontsize=fs)
     ax3.set_ylabel('$\\beta$', fontsize=fs)
     ax3.set_xlim([1., 3.])
-    ax3.set_ylim([0.0, 0.5])
+    ax3.set_ylim([0.0, 1.5])
     # ax3.plot(sigmas,2*np.ones(200)-sigmas,color='black',linestyle='--')
     ax3.xaxis.set_major_locator(MultipleLocator(0.5))
     ax3.xaxis.set_minor_locator(MultipleLocator(0.25))
@@ -132,7 +144,7 @@ def plot():
     # plt.tight_layout()
     fig.legend(loc='lower right', bbox_to_anchor=(0.98,0.15), handletextpad=0.2, fontsize=12)
     #fig.legend(loc='lower right',ncol=1, handletextpad=-0.2, columnspacing=0.5, fontsize=fs2)
-    fig.savefig("../plots/crit_u1csb_alpha.pdf")
+    fig.savefig("../plots/fss/u1_csb/crit_u1csb_alpha.pdf")
     plt.show()
 
 if __name__ == '__main__':

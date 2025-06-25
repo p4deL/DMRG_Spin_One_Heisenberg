@@ -15,7 +15,7 @@ import os
 sys.path.insert(0, os.path.abspath('../'))
 import include.data_io as data_io
 
-alpha = 2.5
+alpha = 2.75
 chi = 500
 #sigma = float(fixed_sigma)
 #koppa = np.maximum(1, 2./(3*sigma))
@@ -24,7 +24,7 @@ koppa = 1.
 L_min = 100
 L_mins = [60, 100, 140, 180, 200, 220, 240, 260]
 
-reciprocal_lambda = True
+variable_str = "D"
 loop = True
 
 # global xc and nu guess
@@ -33,33 +33,45 @@ loop = True
 obs_string = "m_trans"
 
 # data collapse guess ####
-tuning_param_guess = 0.38
+tuning_param_guess = 0.488
+#x_c = tuning_param_guess
+#dx_c = 1.e-12
+#1.25,0.05628459055566769,2.113150896893074e-6,0
+#1.5,0.10794923331584483,0.00007044664706561662,
+#1.75,0.16182594579522097,0.00014840898296116826
+#2.0,0.22192787344511145,0.00011423184989786802,
+#2.25,0.29204226094403873,0.0006668923477267245,
+#2.5,0.3794484555760642,0.00021543873275218614,1
+#2.75,0.48809099656271715,0.005777484463677801,1
 invnu_guess = 1. / 1.3
 exponent_guess = 0.25
 guess = (tuning_param_guess, invnu_guess, exponent_guess)
 
-red_n_points = 16
+red_n_points = 0
 cutoff_left = red_n_points//2
 cutoff_right = red_n_points//2
 
-if obs_string == "fidelity":
-    ylabels = ("$\\chi_{\\rm fidelity}$", '$L^{-\\mu}\\chi_{\\rm fidelity}$')  # FIXME
-elif obs_string == "m_long":
-    ylabels = ("$M_{z}$", "$L^{\\beta/\\nu}M_{z}$")
-else:
-    ylabels = ("$M_{\\rm \\perp}$", "$L^{\\beta/\\nu}M_{\\rm \\perp}$")
+ylabels_dict = {
+    "fidelity": ("$\\chi_{\\rm fidelity}$", "$L^{-\\mu}\\chi_{\\rm fidelity}$"),
+    "m_long": ("$M_{z}$", "$L^{\\beta/\\nu}M_{z}$"),
+    "m_trans":  ("$M_{\\rm \\perp}$", "$L^{\\beta/\\nu}M_{\\rm \\perp}$"),
+}
 
-if reciprocal_lambda:
-    xlabels = ("$\\lambda$", "$L^{1/\\nu}(\\lambda-\\lambda_c)$")
-else:
-    xlabels = ("$D$", "$L^{1/\\nu}(D-D_c)$")
+xlabels_dict = {
+    "lambda": ("$\\lambda$", "$L^{1/\\nu}(\\lambda-\\lambda_c)$"),
+    "D": ("$D$", "$L^{1/\\nu}(D-D_c)$"),
+    "Gamma": ("$\\Gamma$", "$L^{1/\\nu}(\\Gamma-\\Gamma_c)$"),
+    "alpha": ("$M_{\\rm \\perp}$", "$L^{\\beta/\\nu}M_{\\rm \\perp}$"),
+}
 
+ylabels = ylabels_dict.get(obs_string)
+xlabels = xlabels_dict.get(variable_str)
 labels = (xlabels, ylabels)
 
 data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
 #data_path = f"../data/fss/ising_transition/alpha{alpha}/"
 out_file = f"../plots/fss/fss_{obs_string}_alpha{alpha}.pdf"
-out_data_file = f"../plots/fss/data_collapse_{obs_string}_alpha{alpha}.csv"
+out_data_file = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/data_collapse_{obs_string}_alpha{alpha}.csv"
 
 print(data_path)
 
@@ -74,11 +86,11 @@ def fss_fid_suscept_fit_func(data, x_c, invnu, mu, *coefs):
 
     return L**(mu)*poly
 
+#def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
 def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
+
     L = data[0,:]
     x = data[1,:]
-
-
     poly = 0.
     #poly += coefs[0]*(L**(1./nu)*(x-x_c))**1
     for power, coef in enumerate(coefs):
@@ -91,6 +103,8 @@ def perform_data_collapse(data, fit_func, guess):
     tuning_param_guess, invnu_guess, exponent_guess = guess
 
     params, params_covariance = optimize.curve_fit(fit_func, data[:2,:], data[2,:], p0=[tuning_param_guess, invnu_guess, exponent_guess, 1, 1, 1, 1, 1, 1], maxfev=500000)
+    #params, params_covariance = optimize.curve_fit(fit_func, data[:2,:], data[2,:], p0=[invnu_guess, exponent_guess, 1, 1, 1, 1, 1, 1], maxfev=500000)
+
     #print(fss_mag_fit_func(data[:2,:], tuning_param_guess, beta_guess, nu_guess, 1,1,1,1))
     #print(params)
     #ax.plot(L_range, params[1]*L_range**params[0] + params[2], c='C1')
@@ -111,6 +125,10 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
     dx_c = np.sqrt(params_covariance[0,0])
     invnu = params[1]
     dinvnu = np.sqrt(params_covariance[1,1])
+    #invnu = params[0]
+    #dinvnu = np.sqrt(params_covariance[0,0])
+    #exp = params[1]
+    #dexp = np.sqrt(params_covariance[1,1])
     exp = params[2]
     dexp = np.sqrt(params_covariance[2,2])
     nu = 1/params[1]
@@ -182,8 +200,8 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
 def main(argv):
     if loop:
         for L in L_mins:
-            data, dim = data_io.read_fss_data(data_path, obs_string, alpha, chi, L_min=L, cutoff_l=cutoff_left,
-                                          cutoff_r=cutoff_right, reciprocal=reciprocal_lambda)
+            data, dim = data_io.read_fss_data(data_path, obs_string, variable_str, alpha, chi, L_min=L, cutoff_l=cutoff_left,
+                                          cutoff_r=cutoff_right)
             if obs_string == "fidelity":
                 params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func, guess)
             else:
@@ -194,8 +212,8 @@ def main(argv):
 
 
     else:
-        data, dim = data_io.read_fss_data(data_path, obs_string, alpha, chi, L_min=L_min, cutoff_l=cutoff_left,
-                                          cutoff_r=cutoff_right, reciprocal=reciprocal_lambda)
+        data, dim = data_io.read_fss_data(data_path, obs_string, variable_str, alpha, chi, L_min=L_min, cutoff_l=cutoff_left,
+                                          cutoff_r=cutoff_right)
         if obs_string == "fidelity":
             params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func, guess)
         else:

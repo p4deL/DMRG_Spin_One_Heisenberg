@@ -21,7 +21,7 @@ output_file = f"../plots/entanglment_spectrum_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
 #data_dir = f"output/L{L}/"
-data_dir = f"../output/full/Sz1/"
+data_dir = f"../output/no_conservation/"
 
 
 
@@ -43,7 +43,7 @@ for i, (file, quantities, label) in enumerate(zip(files, all_quantities, labels)
         print(quantity)
         # Read the data
         data = pd.read_csv(data_dir + file)
-        x = data["Jz"].values
+        x = data["D"].values
         y = data[quantity].values
 
         combined = list(zip(x, y))
@@ -54,7 +54,7 @@ for i, (file, quantities, label) in enumerate(zip(files, all_quantities, labels)
         axs[i].plot(x, y, marker=markers[i], color=f"C{j}")
 
 # Label the x-axis on the last subplot only (shared x-axis)
-axs[-1].set_xlabel("$J_z$")
+axs[-1].set_xlabel("$D$")
 #axs[0].set_ylim([1.1, 2.0])
 
 

@@ -13,10 +13,11 @@ rc('text', usetex=True)
 rc('text.latex', preamble = r'\usepackage{amssymb}')
 rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
-alpha = 2.5
+alpha = 1.25
 
 # Load the CSV file
-file_path = f"../plots/fss/data_collapse_m_trans_alpha{alpha}.csv"  # Change path if needed
+file_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/data_collapse_m_trans_biased_alpha{alpha}.csv"  # Change path if needed
+out_file = f"../plots/fss/u1_csb/data_collapse_scaling_biased_alpha{alpha}.pdf"
 df = pd.read_csv(file_path)
 
 fs = 16
@@ -64,15 +65,10 @@ for red_n in red_n_values:
     #        y_fit = slope * x_fit + intercept
     #        ax.plot(x_fit, y_fit, linestyle='--', alpha=0.7)
 
-    # TODO: Also implement critical point
-    # TODO: Fit with errorbar !
-    # TODO: Should be possible to plot errorbar in L_min=infty from errorpropagation!?
-
-        # Linear fit for L_min in [200, 280]
-    Lmin_fit = 140
-    Lmax_fit = 260
+    # Linear fit for L_min in [200, 280]
+    Lmin_fit = 160
+    Lmax_fit = 340
     df_fit = df_sub[df_sub['L_min'].between(Lmin_fit, Lmax_fit)]
-    print(df_fit)
     if len(df_fit) >= 2:
         x_fit = np.linspace(1 / Lmin_fit, 0, 200)
         b_vals = []
@@ -94,7 +90,8 @@ for red_n in red_n_values:
             #ax.errorbar(0.0, b, yerr=db, alpha=1.0, marker="o", ms=10, lw=4, c="gray", zorder=1)
 
 # After red_n loop: compute weighted averages with chi² correction
-for ax, ycol in zip([ax_crit, ax_nu, ax_exp], ['x_c', 'nu', 'exp']):
+results_str = ""
+for ax, ycol, label in zip([ax_crit, ax_nu, ax_exp], ['x_c', 'nu', 'exp'], ["$\\lambda_c$", "$\\nu$", "$\\beta$"]):
     b_vals, b_err_vals = zip(*b_collection[ycol])
     b_ufloats = [ufloat(val, err) for val, err in zip(b_vals, b_err_vals)]
 
@@ -111,6 +108,7 @@ for ax, ycol in zip([ax_crit, ax_nu, ax_exp], ['x_c', 'nu', 'exp']):
 
     # Adjusted uncertainty
     std_dev_adjusted = std_dev(b_avg) * np.sqrt(chi2_red) if chi2_red > 1 else std_dev(b_avg)
+    nom_b_val = nominal_value(b_avg)
 
     # Output
     print(f"\nObservable: {ycol}")
@@ -118,17 +116,22 @@ for ax, ycol in zip([ax_crit, ax_nu, ax_exp], ['x_c', 'nu', 'exp']):
     print(f"Adjusted (chi²) error: ± {std_dev_adjusted:.5f}")
     print(f"Reduced chi-squared: {chi2_red:.2f}")
 
-    ax.errorbar(0.0, nominal_value(b_avg), yerr=std_dev_adjusted,  marker="o", ms=10, lw=4, c="black", zorder=2)
+
+    ax.errorbar(0.0, nom_b_val, yerr=std_dev_adjusted,  marker="o", ms=10, lw=4, c="black", zorder=2)
     #ax.errorbar(0.0, nominal_value(b_avg), yerr=std_dev(b_avg),  marker="o", ms=10, lw=4, c="black", zorder=2)
 
-    resstr = f"$\\beta = {nominal_value(b_avg):.4f}\\pm{std_dev_adjusted:.4f}$"
+    plot_res_str = f"{label}$ = {nom_b_val:.5f}\\pm{std_dev_adjusted:.5f}$"
     #resstr = '\n'.join((xlabel + '$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\beta=%.4f$' % exp, ))
 
     # these are matplotlib.patch.Patch properties
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 
     # place a text box in upper left in axes coords
-    ax.text(0.025, 0.9, resstr, transform=ax.transAxes, fontsize=12, verticalalignment='center', bbox=props)
+    ax.text(0.35, 0.05, plot_res_str, transform=ax.transAxes, fontsize=12, verticalalignment='center', bbox=props)
+    results_str += f"{nom_b_val},{std_dev_adjusted},"
+
+print("x_c,dx_c,nu,dnu,exp,dexp")
+print(results_str)
 
 # Finalize plot formatting
 ax_crit.set_xlabel(r'$1/L_{\min}$', fontsize=fs)
@@ -147,5 +150,5 @@ ax_exp.legend()
 ax_exp.set_xlim(0,0.018)
 
 plt.tight_layout()
+plt.savefig(out_file)
 plt.show()
-
