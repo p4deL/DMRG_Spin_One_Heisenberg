@@ -41,8 +41,6 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Jz=1.0, Gamma=1.0
         'trunc_params': {
             'svd_min': 1e-5,
         },
-        #'chi_max': 150,
-        #'chi_min': 100,
         #'chi_max': 300,
         'chi_list': {
             1: 10,
@@ -51,6 +49,7 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Jz=1.0, Gamma=1.0
             4: 100,
             6: 200,
             8: 300,
+            10: 500,
         },
         'max_E_err': 1.e-8,
         'max_S_err': 1.e-6,
@@ -84,8 +83,7 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Jz=1.0, Gamma=1.0
     E = info['E']
 
     # calc observables for tracking convergence
-    #tracking_obs = utilities.calc_tracking_quantities(psi, info, dmrg_params)
-    tracking_obs = []
+    tracking_obs = utilities.calc_tracking_quantities(psi, info, dmrg_params)
 
     # calculate observables
     obs = utilities.calc_observables(psi)
@@ -135,24 +133,22 @@ def main(argv):
     ##########
     # run dmrg
     start_time = time.time()
-    # FIXME: Conservation!!!
     E, tracking_obs, obs, psi = dmrg_lr_spinone_heisenberg_finite(L=L, D=D, Jz=Jz, Gamma=Gamma, alpha=alpha, B=B, n_exp=n_exp, sz1_flag=sz1_flag)
     print("--- %s seconds ---" % (time.time() - start_time))
 
     ###########################
     # writing the data to files
     # unpack
-    #nsweeps, chi, Px, Stot_sq = tracking_obs
-    #chi_limit, chi_max = chi
-    chi_limit = 300
+    nsweeps, chi, Px, Stot_sq = tracking_obs
+    chi_limit, chi_max = chi
     # save tracking obs
-    #str_tracking_obs = ["gs_energy", "parity_x", "s_total", "chi_max", "nsweeps"]
-    #tracking_obs = [E, Px, Stot_sq, chi_max, nsweeps]
-    #data_io.write_observables_to_file("spinone_heisenberg_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, Gamma, Jz, chi_limit)
+    str_tracking_obs = ["gs_energy", "parity_x", "s_total", "chi_max", "nsweeps"]
+    tracking_obs = [E, Px, Stot_sq, chi_max, nsweeps]
+    data_io.write_observables_to_file("spinone_heisenberg_trackobs",str_tracking_obs, tracking_obs, L, alpha, D, Gamma, Jz, chi_limit)
     # save observables
     str_observables = ["SvN", "m_trans", "m_long", "str_order", "eff_str_order"]
-    #data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, Gamma, Jz, chi_limit)
-    data_io.write_observables_to_file_fix_D("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, Gamma, Jz, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, Gamma, Jz, chi_limit)
+    #data_io.write_observables_to_file_fix_D("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, Gamma, Jz, chi_limit)
 
     # save entanglement spectrum
     #ee_spectrum = psi.entanglement_spectrum()[(L-1)//2][:10]
