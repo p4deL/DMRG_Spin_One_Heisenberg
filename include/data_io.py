@@ -166,50 +166,45 @@ def write_one_xxz_joblist_file(filename, script, L, alpha, Jzs, n_exp, sz1_flag,
 
 
 #def read_fss_data(path, obs_string, alpha, chi, L_min=0, cutoff_l=0, cutoff_r=0, reciprocal=False):
-def read_fss_data(path, obs_string, variable_string, fixed_variable, chi, L_min=0, cutoff_l=0, cutoff_r=0):
+def read_fss_data(path, obs_string, variable_string, fixed_val, chi, L_min=0, cutoff_l=0, cutoff_r=0):
     """read data for given observable (as string) and return prepared data"""
     data_L = []
     data_tuning_param = []
     data_obs = []
+    sorted_vars = []
     # iterate over files in path
     for f in os.listdir(path):
         # check if indeed is file
         if os.path.isfile(os.path.join(path, f)):
             # check if filename contains string of observable
-            if "fss_obs" in f:
+            if "_obs_" in f:
                 print(f)
                 # extract system size from filename
                 # FIXME: TRACKOBS doesn't work if there are other files...
                 if variable_string == "alpha":
-                    system_size = int(re.search(f"spinone_heisenberg_fss_obs_chi{chi}_D{fixed_variable}_L(.*).csv", f).group(1))
+                    system_size = int(re.search(f"spinone_heisenberg_obs_chi{chi}_D{fixed_val}_L(.*).csv", f).group(1))
                 else:
-                    system_size = int(re.search(f"spinone_heisenberg_fss_obs_chi{chi}_alpha{fixed_variable}_L(.*).csv", f).group(1))
+                    system_size = int(re.search(f"spinone_heisenberg_obs_chi{chi}_alpha{fixed_val}_L(.*).csv", f).group(1))
 
                 if system_size >= L_min:
 
                     # import csv with panda
                     df = pd.read_csv(path + f)
-                    # data_array = df.to_numpy()
-                    # sigmas = data_array[:,0]
-                    # FIXME
-                    # hs = data_array[:,0]
-                    # obs = data_array[:,3] # FIXME do i need to multiply with L again?
-
-                    # FIXME: What if I want to read in Gamma as parameter? add input parameter
-                    Ds = df[variable_string].values
+                    vars = df[variable_string].values
                     obs = df[obs_string].values
+                    print(vars)
 
                     # TODO: only if necessary
                     # prepare list with j as control fixed_param
-                    tmp = list(zip(Ds, obs))
+                    tmp = list(zip(vars, obs))
                     tmp.sort(key=lambda x: x[0])
-                    sorted_Ds = [tuples[0] for tuples in tmp]
+                    sorted_vars = [tuples[0] for tuples in tmp]
                     sorted_obs = [tuples[1] for tuples in tmp]
-                    l = len(sorted_Ds)
+                    l = len(sorted_vars)
 
-                    L = list(np.ones(len(Ds[cutoff_l:l - cutoff_r])) * system_size)
+                    L = list(np.ones(len(vars[cutoff_l:l - cutoff_r])) * system_size)
                     data_L += L
-                    data_tuning_param += sorted_Ds[cutoff_l:l - cutoff_r]
+                    data_tuning_param += sorted_vars[cutoff_l:l - cutoff_r]
                     data_obs += sorted_obs[cutoff_l:l - cutoff_r]
 
                     # TODO: WRITE DOWN WHAT'S GOING ON
@@ -221,7 +216,7 @@ def read_fss_data(path, obs_string, variable_string, fixed_variable, chi, L_min=
                     print(len(data_L))
                     print(len(data_tuning_param))
 
-    dim = len(sorted_Ds[cutoff_l:l - cutoff_r])
+    dim = len(sorted_vars[cutoff_l:l - cutoff_r])
     if variable_string == "lambda":
         data = np.stack((np.array(data_L), np.reciprocal(data_tuning_param), np.array(data_obs)))
     else:

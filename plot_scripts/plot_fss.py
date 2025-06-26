@@ -15,22 +15,33 @@ import os
 sys.path.insert(0, os.path.abspath('../'))
 import include.data_io as data_io
 
-alpha = 2.75
-chi = 500
-#sigma = float(fixed_sigma)
-#koppa = np.maximum(1, 2./(3*sigma))
-koppa = 1.
-#print(koppa)
-L_min = 100
-L_mins = [60, 100, 140, 180, 200, 220, 240, 260]
 
-variable_str = "D"
-loop = True
+# fixed val_ Either alpha or D
+loop = False
+variable_str = "alpha"
+fixed_val = 2.75
+chi = 300
 
 # global xc and nu guess
 #obs_string = "fidelity"
 #obs_string = "m_long"
 obs_string = "m_trans"
+
+#data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/"
+#out_file = f"../plots/fss/fss_{obs_string}_alpha{fixed_val}.pdf"
+#out_data_file = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_{obs_string}_alpha{fixed_val}.csv"
+
+data_path = f"../output/"
+out_file = f"../plots/fss/fss_{obs_string}_D{fixed_val}.pdf"
+out_data_file = f"../output/data_collapse_{obs_string}_alpha{fixed_val}.csv"
+
+koppa = 1.
+L_min = 16
+L_mins = [60, 100, 140, 180, 200, 220, 240, 260]
+
+red_n_points = 0
+cutoff_left = red_n_points//2
+cutoff_right = red_n_points//2
 
 # data collapse guess ####
 tuning_param_guess = 0.488
@@ -47,10 +58,6 @@ invnu_guess = 1. / 1.3
 exponent_guess = 0.25
 guess = (tuning_param_guess, invnu_guess, exponent_guess)
 
-red_n_points = 0
-cutoff_left = red_n_points//2
-cutoff_right = red_n_points//2
-
 ylabels_dict = {
     "fidelity": ("$\\chi_{\\rm fidelity}$", "$L^{-\\mu}\\chi_{\\rm fidelity}$"),
     "m_long": ("$M_{z}$", "$L^{\\beta/\\nu}M_{z}$"),
@@ -61,19 +68,13 @@ xlabels_dict = {
     "lambda": ("$\\lambda$", "$L^{1/\\nu}(\\lambda-\\lambda_c)$"),
     "D": ("$D$", "$L^{1/\\nu}(D-D_c)$"),
     "Gamma": ("$\\Gamma$", "$L^{1/\\nu}(\\Gamma-\\Gamma_c)$"),
-    "alpha": ("$M_{\\rm \\perp}$", "$L^{\\beta/\\nu}M_{\\rm \\perp}$"),
+    "alpha": ("$\\alpha$", "$L^{1/\\nu}(\\alpha-\\alpha_c)$"),
 }
 
 ylabels = ylabels_dict.get(obs_string)
 xlabels = xlabels_dict.get(variable_str)
 labels = (xlabels, ylabels)
 
-data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/"
-#data_path = f"../data/fss/ising_transition/alpha{alpha}/"
-out_file = f"../plots/fss/fss_{obs_string}_alpha{alpha}.pdf"
-out_data_file = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/data_collapse_{obs_string}_alpha{alpha}.csv"
-
-print(data_path)
 
 def fss_fid_suscept_fit_func(data, x_c, invnu, mu, *coefs):
     L = data[0,:]
@@ -200,7 +201,7 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
 def main(argv):
     if loop:
         for L in L_mins:
-            data, dim = data_io.read_fss_data(data_path, obs_string, variable_str, alpha, chi, L_min=L, cutoff_l=cutoff_left,
+            data, dim = data_io.read_fss_data(data_path, obs_string, variable_str, fixed_val, chi, L_min=L, cutoff_l=cutoff_left,
                                           cutoff_r=cutoff_right)
             if obs_string == "fidelity":
                 params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func, guess)
@@ -212,7 +213,7 @@ def main(argv):
 
 
     else:
-        data, dim = data_io.read_fss_data(data_path, obs_string, variable_str, alpha, chi, L_min=L_min, cutoff_l=cutoff_left,
+        data, dim = data_io.read_fss_data(data_path, obs_string, variable_str, fixed_val, chi, L_min=L_min, cutoff_l=cutoff_left,
                                           cutoff_r=cutoff_right)
         if obs_string == "fidelity":
             params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func, guess)

@@ -49,7 +49,7 @@ def dmrg_lr_spinone_heisenberg_finite(L=10, alpha=10.0, D=0.0, Jz=1.0, Gamma=1.0
             6: 200,
             8: 300,
         },
-        'max_E_err': 1.e-9,
+        'max_E_err': 1.e-8, #1.e-9,
         'max_S_err': 1.e-7,
         'norm_tol': 1.e-7,
         'max_sweeps': 100,
@@ -118,9 +118,6 @@ def main(argv):
     #else:
     #    B = 0.
 
-    # TODO: Introduce parameter to decide whether we should calculate fidelity or not
-    
-
     ##########
     # run dmrg
     start_time = time.time()
@@ -140,7 +137,7 @@ def main(argv):
     # save tracking obs
     str_tracking_obs = ["gs_energy", "gs_energy_eps", "gs_energy_diff", "parity_x", "parity_x_eps", "s_total", "s_total_eps", "chi_max", "chi_max_eps", "nsweeps", "nsweeps_eps"]
     tracking_obs = [E, E_eps, delta_E, Px, Px_eps, Stot_sq, Stot_sq_eps, chi_max, chi_max_eps, nsweeps, nsweeps_eps]
-    data_io.write_observables_to_file("spinone_heisenberg_fss_trackobs", str_tracking_obs, tracking_obs, L, alpha, D, Gamma, Jz, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_trackobs", str_tracking_obs, tracking_obs, L, alpha, D, Gamma, Jz, chi_limit)
     # save observables
     SvN, m_trans, m_long, str_order, eff_str_order = obs
     overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
@@ -148,7 +145,7 @@ def main(argv):
     log_fidelity = utilities.calc_log_fidelity(psi, psi_eps, eps)
     obs = [eps, overlap, fidelity, log_fidelity, SvN, m_trans, m_long, str_order, eff_str_order]
     str_observables = ["eps", "overlap", "fidelity", "log_fidelity", "SvN", "m_trans", "m_long", "str_order", "eff_str_order"]
-    data_io.write_observables_to_file("spinone_heisenberg_fss_obs", str_observables, list(obs), L, alpha, D, Gamma, Jz, chi_limit)
+    data_io.write_observables_to_file("spinone_heisenberg_obs", str_observables, list(obs), L, alpha, D, Gamma, Jz, chi_limit)
 
 
 if __name__ == "__main__":
