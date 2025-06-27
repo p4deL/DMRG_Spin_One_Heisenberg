@@ -190,7 +190,10 @@ def read_fss_data(path, obs_string, variable_string, fixed_val, chi, L_min=0, cu
 
                     # import csv with panda
                     df = pd.read_csv(path + f)
-                    vars = df[variable_string].values
+                    if variable_string == "lambda":
+                        vars = df["D"].values
+                    else:
+                        vars = df[variable_string].values
                     obs = df[obs_string].values
                     print(vars)
 

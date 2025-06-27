@@ -47,7 +47,7 @@ def plot():
     qpt = ("#3a86ff", 's-', 5, 1, "DMRG - data collapse - $M_{\\perp}$")
     qpt2 = ("#ff006e", '.-', 9, 1, "pCUT - DlogPadé- $\\Delta$")
     exp = ("#3a86ff", 's', 6, "DMRG - data collapse - $M_{\\perp}$")
-    exp_bias = ("#83BCA9", '*', 6, "DMRG biased - data collapse - $M_{\\perp}$")
+    exp_bias = ("#83BCA9", '*', 10, "DMRG biased - data collapse - $M_{\\perp}$")
     exp2 = ("#ff006e", '.', 11, "pCUT -DlogPadé - $\\Delta$")
 
     file = "../data/fss/largeD_U(1)CSB_transition/data_collapse_mag.csv"
@@ -74,7 +74,7 @@ def plot():
     file = "../data/fss/largeD_U(1)CSB_transition/data_collapse_mag_biased.csv"
     data = pd.read_csv(file)
     alphas_bias = data["alpha"].values
-    alphas_bias[np.isinf(alphas)] = 999999
+    #alphas_bias[np.isinf(alphas)] = 999999
     nus_bias = data["nu"].values
     dnus_bias = data["dnu"].values
     betas_bias = data["beta"].values
@@ -100,7 +100,7 @@ def plot():
     ax2.set_xlabel('$\\alpha$', fontsize=fs)
     ax2.set_ylabel('$\\nu$', fontsize=fs)
     ax2.set_xlim([1., 3.])
-    ax2.set_ylim([0.5, 5.0])
+    ax2.set_ylim([0.5, 3.0])
     ax2.xaxis.set_major_locator(MultipleLocator(0.5))
     ax2.xaxis.set_minor_locator(MultipleLocator(0.25))
     ax2.yaxis.set_major_locator(MultipleLocator(0.5))

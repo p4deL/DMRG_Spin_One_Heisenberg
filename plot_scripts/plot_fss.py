@@ -17,36 +17,37 @@ import include.data_io as data_io
 
 
 # fixed val_ Either alpha or D
-loop = False
-variable_str = "alpha"
-fixed_val = 2.75
-chi = 300
+loop = True
+variable_str = "lambda"
+fixed_val = 1.25
+chi = 500
 
 # global xc and nu guess
 #obs_string = "fidelity"
 #obs_string = "m_long"
 obs_string = "m_trans"
 
-#data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/"
-#out_file = f"../plots/fss/fss_{obs_string}_alpha{fixed_val}.pdf"
+data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/"
+out_file = f"../plots/fss/fss_{obs_string}_alpha{fixed_val}.pdf"
 #out_data_file = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_{obs_string}_alpha{fixed_val}.csv"
+out_data_file = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_{obs_string}_biased_alpha{fixed_val}.csv"
 
-data_path = f"../output/"
-out_file = f"../plots/fss/fss_{obs_string}_D{fixed_val}.pdf"
-out_data_file = f"../output/data_collapse_{obs_string}_alpha{fixed_val}.csv"
+#data_path = f"../output/"
+#out_file = f"../plots/fss/fss_{obs_string}_D{fixed_val}.pdf"
+#out_data_file = f"../output/data_collapse_{obs_string}_alpha{fixed_val}.csv"
 
 koppa = 1.
 L_min = 16
 L_mins = [60, 100, 140, 180, 200, 220, 240, 260]
 
-red_n_points = 0
+red_n_points = 20
 cutoff_left = red_n_points//2
 cutoff_right = red_n_points//2
 
 # data collapse guess ####
-tuning_param_guess = 0.488
-#x_c = tuning_param_guess
-#dx_c = 1.e-12
+tuning_param_guess = 0.05628459055566769
+x_c = tuning_param_guess
+dx_c = 1.e-12
 #1.25,0.05628459055566769,2.113150896893074e-6,0
 #1.5,0.10794923331584483,0.00007044664706561662,
 #1.75,0.16182594579522097,0.00014840898296116826
@@ -87,8 +88,8 @@ def fss_fid_suscept_fit_func(data, x_c, invnu, mu, *coefs):
 
     return L**(mu)*poly
 
+def fss_mag_fit_func(data, koppanu, beta, *coefs):
 #def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
-def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
 
     L = data[0,:]
     x = data[1,:]
@@ -103,8 +104,8 @@ def fss_mag_fit_func(data, x_c, koppanu, beta, *coefs):
 def perform_data_collapse(data, fit_func, guess):
     tuning_param_guess, invnu_guess, exponent_guess = guess
 
-    params, params_covariance = optimize.curve_fit(fit_func, data[:2,:], data[2,:], p0=[tuning_param_guess, invnu_guess, exponent_guess, 1, 1, 1, 1, 1, 1], maxfev=500000)
-    #params, params_covariance = optimize.curve_fit(fit_func, data[:2,:], data[2,:], p0=[invnu_guess, exponent_guess, 1, 1, 1, 1, 1, 1], maxfev=500000)
+    #params, params_covariance = optimize.curve_fit(fit_func, data[:2,:], data[2,:], p0=[tuning_param_guess, invnu_guess, exponent_guess, 1, 1, 1, 1, 1, 1], maxfev=500000)
+    params, params_covariance = optimize.curve_fit(fit_func, data[:2,:], data[2,:], p0=[invnu_guess, exponent_guess, 1, 1, 1, 1, 1, 1], maxfev=500000)
 
     #print(fss_mag_fit_func(data[:2,:], tuning_param_guess, beta_guess, nu_guess, 1,1,1,1))
     #print(params)
@@ -122,17 +123,21 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
     L = data[0,:]
     x = data[1,:]
     obs = data[2,:]
-    x_c = params[0]
-    dx_c = np.sqrt(params_covariance[0,0])
-    invnu = params[1]
-    dinvnu = np.sqrt(params_covariance[1,1])
-    #invnu = params[0]
-    #dinvnu = np.sqrt(params_covariance[0,0])
-    #exp = params[1]
-    #dexp = np.sqrt(params_covariance[1,1])
-    exp = params[2]
-    dexp = np.sqrt(params_covariance[2,2])
-    nu = 1/params[1]
+
+    # unbiased
+    #x_c = params[0]
+    #dx_c = np.sqrt(params_covariance[0,0])
+    #invnu = params[1]
+    #dinvnu = np.sqrt(params_covariance[1,1])
+    #exp = params[2]
+    #dexp = np.sqrt(params_covariance[2,2])
+    # biased
+    invnu = params[0]
+    dinvnu = np.sqrt(params_covariance[0,0])
+    exp = params[1]
+    dexp = np.sqrt(params_covariance[1,1])
+
+    nu = 1./invnu
     dnu = dinvnu/nu**2
     #print(f"koppa={koppa}")
     #print(f"invnu={invnu}")
