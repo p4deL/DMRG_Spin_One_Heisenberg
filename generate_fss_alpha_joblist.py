@@ -13,11 +13,11 @@ if __name__ == "__main__":
     basename = "joblist_dmrg_fss"
     sz1_flag = False
     plotflag = False
-    lambdaflag = False
+    lambdaflag = True
     alpha = float('inf')
-    D = 2.75
+    D = 0.5
     #Ls = [60, 100, 140, 160, 180, 200, 220, 240, 260, 280, 300, 320, 340]
-    Ls = [16,32,48,64]
+    Ls = [32,48,64,80,96]
     alphacinf = 2.75  # guess for phase transition point
     koppa = 1.
     nu = 1.8
@@ -33,8 +33,8 @@ if __name__ == "__main__":
         print(f"L={L}")
         alphamin = alphacinf - nonuni_pref_range*L**(-koppa/nu)
         alphamax = alphacinf + nonuni_pref_range*L**(-koppa/nu)
-        alphamin = 1.1
-        alphamax = 6.0
+        #alphamin = 1.1
+        #alphamax = 6.0
         alphas = np.linspace(alphamax, alphamin, n_datapoints)
 
         #print(f"xc={xc}")
