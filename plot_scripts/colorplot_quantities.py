@@ -15,16 +15,17 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 # system size 
 L = 100
-chi = 300
+chi = 500
 
 # which phase diagram
-phase_diag = "lambda_alpha"
+#phase_diag = "lambda_alpha"
 #phase_diag = "Gamma_alpha"
 #phase_diag = "Jz_alpha"
-#phase_diag = "D_alpha"
+phase_diag = "D_alpha"
 
 # Directory where your CSV files are stored
-data_dir = f'../data/phase_diagram/{phase_diag}_observables/L{L}/'
+#data_dir = f'../data/phase_diagram/{phase_diag}_observables/L{L}/'
+data_dir = f'../data/fss/gaussian_transition/svn_color/L{L}/'
 print(data_dir)
 
 quantity = ['SvN', r'$S_{\rm VN}$']

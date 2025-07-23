@@ -30,7 +30,7 @@ def get_color_gradient(c1, c2, n):
 colors = get_color_gradient("#ff006e", "#3a86ff", 5)
 
 def plot():
-    fig = plt.figure(figsize=(5.51, 8.51))
+    fig = plt.figure(figsize=(6.51, 8.51))
     # matplotlib.figure.SubplotParams(left=0.0,right=1.0,bottom=0.5,top=1.0)
 
     gs = GridSpec(5, 2, figure=fig)
@@ -44,13 +44,15 @@ def plot():
     ax3.set_position([0.61, 0.40, 0.35, 0.25], which='both')
     ax4.set_position([0.11, 0.07, 0.35, 0.25], which='both')
 
-    qpt = ("#3a86ff", 's-', 5, 1, "DMRG - data collapse - $M_{\\perp}$")
-    qpt2 = ("#ff006e", '.-', 9, 1, "pCUT - DlogPadé- $\\Delta$")
-    exp = ("#3a86ff", 's', 6, "DMRG - data collapse - $M_{\\perp}$")
-    exp_bias = ("#83BCA9", '*', 10, "DMRG biased - data collapse - $M_{\\perp}$")
-    exp2 = ("#ff006e", '.', 11, "pCUT -DlogPadé - $\\Delta$")
+    qpt = ("#3a86ff", 's-', 5, 1, "DMRG - data collapse in $\\lambda$ - $M_{\\perp}$")
+    qpt_pcut = ("#ff006e", '.-', 9, 1, "pCUT - DlogPadé- $\\Delta$")
+    qpt2 = ("#BD93D8", 'X-', 6, 1, "DMRG - data collapse in $\\alpha$ - $M_{\\perp}$")
+    exp = ("#3a86ff", 's', 6, "DMRG - data collapse in $\\lambda$ - $M_{\\perp}$")
+    exp_bias = ("#83BCA9", '*', 10, "DMRG biased - data collapse in $\\lambda$ - $M_{\\perp}$")
+    exp_pcut = ("#ff006e", '.', 11, "pCUT -DlogPadé - $\\Delta$")
+    exp2 = ("#BD93D8", 'X', 7, "DMRG - data collapse in $\\alpha$ - $M_{\\perp}$")
 
-    file = "../data/fss/largeD_U(1)CSB_transition/data_collapse_mag.csv"
+    file = "../data/fss/largeD_U(1)CSB_transition/data_collapse_lambda_mag.csv"
     data = pd.read_csv(file)
     alphas = data["alpha"].values
     alphas[np.isinf(alphas)] = 999999
@@ -62,16 +64,16 @@ def plot():
     dbetas = data["dbeta"].values
 
 
-    file = "../data/fss/largeD_U(1)CSB_transition/pcut_data.csv"
+    file = "../data/fss/largeD_U(1)CSB_transition/pcut_1qp_gap.csv"
     data = pd.read_csv(file)
-    alphas2 = data["alpha"].values
-    alphas2[np.isinf(alphas2)] = 999999
-    lambdas2 = data["lambda"].values
-    dlambdas2 = data["dlambda"].values
+    alphas_pcut = data["alpha"].values
+    alphas_pcut[np.isinf(alphas_pcut)] = 999999
+    lambdas_pcut = data["lambda"].values
+    dlambdas_pcut = data["dlambda"].values
     znus = data["znu"].values
     dznus = data["dznu"].values
 
-    file = "../data/fss/largeD_U(1)CSB_transition/data_collapse_mag_biased.csv"
+    file = "../data/fss/largeD_U(1)CSB_transition/data_collapse_lambda_mag_biased.csv"
     data = pd.read_csv(file)
     alphas_bias = data["alpha"].values
     #alphas_bias[np.isinf(alphas)] = 999999
@@ -80,8 +82,20 @@ def plot():
     betas_bias = data["beta"].values
     dbetas_bias = data["dbeta"].values
 
+
+    file = "../data/fss/largeD_U(1)CSB_transition/data_collapse_alpha_mag.csv"
+    data = pd.read_csv(file)
+    alphas2 = data["alpha"].values
+    dalphas2 = data["dalpha"].values
+    lambdas2 = data["lambda"].values
+    nus2 = data["nu"].values
+    dnus2 = data["dnu"].values
+    betas2 = data["beta"].values
+    dbetas2 = data["dbeta"].values
+
     ax1.errorbar(alphas, lambdas, yerr=dlambdas, color=qpt[0], fmt=qpt[1], ms=qpt[2], lw=qpt[3])
-    ax1.errorbar(alphas2, lambdas2, yerr=dlambdas2, color=qpt2[0], fmt=qpt2[1], ms=qpt2[2], lw=qpt2[3])
+    ax1.errorbar(alphas_pcut, lambdas_pcut, yerr=dlambdas_pcut, color=qpt_pcut[0], fmt=qpt_pcut[1], ms=qpt_pcut[2], lw=qpt_pcut[3])
+    ax1.errorbar(alphas2, lambdas2, xerr=dalphas2, color=qpt2[0], fmt=qpt2[1], ms=qpt2[2], lw=qpt2[3])
     print(alphas, lambdas)
     ax1.set_xlabel('$\\alpha$', fontsize=fs)
     ax1.set_ylabel('$\\lambda_c$', fontsize=fs)
@@ -97,6 +111,8 @@ def plot():
 
     ax2.errorbar(alphas, nus, yerr=dnus, color=exp[0], fmt=exp[1], ms=exp[2])
     ax2.errorbar(alphas_bias, nus_bias, yerr=dnus_bias, color=exp_bias[0], fmt=exp_bias[1], ms=exp_bias[2])
+    ax2.errorbar(alphas2, nus2, xerr=dalphas2, yerr=dnus2, color=exp2[0], fmt=exp2[1], ms=exp2[2])
+    #ax2.errorbar(alphas2, lambdas2*np.exp(nus2), xerr=dalphas2, yerr=dnus2, color=exp2[0], fmt=exp2[1], ms=exp2[2])
     ax2.set_xlabel('$\\alpha$', fontsize=fs)
     ax2.set_ylabel('$\\nu$', fontsize=fs)
     ax2.set_xlim([1., 3.])
@@ -108,6 +124,7 @@ def plot():
 
     ax3.errorbar(alphas, betas, yerr=dbetas, color=exp[0], fmt=exp[1], ms=exp[2], label=exp[3])
     ax3.errorbar(alphas_bias, betas_bias, yerr=dbetas_bias, color=exp_bias[0], fmt=exp_bias[1], ms=exp_bias[2], label=exp_bias[3])
+    ax3.errorbar(alphas2, betas2, xerr=dalphas2, yerr=dbetas2, color=exp2[0], fmt=exp2[1], ms=exp2[2], label=exp2[3])
     ax3.set_xlabel('$\\alpha$', fontsize=fs)
     ax3.set_ylabel('$\\beta$', fontsize=fs)
     ax3.set_xlim([1., 3.])
@@ -118,7 +135,7 @@ def plot():
     ax3.yaxis.set_major_locator(MultipleLocator(0.25))
     ax3.yaxis.set_minor_locator(MultipleLocator(0.125))
 
-    ax4.errorbar(alphas2, znus, yerr=dznus, color=exp2[0], fmt=exp2[1], ms=exp2[2], label=exp2[3])
+    ax4.errorbar(alphas_pcut, znus, yerr=dznus, color=exp_pcut[0], fmt=exp_pcut[1], ms=exp_pcut[2], label=exp_pcut[3])
     ax4.set_xlabel('$\\alpha$', fontsize=fs)
     ax4.set_ylabel('$z\\nu$', fontsize=fs)
     ax4.set_xlim([1., 3.])
@@ -142,7 +159,7 @@ def plot():
     #ax4b.plot(xmu, ymu, c='gray', linewidth=2, zorder=-1)
 
     # plt.tight_layout()
-    fig.legend(loc='lower right', bbox_to_anchor=(0.98,0.15), handletextpad=0.2, fontsize=12)
+    fig.legend(loc='lower right', bbox_to_anchor=(0.98,0.10), handletextpad=0.2, fontsize=12)
     #fig.legend(loc='lower right',ncol=1, handletextpad=-0.2, columnspacing=0.5, fontsize=fs2)
     fig.savefig("../plots/fss/u1_csb/crit_u1csb_alpha.pdf")
     plt.show()

@@ -10,9 +10,9 @@ rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 
 
-L = 60  # system size
+L = 100  # system size
 alpha = "inf"
-chi = 300
+chi = 500
 
 max_sweeps = 50
 
@@ -21,11 +21,11 @@ output_file = f"../plots/svn_field_chi{chi}_alpha{alpha}_L{L}.pdf"
 
 # directory and filename
 #data_dir = f"output/L{L}/"
-data_dir = f"../output/"
+data_dir = f"../output/auxfield_test/"
 
 
 #dirs = ["B1e-0", "B1e-1", "B1e-2", "B1e-3", "B1e-4", "B1e-5", "B1e-6"]
-dirs = ["B-1e-0", "B-1e-2", "B-1e-4", "B0", "B1e-4", "B1e-2", "B1e-0"]
+dirs = ["B1e-0", "B1e-1", "B1e-2", "B1e-3", "B1e-4", "B1e1", "B1e2"]
 markers = ["o", "o", "o", "+", "x", "x", "x"]
 marker_sizes = [8, 8, 8, 10, 6, 6, 6]
 
@@ -38,7 +38,7 @@ fig, ax = plt.subplots(1, 1, figsize=(5, 4), sharex=True)
 for i, (dir, marker, ms) in enumerate(zip(dirs, markers, marker_sizes)):
     
     # Read the data
-    file = f'{data_dir}{dir}/spinone_heisenberg_fss_obs_chi{chi}_alpha{alpha}_L{L}.csv'
+    file = f'{data_dir}{dir}/spinone_heisenberg_obs_chi{chi}_alpha{alpha}_L{L}.csv'
     data = pd.read_csv(file)
     x = data["D"].values
     y = data[quantity].values

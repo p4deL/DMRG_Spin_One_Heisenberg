@@ -17,16 +17,24 @@ phase_diag = "D_alpha_observables"
 #phase_diag = "lambda_alpha_observables"
 #phase_diag = "Jz_alpha_observables"
 
-D_selected = [-0.33, -0.315, -0.3, -0.28]
-chi = 300
+#D_selected = [-0.33, -0.315, -0.3, -0.28]
+#D_selected = [0.7, 0.9482758620689655, 0.9620689655172414, 0.9758620689655173, 1.017241379310345, 1.1]
+D_selected = [0.595, 0.7423728813559322,0.9457627118644067, 1.0271186440677966,1.1084745762711865,1.11864406779661]
+probe_idx = 1
+#chi = 300
+chi = 500
+#D_c = 0.96845
+D_c = 1.0
 
-alpha = float("inf")
+#alpha = float("inf")
+alpha = 4.0
 
 # output filename
-output_file = f"../plots/log_centralcharge_{phase_diag}.pdf"
+output_file = f"../plots/log_centralcharge_alpha{alpha}.pdf"
 
 # directory and filename
-data_dir = f'../data/fss/ising_transition/central_charge/'
+#data_dir = f'../data/fss/ising_transition/central_charge/'
+data_dir = f'../output/SvN_Gaussian/alpha{alpha}/Sz0/'
 # Use glob to find all csv files that match the pattern
 file_pattern = os.path.join(f"{data_dir}", f'spinone_heisenberg_obs_chi{chi}_alpha{alpha}_*.csv')
 
@@ -41,7 +49,7 @@ def read_data(file_pattern, alpha):
 
     csv_files = glob.glob(file_pattern)
 
-    #print(file_pattern)
+    print(file_pattern)
 
     # Lists to hold the data
     D_values = []
@@ -154,9 +162,9 @@ if __name__ == "__main__":
         #print(f"L: {L}, svn: {svn}")
         ax2.scatter(L_values, svn, label=f"$D={D[0]:.3f}$")
 
-    idx_min = 2
+    idx_min = 1
     Lfit = L_values[idx_min:]
-    svnfit = svn_selected.T[1,idx_min:]
+    svnfit = svn_selected.T[probe_idx,idx_min:]
     print(svnfit)
     a, a_err, b, berr = perform_log_fit(Lfit, svnfit)
     ax2.text(0.6, 0.55, "$c_{\\rm eff}=$" + f"${6*a:.3f}\\pm{6*a_err:.3f}$", transform=ax2.transAxes, fontsize=fs2)
@@ -175,7 +183,8 @@ if __name__ == "__main__":
     else:
         ax1.set_xlabel(r'$D$', fontsize=fs1)
 
-    ax1.set_xlim([-0.5, -0.2])
+    #ax1.set_xlim([-0.5, -0.2])
+    ax1.set_xlim([0.2, 1.2])
     ax2.set_xlim([40, 1000])
     ax2.set_xscale("log")
 
@@ -186,7 +195,8 @@ if __name__ == "__main__":
     #ax2.set_ylim([-0.1, 5.5])
     ax2.legend(loc='best', fontsize=fs2)
 
-    specific_tick = -0.315
+    #specific_tick = -0.315
+    specific_tick = D_c
     specific_label = "$D_c$"
 
     current_ticks = ax1.get_xticks()
@@ -201,6 +211,11 @@ if __name__ == "__main__":
     ax1.set_xticklabels(new_labels)
     ax1.axvline(specific_tick, color='red', linestyle='--', alpha=0.5)
 
+    # these are matplotlib.patch.Patch properties
+    props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+
+    # place a text box in upper left in axes coords
+    ax1.text(0.1, 0.9, f"$\\alpha={alpha}$", transform=ax1.transAxes, fontsize=12, verticalalignment='center', bbox=props)
 
     # title
     #ax1.set_title(f"$L_1={L1}$,~$L_2={L2}$", fontsize=fs2)

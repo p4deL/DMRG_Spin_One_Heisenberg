@@ -1,9 +1,9 @@
 import csv
 import glob
 
-joblist_filename = "joblist_dmrg_fss_all_alpha2.5.txt"
+joblist_filename = "joblist_dmrg_fss_all_alpha6.0.txt"
 output_missing_jobs_filename = "missing_jobs.txt"
-results_pattern = "output/spinone_heisenberg_obs_chi500_alpha2.5_L*.csv"
+results_pattern = "output/spinone_heisenberg_obs_chi500_alpha6.0_L*.csv"
 
 # Step 1: Read job list and extract D values
 job_D_values = []

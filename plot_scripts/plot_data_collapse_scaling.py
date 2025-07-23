@@ -13,11 +13,14 @@ rc('text', usetex=True)
 rc('text.latex', preamble = r'\usepackage{amssymb}')
 rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
-alpha = 1.25
+fixed_val = 1.6666666666666667
 
 # Load the CSV file
-file_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{alpha}/data_collapse_m_trans_biased_alpha{alpha}.csv"  # Change path if needed
-out_file = f"../plots/fss/u1_csb/data_collapse_scaling_biased_alpha{alpha}.pdf"
+#file_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_m_trans_alpha{fixed_val}.csv"  # Change path if needed
+#file_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_m_trans_biased_alpha{fixed_val}.csv"  # Change path if needed
+#out_file = f"../plots/fss/u1_csb/data_collapse_scaling_biased_alpha{fixed_val}.pdf"
+file_path = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/data_collapse_m_trans_D{fixed_val}.csv"  # Change path if needed
+out_file = f"../plots/fss/u1_csb/data_collapse_scaling_D{fixed_val}.pdf"
 df = pd.read_csv(file_path)
 
 fs = 16

@@ -2,6 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tenpy.linalg.np_conserved as npc
 from tenpy.tools.fit import sum_of_exp
+from collections import Counter
 
 
 def power_law_decay(dist, alpha):
@@ -115,6 +116,9 @@ def calc_observables(psi):
     # von Neumann entanglement entropy
     SvN = psi.entanglement_entropy()[(L-1)//2]
 
+    # participation entropy
+    #S_part = calc_participation_entropy(psi)
+
     # transverse magnetization
     corr_pm = psi.correlation_function('Sp','Sm')
     corr_pm_stag = np.array([[(-1) ** (i + j) * corr_pm[i][j] for j in range(L)] for i in range(L)])
@@ -134,7 +138,7 @@ def calc_observables(psi):
     str_order = corr_str_order[i, j]
     eff_str_order = corr_str_order[i, j] - corr_zz[i, j]
 
-    return SvN, mag_pm_stag, mag_zz_stag, str_order, eff_str_order
+    return SvN, mag_pm_stag, mag_zz_stag, str_order, eff_str_order #, S_part
 
 def calc_correlations(psi):
     corr_pm = psi.correlation_function('Sp','Sm')
@@ -150,6 +154,33 @@ def calc_entropies(psi):
     # von Neumann entanglement entropy
     SvN_full = psi.entanglement_entropy()
     return SvN_full
+
+# TODO: FIXME: sampling doesn't seem to work. Get the same value for different system sizes and alphas
+def calc_participation_entropy(psi, q=1, N_samples=100000):
+    # Convert each sample to a tuple so it can be hashed
+    sampled_configs = []
+    rng = np.random.default_rng(42)
+    L = psi.L
+
+    for _ in range(N_samples):
+        sigmas, _ = psi.sample_measurements(first_site=0, last_site=L-1, rng=rng)
+        sampled_configs.append(tuple(sigmas))  # turn to tuple so we can hash
+
+    # Count frequencies
+    counts = Counter(sampled_configs)
+
+    # estimate probabilities
+    probs = np.array([count / N_samples for count in counts.values()])
+
+    print("Unique samples:", len(set(sampled_configs)))
+    print("Top 5 probabilities:", np.sort(probs)[-5:])
+    print(f"S_part={-np.sum(probs * np.log(probs))}")
+    # calc entropies
+    probs = probs[probs > 0]
+    if q == 1:
+        return -np.sum(probs * np.log(probs))
+    else:
+        return 1.0 / (1 - q) * np.log(np.sum(probs**q))
 
 def calc_log_fidelity(psi, psi_eps, eps):
     overlap = np.abs(psi.overlap(psi_eps))  # contract the two mps wave functions
