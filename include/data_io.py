@@ -343,6 +343,32 @@ def write_observables_to_file_fix_D(str_base: str, str_observables: list, observ
                 writer.writerow(header)
             writer.writerow(row)
 
+def write_observables_to_file_fix_D_alpha(str_base: str, str_observables: list, observables: list, L: int, alpha: float, D: float, chi: int):
+    if len(str_observables) != len(observables):
+        print("Length of str_observables does not match length of observables.")
+        print(str_observables)
+        print(observables)
+        return
+
+    # Prepare filename
+    filename = f'output/{str_base}_chi{chi}_D{D}_alpha{alpha}.csv'
+    lockfile = filename + ".lock"
+
+    # Prepend extra observables before locking
+    header = ["L"] + str_observables
+    row = [L] + observables
+
+    # Lock files when writing (necessary when using a joblist)
+    with FileLock(lockfile):
+        file_exists = os.path.exists(filename)
+
+        # Open file and write data
+        with open(filename, 'a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists or os.stat(filename).st_size == 0:  # Check if the file is empty
+                writer.writerow(header)
+            writer.writerow(row)
+
 def write_correlations_to_file(base_name : str, correlator_strings : list, correlators : list, L : int, alpha : float, D : float, Gamma : float, Jz : float, chi : int):
 
     # Open a file in write mode
