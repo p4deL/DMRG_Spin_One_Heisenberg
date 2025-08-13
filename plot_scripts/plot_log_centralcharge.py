@@ -19,8 +19,8 @@ phase_diag = "D_alpha_observables"
 
 #D_selected = [-0.33, -0.315, -0.3, -0.28]
 #D_selected = [0.7, 0.9482758620689655, 0.9620689655172414, 0.9758620689655173, 1.017241379310345, 1.1]
-D_selected = [0.595, 0.7423728813559322,0.9457627118644067, 1.0271186440677966,1.1084745762711865,1.11864406779661]
-probe_idx = 1
+D_selected = [0.595, 0.7423728813559322,0.9457627118644067, 0.9966101694915254,1.006779661016949,1.11864406779661]
+probe_idx = 3
 #chi = 300
 chi = 500
 #D_c = 0.96845
@@ -34,7 +34,7 @@ output_file = f"../plots/log_centralcharge_alpha{alpha}.pdf"
 
 # directory and filename
 #data_dir = f'../data/fss/ising_transition/central_charge/'
-data_dir = f'../output/SvN_Gaussian/alpha{alpha}/Sz0/'
+data_dir = f'../output/SvN_Gaussian/alpha{alpha}/Sz1/'
 # Use glob to find all csv files that match the pattern
 file_pattern = os.path.join(f"{data_dir}", f'spinone_heisenberg_obs_chi{chi}_alpha{alpha}_*.csv')
 

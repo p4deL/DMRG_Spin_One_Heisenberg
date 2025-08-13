@@ -72,8 +72,8 @@ def plot():
     alphas_pcut[np.isinf(alphas_pcut)] = 999999
     lambdas_pcut = data["lambda"].values
     dlambdas_pcut = data["dlambda"].values
-    znus = data["znu"].values
-    dznus = data["dznu"].values
+    znus = data["exp"].values
+    dznus = data["dexp"].values
 
     file = "../data/fss/largeD_U(1)CSB_transition/pcut_1qp_sw.csv"
     data = pd.read_csv(file)

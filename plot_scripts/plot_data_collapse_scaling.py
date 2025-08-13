@@ -13,14 +13,17 @@ rc('text', usetex=True)
 rc('text.latex', preamble = r'\usepackage{amssymb}')
 rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
-fixed_val = 1.6666666666666667
+#fixed_val = 1.6666666666666667
+fixed_val = 6.25
 
 # Load the CSV file
+file_path = f"../data/fss/ising_transition/alpha{fixed_val}/data_collapse_m_long_alpha{fixed_val}.csv"  # Change path if needed
+out_file = f"../plots/fss/ising/data_collapse_scaling_alpha{fixed_val}.pdf"
 #file_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_m_trans_alpha{fixed_val}.csv"  # Change path if needed
 #file_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_m_trans_biased_alpha{fixed_val}.csv"  # Change path if needed
 #out_file = f"../plots/fss/u1_csb/data_collapse_scaling_biased_alpha{fixed_val}.pdf"
-file_path = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/data_collapse_m_trans_D{fixed_val}.csv"  # Change path if needed
-out_file = f"../plots/fss/u1_csb/data_collapse_scaling_D{fixed_val}.pdf"
+#file_path = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/data_collapse_m_trans_D{fixed_val}.csv"  # Change path if needed
+#out_file = f"../plots/fss/u1_csb/data_collapse_scaling_D{fixed_val}.pdf"
 df = pd.read_csv(file_path)
 
 fs = 16
@@ -69,7 +72,7 @@ for red_n in red_n_values:
     #        ax.plot(x_fit, y_fit, linestyle='--', alpha=0.7)
 
     # Linear fit for L_min in [200, 280]
-    Lmin_fit = 160
+    Lmin_fit = 200
     Lmax_fit = 340
     df_fit = df_sub[df_sub['L_min'].between(Lmin_fit, Lmax_fit)]
     if len(df_fit) >= 2:
@@ -80,9 +83,14 @@ for red_n in red_n_values:
         for ax, ycol, dycol in zip([ax_crit, ax_nu, ax_exp], ['x_c', 'nu', 'exp'], ['dx_c', 'dnu', 'dexp']):
 
             print(f"val={ycol}")
-            popt, pcov = curve_fit(lambda x, a, b: a * x + b, df_fit['inv_L_min'], df_fit[ycol], sigma=df_fit[dycol],
-                                   absolute_sigma=True)
-            #popt, pcov = curve_fit(lambda x, a, b: a * x + b, df_fit['inv_L_min'], df_fit[ycol])
+            print(np.array(df_fit['x_c']))
+            xdata = np.array(df_fit['inv_L_min'])
+            ydata = np.array(df_fit[ycol])
+            dydata = np.array(df_fit[dycol])
+
+            #popt, pcov = curve_fit(lambda x, a, b: a * x**2 + b, xdata, ydata, sigma=dydata, p0=[-1.0, ydata[-1]])
+            popt, pcov = curve_fit(lambda x, a, b: a * x + b, xdata, ydata, sigma=dydata, absolute_sigma=True) #FIXME: Absolute error or relative error
+            #popt, pcov = curve_fit(lambda x, a, b: a * x + b, xdata, ydata, sigma=dydata)
             #slope, intercept, *_ = linregress(df_fit['inv_L_min'], df_fit[ycol])
             a, b = popt  # coefficients
             da, db = np.sqrt(np.diag(pcov))  # standard deviations (errors)

@@ -18,23 +18,29 @@ import include.data_io as data_io
 
 # fixed val_ Either alpha or D
 loop = True
-variable_str = "alpha"
-fixed_val = 1.6666666666666667
+variable_str = "D"
+fixed_val = 6.25
+#fixed_val = 1.6666666666666667
 chi = 500
 
 # global xc and nu guess
 #obs_string = "fidelity"
-#obs_string = "m_long"
-obs_string = "m_trans"
+obs_string = "m_long"
+#obs_string = "m_trans"
+
+
+data_path = f"../data/fss/ising_transition/alpha{fixed_val}/"
+out_file = f"../plots/fss/fss_{obs_string}_alpha{fixed_val}.pdf"
+out_data_file = f"../data/fss/ising_transition/alpha{fixed_val}/data_collapse_{obs_string}_alpha{fixed_val}.csv"
 
 #data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/"
 #out_file = f"../plots/fss/fss_{obs_string}_alpha{fixed_val}.pdf"
 #out_data_file = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_{obs_string}_alpha{fixed_val}.csv"
 #out_data_file = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_{obs_string}_biased_alpha{fixed_val}.csv"
 
-data_path = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/"
-out_file = f"../plots/fss/fss_{obs_string}_D{fixed_val}.pdf"
-out_data_file = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/data_collapse_{obs_string}_D{fixed_val}.csv"
+#data_path = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/"
+#out_file = f"../plots/fss/fss_{obs_string}_D{fixed_val}.pdf"
+#out_data_file = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/data_collapse_{obs_string}_D{fixed_val}.csv"
 
 #data_path = f"../output/"
 #out_file = f"../plots/fss/fss_{obs_string}_D{fixed_val}.pdf"
@@ -43,15 +49,15 @@ out_data_file = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/data_collap
 koppa = 1.
 L_min = 16
 #L_mins = [60, 100, 140, 160, 180, 200, 220, 240, 260]
-L_mins = [60, 100, 140, 160, 180]
-#L_mins = [60, 100, 140, 180, 200, 220]
+#L_mins = [60, 100, 140, 160, 180]
+L_mins = [60, 100, 140, 160, 180, 200, 220, 240]
 
 red_n_points = 0
 cutoff_left = red_n_points//2
 cutoff_right = red_n_points//2
 
 # data collapse guess ####
-tuning_param_guess = 2.8
+tuning_param_guess = -0.25
 #x_c = tuning_param_guess
 #dx_c = 1.e-12
 #1.25,0.05628459055566769,2.113150896893074e-6,0
@@ -170,7 +176,6 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
 
         ins_ax.plot(x[start:end], obs[start:end])
 
-
     (xlabel, xlabel_scaling), (ylabel, ylabel_scaling) = labels
 
     print(f"x_c = {x_c:.6f}±{dx_c:.6f}")
@@ -233,6 +238,7 @@ def main(argv):
 
         x_c, dx_c, nu, dnu, exp, dexp = plot_data_collapse(out_file, data, dim, params, params_covariance, obs_string, labels)
         data_io.write_data_collapse_to_file(out_data_file, red_n_points, L_min, x_c, dx_c, nu, dnu, exp, dexp)
+
 
 if __name__ == "__main__":
     main(sys.argv[1:])

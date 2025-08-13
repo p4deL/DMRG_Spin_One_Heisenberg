@@ -24,9 +24,9 @@ import matplotlib.cm as cm
 import matplotlib.colors as colors
 
 # --- Parameters ---
-D = 0.0
-chi = 600
-directory = f"../data/ee_scaling/D{D}/Sz0/"  # Change to your directory path if needed
+D = 1.25
+chi = 500
+directory = f"../data/ee_scaling/D{D}/"  # Change to your directory path if needed
 #directory = f"../output/"  # Change to your directory path if needed
 pattern = os.path.join(directory, f"spinone_heisenberg_obs_chi{chi}_D{D}_L*")
 out_file = (f"../plots/ee_scaling/ee_scaling_D{D}.pdf")
@@ -73,7 +73,7 @@ def log_fit(L, a, b):
 
 # --- Top plot: SvN vs 1/L with fit ---
 for i, (alpha, group) in enumerate(grouped):
-    #if alpha < 3.0:
+    #if alpha > 3.0:
     group_sorted = group.sort_values("L")
     L_vals = group_sorted["L"].values
     SvN_vals = group_sorted["SvN"].values
@@ -118,6 +118,7 @@ plt.colorbar(sm, ax=ax1, label=r"$\alpha$")
 ax2.plot(alphas, a_coeffs, 'o-')
 ax2.set_xlabel("$\\alpha$")
 ax2.set_ylabel("Fit coefficient $a$")
+ax2.set_ylim(-0.1,0.5)
 
 plt.tight_layout()
 plt.savefig(out_file)

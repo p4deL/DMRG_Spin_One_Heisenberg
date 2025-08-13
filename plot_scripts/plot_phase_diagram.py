@@ -15,6 +15,7 @@ def plot():
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5), sharey=False, gridspec_kw={'wspace': 0})
 
     qpt = ("#3a86ff", 's-', 5, 1, "DMRG - data collapse in $D$")
+    qpt_svn = ("#3a86ff", 'd-', 6, 1, "DMRG - SvN sym. sectors in $D$")
     qpt_alpha = ("#BD93D8", 'X-', 6, 1, "DMRG - data collapse in $\\alpha$")
     qpt_pcut = ("#ff006e", '.-', 9, 1, "pCUT")
 
@@ -35,7 +36,7 @@ def plot():
     D_su2_alpha = data["D"].values
 
     # guassian transition data
-    file = "../data/fss/gaussian_transition/data_collapse_D_SvN.csv"
+    file = "../data/fss/gaussian_transition/SvN_intersection_scaling.csv"
     data = pd.read_csv(file)
     alphas_gaussian = data["alpha"].values
     alphas_gaussian[np.isinf(alphas_gaussian)] = 999999
@@ -69,7 +70,8 @@ def plot():
     ax1.errorbar(D_su2_alpha, np.reciprocal(alphas_su2_alpha), yerr=1./alphas_su2_alpha**2 * dalphas_su2_alpha, color=qpt_alpha[0], fmt=qpt_alpha[1], ms=qpt_alpha[2], lw=qpt_alpha[3], label=qpt_alpha[4])
 
     # gaussian transition
-    ax1.errorbar(D_gaussian, np.reciprocal(alphas_gaussian), xerr=dD_gaussian, color=qpt[0], fmt=qpt[1], ms=qpt[2], lw=qpt[3], label=qpt[4])
+    ax1.errorbar(D_gaussian, np.reciprocal(alphas_gaussian), xerr=dD_gaussian, color=qpt_svn[0], fmt=qpt_svn[1], ms=qpt_svn[2], lw=qpt_svn[3], label=qpt_svn[4])
+    ax2.errorbar(np.reciprocal(D_gaussian), np.reciprocal(alphas_gaussian), xerr=dD_gaussian, color=qpt_svn[0], fmt=qpt_svn[1], ms=qpt_svn[2], lw=qpt_svn[3], label=qpt_svn[4])
 
     # U1 transition
     ax2.errorbar(lambdas_u1, np.reciprocal(alphas_u1), xerr=dlambdas_u1, color=qpt[0], fmt=qpt[1], ms=qpt[2], lw=qpt[3], label=qpt[4])
@@ -96,6 +98,15 @@ def plot():
     ax1.set_ylabel('$1/\\alpha$', fontsize=fs2)
 
     ax1.vlines(x=0.0, ymin=0.33, ymax=1.0, color='gray', lw=2)
+
+    # Remove left spine from the first plot
+    ax1.spines['right'].set_visible(False)
+    ax1.yaxis.set_ticks([])
+
+    # Remove right spine from the second plot
+    ax2.spines['left'].set_visible(False)
+    ax2.yaxis.set_ticks([])
+
 
     fig.text(0.5, 0.02, "$D$", ha='center', fontsize=fs2)
     fig.text(0.3, 0.2, "Haldane", ha='center', fontsize=fs)

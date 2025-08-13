@@ -145,7 +145,7 @@ def plot():
     exp = ("#3a86ff", '.', 11, "data collapse - $M_z$")
     exp2 = ("#ff006e", '.', 11, "data collapse - $\\chi_{\\rm fidelity}$")
 
-    file = "../data/fss/ising_transition/data_collapse_mag.csv"
+    file = "../data/fss/ising_transition/data_collapse_D_mag.csv"
     data = pd.read_csv(file)
     alphas = data["alpha"].values
     alphas[np.isinf(alphas)] = 999999
@@ -157,7 +157,7 @@ def plot():
     dbetas = data["dbeta"].values
 
 
-    file = "../data/fss/ising_transition/data_collapse_fidelity.csv"
+    file = "../data/fss/ising_transition/data_collapse_D_fidelity.csv"
     data = pd.read_csv(file)
     alphas2 = data["alpha"].values
     alphas2[np.isinf(alphas2)] = 999999

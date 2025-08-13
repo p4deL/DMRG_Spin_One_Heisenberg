@@ -26,9 +26,10 @@ import matplotlib.colors as colors
 # --- Parameters ---
 D = 0.0
 
+#directories = [f"../data/ee_scaling/D{D}/old_chimax800/Sz0/", f"../data/ee_scaling/D{D}/Sz1/"]   # Change to your directory path if needed
 directories = [f"../data/ee_scaling/D{D}/Sz0/", f"../data/ee_scaling/D{D}/Sz1/"]   # Change to your directory path if needed
 #directory = f"../output/"  # Change to your directory path if needed
-chis = (600, 500)
+chis = (1250, 500)
 labels = ("$S^z=0$", "$S^z=1$")
 
 out_file = (f"../plots/ee_scaling/ee_scaling_D{D}.pdf")
@@ -84,8 +85,8 @@ for chi, dir, label in zip(chis, directories, labels):
         L_vals = group_sorted["L"].values
         SvN_vals = group_sorted["SvN"].values
 
-        print(L_vals)
-        print(SvN_vals)
+        #print(L_vals)
+        #print(SvN_vals)
 
         # Fit to a*log(L)+b
         try:
@@ -105,7 +106,9 @@ for chi, dir, label in zip(chis, directories, labels):
             ax1.plot(L_vals, SvN_vals, 'o', c=color, label=f"$\\alpha=${alpha:.3f}")
 
             # Plot fit
-            L_fit = np.linspace(min(L_vals), max(L_vals), 200)
+            #L_fit = np.linspace(min(L_vals), max(L_vals), 200)
+            L_fit = np.linspace(min(L_vals), 340, 200)
+            print(f"SvN={log_fit(340, a, b)}")
             SvN_fit = log_fit(L_fit, *popt)
             ax1.plot(L_fit, SvN_fit, '--', c=color) #, label=f"fit $a=${a:.3f}, $b=${b:.3f}")
         except RuntimeError:
