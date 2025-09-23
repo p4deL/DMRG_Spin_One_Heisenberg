@@ -14,18 +14,18 @@ rc('text.latex', preamble = r'\usepackage{amssymb}')
 rcParams['pgf.preamble'] = r"\usepackage{amssymb}"
 
 #fixed_val = 1.6666666666666667
-fixed_val = 0.8
+fixed_val = 2.638522427440633
 
 # Load the CSV file
 #file_path = f"../data/fss/ising_transition/alpha{fixed_val}/data_collapse_m_long_alpha{fixed_val}.csv"  # Change path if needed
 #out_file = f"../plots/fss/ising/data_collapse_scaling_alpha{fixed_val}.pdf"
 #file_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_m_trans_alpha{fixed_val}.csv"  # Change path if needed
 #file_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_m_trans_biased_alpha{fixed_val}.csv"  # Change path if needed
-#out_file = f"../plots/fss/u1_csb/data_collapse_scaling_biased_alpha{fixed_val}.pdf"
-#file_path = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/data_collapse_m_trans_D{fixed_val}.csv"  # Change path if needed
-#out_file = f"../plots/fss/u1_csb/data_collapse_scaling_D{fixed_val}.pdf"
-file_path = f"../data/fss/haldane_U(1)CSB_transition/D{fixed_val}/data_collapse_m_trans_D{fixed_val}.csv"  # Change path if needed
-out_file = f"../plots/fss/u1_csb/data_collapse_scaling_D{fixed_val}.pdf"
+#out_file = f"../plots/fss/u1_csb/data_collapse_scaling_biased_alpha{fixed_val}.pdf"#
+file_path = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/data_collapse_m_trans_D{fixed_val}.csv"  # Change path if needed
+out_file = f"../plots/paper/data_collapse_scaling_D{fixed_val}.pdf"
+#file_path = f"../data/fss/haldane_U(1)CSB_transition/D{fixed_val}/data_collapse_m_trans_D{fixed_val}.csv"  # Change path if needed
+#out_file = f"../plots/paper/data_collapse_scaling_D{fixed_val}.pdf"
 df = pd.read_csv(file_path)
 
 fs = 16
@@ -46,22 +46,42 @@ b_collection = {
     'exp': []
 }
 
-# Loop over each red_n_points group
-for red_n in red_n_values:
+def hex_to_RGB(hex_str):
+  """ #FFFFFF -> [255,255,255]"""
+  #Pass 16 to the integer function for change of base
+  return [int(hex_str[i:i+2], 16) for i in range(1,6,2)]
+
+
+def get_color_gradient(c1, c2, n):
+    """
+    Given two hex colors, returns a color gradient
+    with n colors.
+    """
+    assert n > 1
+    c1_rgb = np.array(hex_to_RGB(c1))/255
+    c2_rgb = np.array(hex_to_RGB(c2))/255
+    mix_pcts = [x/(n-1) for x in range(n)]
+    rgb_colors = [((1-mix)*c1_rgb + (mix*c2_rgb)) for mix in mix_pcts]
+    return ["#" + "".join([format(int(round(val*255)), "02x") for val in item]) for item in rgb_colors]
+
+
+colors = get_color_gradient("#457b9d", "#81b29a", len(red_n_values))
+# Loop over each red_n_points groups
+for i, red_n in enumerate(red_n_values):
     df_sub = df[df['red_n_points'] == red_n].copy()
     df_sub.sort_values('L_min', inplace=True)
 
     # Plot crit val
     ax_crit.errorbar(df_sub['inv_L_min'], df_sub['x_c'], yerr=df_sub['dx_c'],
-                   label=f'red_n={red_n}', marker='o', linestyle='-', zorder=-1)
+                   label=f'red_n={red_n}', marker='o', linestyle='-', color=colors[i], alpha=0.75, zorder=-1)
 
     # Plot nu
     ax_nu.errorbar(df_sub['inv_L_min'], df_sub['nu'], yerr=df_sub['dnu'],
-                   label=f'red_n={red_n}', marker='o', linestyle='-', zorder=-1)
+                   label=f'red_n={red_n}', marker='o', linestyle='-', color=colors[i], alpha=0.75, zorder=-1)
 
     # Plot exp
     ax_exp.errorbar(df_sub['inv_L_min'], df_sub['exp'], yerr=df_sub['dexp'],
-                    label=f'red_n={red_n}', marker='o', linestyle='-', zorder=-1)
+                    label=f'red_n={red_n}', marker='o', linestyle='-', color=colors[i], alpha=0.75, zorder=-1)
 
     # Linear fit to leading 4 L_min points in range 220-280
     #df_fit = df_sub[df_sub['L_min'].between(200, 280)].head(4)

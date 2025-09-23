@@ -9,7 +9,7 @@ plt.rcParams['text.usetex'] = True
 fs = 18
 fs2 = 12
 
-output_file = "../plots/phase_diagram_real.pdf"
+output_file = "../plots/paper/phase_diagram_real.pdf"
 
 
 def plot():

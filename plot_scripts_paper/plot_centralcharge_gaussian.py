@@ -6,7 +6,7 @@ import glob
 from matplotlib.gridspec import GridSpec
 from matplotlib import rc, rcParams
 from scipy.optimize import curve_fit
-
+import matplotlib.cm as cm
 
 #matplotlib.rcParams['text.usetex'] = True
 rc('text', usetex=True)
@@ -21,7 +21,7 @@ chi = 500
 
 
 # output filename
-output_file = f"../plots/Gaussian_transition/log_centralcharge_gaussian.pdf"
+output_file = f"../plots/paper/centralcharge_gaussian.pdf"
 
 # directory and filename
 #data_dir = f'../data/fss/ising_transition/central_charge/'
@@ -98,20 +98,44 @@ def perform_log_fit(x, y):
     #print("b =", b, "+/-", b_err)
 
     return a, a_err, b, b_err
+def hex_to_RGB(hex_str):
+  """ #FFFFFF -> [255,255,255]"""
+  #Pass 16 to the integer function for change of base
+  return [int(hex_str[i:i+2], 16) for i in range(1,6,2)]
+
+
+def get_color_gradient(c1, c2, n):
+    """
+    Given two hex colors, returns a color gradient
+    with n colors.
+    """
+    assert n > 1
+    c1_rgb = np.array(hex_to_RGB(c1))/255
+    c2_rgb = np.array(hex_to_RGB(c2))/255
+    mix_pcts = [x/(n-1) for x in range(n)]
+    rgb_colors = [((1-mix)*c1_rgb + (mix*c2_rgb)) for mix in mix_pcts]
+    return ["#" + "".join([format(int(round(val*255)), "02x") for val in item]) for item in rgb_colors]
+
 
 if __name__ == "__main__":
     alpha_values, L_values, svn_values = read_data(file_pattern)
     print(f"alphas: {np.shape(alpha_values)}, Ls: {np.shape(L_values)}, svns: {np.shape(svn_values)}")
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 8))
 
+    #colors = cm.viridis(np.linspace(0, 1, len(alpha_values)))
+    #colors = cm.cividis(np.linspace(0, 1, len(alpha_values)))
+    colors = get_color_gradient("#457b9d", "#81b29a", len(alpha_values))
+
     ceffs = []
     ceffs_err = []
     # iterate over all alphas
     for i, alpha in enumerate(alpha_values):
+        color = colors[i]
+
         # plot entanglement entropy as function of log(L)
         Ls = L_values[i]
         svn = svn_values[i]
-        ax1.scatter(Ls, svn, alpha=0.5, label=f"$\\alpha={alpha:.3f}$")
+        ax1.scatter(Ls, svn, alpha=0.75, color=color, s=50, label=f"$\\alpha={alpha:.3f}$")
 
         # linear fit of data points
         a, a_err, b, berr = perform_log_fit(Ls[5:], svn[5:])
@@ -124,7 +148,7 @@ if __name__ == "__main__":
 
         # plot linear fit
         xrange = np.linspace(Ls[5], Ls[-1], 100)
-        ax1.plot(xrange, linear_fit(np.log(xrange), a, b), alpha=0.5, linestyle='--')
+        ax1.plot(xrange, linear_fit(np.log(xrange), a, b), lw=2.5, alpha=0.75, linestyle='--', color=color)
 
 
 
@@ -138,7 +162,7 @@ if __name__ == "__main__":
     #ax2.set_ylim([-0.1, 5.5])
     ax1.legend(loc='best', fontsize=fs2)
 
-    ax2.errorbar(np.reciprocal(alpha_values), ceffs, yerr=ceffs_err, marker="o")
+    ax2.errorbar(np.reciprocal(alpha_values), ceffs, yerr=ceffs_err, marker="o", ms=8, lw=2.5, alpha=0.6, color="#bc4749")
     ax2.set_xlabel('$1/\\alpha$', fontsize=fs1)
     ax2.set_ylabel('$c_{\\rm eff}$', fontsize=fs1)
     ax2.set_ylim(0.75,1.25)

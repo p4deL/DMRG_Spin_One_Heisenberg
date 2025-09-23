@@ -26,18 +26,18 @@ import matplotlib.cm as cm
 import matplotlib.colors as colors
 
 # --- Parameters ---
-D = 0.0
+D = 0.25
 
 
 directories = [f"../data/ee_scaling/D{D}/Sz0/", f"../data/ee_scaling/D{D}/Sz1/"]   # Change to your directory path if needed
 #directory = f"../output/"  # Change to your directory path if needed
-chis = (800, 500)
+chis = (500, 500)
 labels = ("$S^z=0$", "$S^z=1$")
 out_file = (f"../plots/ee_scaling/ee_scaling_D{D}.pdf")
 
 #Lmins = [60, 80, 100, 120, 140, 160, 180, 200, 220, 240, 260, 280]
-#Lmins = [60, 80, 100, 120, 140, 160, 180, 200]
-Lmins = [60, 80, 100, 120, 140]
+Lmins = [60, 80, 100, 120, 140, 160, 180, 200]
+#Lmins = [60, 80, 100, 120, 140]
 num_Lmins = len(Lmins)
 n_fit_vals = 5
 
@@ -170,7 +170,7 @@ for idx, (chi, dir, label) in enumerate(zip(chis, directories, labels)):
             #da = 0.0
             #b = 0.05
             #c = 0.8
-            Lmin_fit = 60
+            Lmin_fit = 200
             x_fit = np.linspace(0, L_scaling[-n_fit_vals], 200)
             #y_fit = a + b*x_fit**c
             y_fit = a + b*x_fit

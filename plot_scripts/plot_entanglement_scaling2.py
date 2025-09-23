@@ -29,7 +29,7 @@ D = 0.0
 #directories = [f"../data/ee_scaling/D{D}/old_chimax800/Sz0/", f"../data/ee_scaling/D{D}/Sz1/"]   # Change to your directory path if needed
 directories = [f"../data/ee_scaling/D{D}/Sz0/", f"../data/ee_scaling/D{D}/Sz1/"]   # Change to your directory path if needed
 #directory = f"../output/"  # Change to your directory path if needed
-chis = (1250, 500)
+chis = (2000, 500)
 labels = ("$S^z=0$", "$S^z=1$")
 
 out_file = (f"../plots/ee_scaling/ee_scaling_D{D}.pdf")
@@ -44,10 +44,12 @@ fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(7, 9), sharex=False, gridspec_kw={
 def log_fit(L, a, b):
     return a * np.log(L) + b
 
+norm = colors.Normalize(vmin=1.1, vmax=1.6)
+cmap = cm.rainbow  # Or use 'plasma', 'inferno', 'cividis', etc.
 
-for chi, dir, label in zip(chis, directories, labels):
+for dir, label in zip(directories, labels):
 
-    pattern = os.path.join(dir, f"spinone_heisenberg_obs_chi{chi}_D{D}_L*")
+    pattern = os.path.join(dir, f"spinone_heisenberg_obs_chi*_D{D}_L*")
     # --- Load and parse all files ---
     data = []
     for filepath in glob.glob(pattern):
@@ -70,8 +72,8 @@ for chi, dir, label in zip(chis, directories, labels):
 
     # color map
     all_alphas = sorted(grouped.groups.keys())  # or extract from your data directly
-    norm = colors.Normalize(vmin=min(all_alphas), vmax=max(all_alphas))
-    cmap = cm.rainbow  # Or use 'plasma', 'inferno', 'cividis', etc.
+    #norm = colors.Normalize(vmin=min(all_alphas), vmax=max(all_alphas))
+    #cmap = cm.rainbow  # Or use 'plasma', 'inferno', 'cividis', etc.
 
 
     # For bottom plot

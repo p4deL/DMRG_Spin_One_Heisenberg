@@ -17,9 +17,9 @@ import include.data_io as data_io
 
 
 # fixed val_ Either alpha or D
-loop = True
+loop = False
 variable_str = "alpha"
-fixed_val = 0.2
+fixed_val = 0.4
 #fixed_val = 1.6666666666666667
 chi = 500
 
@@ -30,38 +30,29 @@ obs_string = "m_trans"
 
 
 #data_path = f"../data/fss/ising_transition/alpha{fixed_val}/"
-#out_file = f"../plots/fss/fss_{obs_string}_alpha{fixed_val}.pdf"
-#out_data_file = f"../data/fss/ising_transition/alpha{fixed_val}/data_collapse_{obs_string}_alpha{fixed_val}.csv"
+#out_file = f"../plots/paper/fss_{obs_string}_alpha{fixed_val}.pdf"
 
 #data_path = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/"
-#out_file = f"../plots/fss/fss_{obs_string}_alpha{fixed_val}.pdf"
-#out_data_file = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_{obs_string}_alpha{fixed_val}.csv"
-#out_data_file = f"../data/fss/largeD_U(1)CSB_transition/alpha{fixed_val}/data_collapse_{obs_string}_biased_alpha{fixed_val}.csv"
+#out_file = f"../plots/paper/fss_{obs_string}_alpha{fixed_val}.pdf"
 
 #data_path = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/"
-#out_file = f"../plots/fss/fss_{obs_string}_D{fixed_val}.pdf"
-#out_data_file = f"../data/fss/largeD_U(1)CSB_transition/D{fixed_val}/data_collapse_{obs_string}_D{fixed_val}.csv"
+#out_file = f"../plots/paper/fss_{obs_string}_D{fixed_val}.pdf"
 
 data_path = f"../data/fss/haldane_U(1)CSB_transition/D{fixed_val}/"
-out_file = f"../plots/fss/fss_{obs_string}_D{fixed_val}.pdf"
-out_data_file = f"../data/fss/haldane_U(1)CSB_transition/D{fixed_val}/data_collapse_{obs_string}_D{fixed_val}.csv"
+out_file = f"../plots/paper/fss_{obs_string}_D{fixed_val}.pdf"
 
 #data_path = f"../output/"
-#out_file = f"../plots/fss/fss_{obs_string}_D{fixed_val}.pdf"
-#out_data_file = f"../output/data_collapse_{obs_string}_alpha{fixed_val}.csv"
+#out_file = f"../plots/paper/fss_{obs_string}_D{fixed_val}.pdf"
 
 koppa = 1.
-L_min = 16
-#L_mins = [60, 100, 140, 160, 180, 200, 220, 240, 260]
-#L_mins = [60, 100, 140, 160, 180]
-L_mins = [60, 100, 140, 160, 180, 200, 220, 240]
+L_min = 60
 
-red_n_points = 20
+red_n_points = 12
 cutoff_left = red_n_points//2
 cutoff_right = red_n_points//2
 
 # data collapse guess ####
-tuning_param_guess = 2.95
+tuning_param_guess = 2.9
 #x_c = tuning_param_guess
 #dx_c = 1.e-12
 #1.25,0.05628459055566769,2.113150896893074e-6,0
@@ -91,6 +82,24 @@ xlabels_dict = {
 ylabels = ylabels_dict.get(obs_string)
 xlabels = xlabels_dict.get(variable_str)
 labels = (xlabels, ylabels)
+
+def hex_to_RGB(hex_str):
+  """ #FFFFFF -> [255,255,255]"""
+  #Pass 16 to the integer function for change of base
+  return [int(hex_str[i:i+2], 16) for i in range(1,6,2)]
+
+
+def get_color_gradient(c1, c2, n):
+    """
+    Given two hex colors, returns a color gradient
+    with n colors.
+    """
+    assert n > 1
+    c1_rgb = np.array(hex_to_RGB(c1))/255
+    c2_rgb = np.array(hex_to_RGB(c2))/255
+    mix_pcts = [x/(n-1) for x in range(n)]
+    rgb_colors = [((1-mix)*c1_rgb + (mix*c2_rgb)) for mix in mix_pcts]
+    return ["#" + "".join([format(int(round(val*255)), "02x") for val in item]) for item in rgb_colors]
 
 
 def fss_fid_suscept_fit_func(data, x_c, invnu, mu, *coefs):
@@ -162,9 +171,11 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
 
     #exp = 0.5
 
+
     #ax.scatter(L**(1./nu)*(x-params[0]), L**(2*beta/nu)*obs, s=0.5)
     total_dim = len(data[0,:])
     n = total_dim//dim
+    colors = get_color_gradient("#457b9d", "#81b29a", n)
     for i in range(1,n+1):
         start = (i-1)*dim
         end = i*dim
@@ -173,29 +184,36 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
         #nu = 1.0
         #beta = 0.125
         #x_c = 1.0
-        if obs_string == "fidelity":
-            ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(-exp)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
+        if i == 1:
+            label = '$L_{\\rm min}' + f'={int(L[start])}$'
+        elif i == n:
+            label = '$L_{\\rm max}' + f'={int(L[start])}$'
         else:
-            ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(exp*invnu)*obs[start:end], s=14, label=f'$L={int(L[start])}$')
+            label = None  # no legend entry
 
-        ins_ax.plot(x[start:end], obs[start:end])
+        ax.scatter(L[start:end]**(invnu)*(x[start:end]-x_c), L[start:end]**(exp*invnu)*obs[start:end], s=40, color=colors[i-1], alpha=0.5, label=label)
+
+        ins_ax.plot(x[start:end], obs[start:end], color=colors[i-1], lw=3, alpha=0.75)
 
     (xlabel, xlabel_scaling), (ylabel, ylabel_scaling) = labels
 
     print(f"x_c = {x_c:.6f}±{dx_c:.6f}")
     print(f"nu = {nu:.6f}±{dnu:.6f}")
-    if obs_string != "fidelity":
-        print(f"beta = {exp:.6f}±{dexp:.6f}")
-        resstr = '\n'.join((xlabel + '$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\beta=%.4f$' % exp, ))
-    else:
-        print(f"mu = {exp:.6f}±{dexp:.6f}")
-        resstr = '\n'.join((xlabel +'$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\mu=%.4f$' % exp, ))
+    print(f"beta = {exp:.6f}±{dexp:.6f}")
+
+    resstr = '\n'.join((xlabel + '$_c=%.5f$' % (x_c, ) + '$\\pm %.5f$' % (dx_c, ), '$\\nu=%.4f$' % (nu, ) + '$\\pm %.4f$' % (dnu, ), '$\\beta=%.4f$' % (exp, ) + '$\\pm %.4f$' % (dexp, )))
+
+    #resstr = xlabel + '$_c=%.6f$' % (a, ) + '$\\pm %.6f$' % (da, )
+    #ax2.text(0.02, 0.05, resstr, transform=ax2.transAxes, fontsize=12, verticalalignment='center', bbox=props)
+
+
+    #resstr = '\n'.join((xlabel + '$\\hspace{-0.5em}\\phantom{x}_c=%.4f$' % (x_c, ), '$\\nu=%.4f$' % (nu, ), '$\\beta=%.4f$' % exp, ))
 
     # these are matplotlib.patch.Patch properties
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
 
     # place a text box in upper left in axes coords
-    ax.text(0.025, 0.9, resstr, transform=ax.transAxes, fontsize=12, verticalalignment='center', bbox=props)
+    ax.text(0.025, 0.1, resstr, transform=ax.transAxes, fontsize=12, verticalalignment='center', bbox=props)
     #ax.text(0.025, 0.9, resstr, transform=ax.transAxes, fontsize=12, verticalalignment='center', bbox=props)
 
 
@@ -209,7 +227,7 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
 
     handles, labels = ax.get_legend_handles_labels()
     labels, handles = zip(*sorted(zip(labels, handles), key=lambda t: t[0]))
-    ax.legend(handles, labels, loc="lower right")
+    ax.legend(handles, labels, loc="upper right")
     #ax.legend()
 
     plt.tight_layout()
@@ -220,29 +238,18 @@ def plot_data_collapse(out_file, data, dim, params, params_covariance, obs_strin
 
 
 def main(argv):
-    if loop:
-        for L in L_mins:
-            data, dim = data_io.read_fss_data(data_path, obs_string, variable_str, fixed_val, chi, L_min=L, cutoff_l=cutoff_left,
-                                          cutoff_r=cutoff_right)
-            if obs_string == "fidelity":
-                params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func, guess)
-            else:
-                params, params_covariance = perform_data_collapse(data, fss_mag_fit_func, guess)
+    data, dim = data_io.read_fss_data(data_path, obs_string, variable_str, fixed_val, chi, L_min=L_min, cutoff_l=cutoff_left,
+                                      cutoff_r=cutoff_right)
 
-            x_c, dx_c, nu, dnu, exp, dexp = plot_data_collapse(out_file, data, dim, params, params_covariance, obs_string, labels)
-            data_io.write_data_collapse_to_file(out_data_file, red_n_points, L, x_c, dx_c, nu, dnu, exp, dexp)
+    #data = data[data[:, 0].argsort()]
+    data = data[:, data[0].argsort(kind="stable")] # sort by entries of the first row
+    #print(np.shape(data))
+    #print(data[:,0])
 
+    params, params_covariance = perform_data_collapse(data, fss_mag_fit_func, guess)
 
-    else:
-        data, dim = data_io.read_fss_data(data_path, obs_string, variable_str, fixed_val, chi, L_min=L_min, cutoff_l=cutoff_left,
-                                          cutoff_r=cutoff_right)
-        if obs_string == "fidelity":
-            params, params_covariance = perform_data_collapse(data, fss_fid_suscept_fit_func, guess)
-        else:
-            params, params_covariance = perform_data_collapse(data, fss_mag_fit_func, guess)
-
-        x_c, dx_c, nu, dnu, exp, dexp = plot_data_collapse(out_file, data, dim, params, params_covariance, obs_string, labels)
-        data_io.write_data_collapse_to_file(out_data_file, red_n_points, L_min, x_c, dx_c, nu, dnu, exp, dexp)
+    x_c, dx_c, nu, dnu, exp, dexp = plot_data_collapse(out_file, data, dim, params, params_covariance, obs_string, labels)
+    print(x_c, dx_c, nu, dnu, exp, dexp)
 
 
 if __name__ == "__main__":
